@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     from,
     to,
-    districts: districtCounts(from, to),
-    daily: dailyCounts(from, to),
+    districts: await districtCounts(from, to),
+    daily: await dailyCounts(from, to),
   })
 }

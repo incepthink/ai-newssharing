@@ -9,7 +9,7 @@ type Ctx = { params: Promise<{ id: string }> }
 /** The per-article DOCX — the file a WhatsApp message links to. */
 export async function GET(_req: NextRequest, { params }: Ctx) {
   const { id } = await params
-  const article = getArticle(Number(id))
+  const article = await getArticle(Number(id))
   if (!article) return NextResponse.json({ error: 'not found' }, { status: 404 })
 
   const buf = await buildArticleDocx(article)

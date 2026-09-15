@@ -65,13 +65,13 @@ const FLOW = [
   { Icon: IconShare, label: 'वितरण', note: 'व्हॉट्सॲप · नकाशा' },
 ]
 
-export default function Home() {
+export default async function Home() {
   const today = todayIso()
-  const pending = listArticles({ status: 'pending' })
-  const fold = foldArticles(today)
-  const parked = listArticles({ status: 'parked' })
+  const pending = await listArticles({ status: 'pending' })
+  const fold = await foldArticles(today)
+  const parked = await listArticles({ status: 'parked' })
   const districtsToday = new Set(fold.map((a) => a.district).filter(Boolean)).size
-  const recent = listArticles({}).slice(0, 5)
+  const recent = (await listArticles({})).slice(0, 5)
 
   return (
     <div className="space-y-10">

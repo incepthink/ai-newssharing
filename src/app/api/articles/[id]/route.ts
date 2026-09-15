@@ -8,7 +8,7 @@ type Ctx = { params: Promise<{ id: string }> }
 
 export async function GET(_req: NextRequest, { params }: Ctx) {
   const { id } = await params
-  const article = getArticle(Number(id))
+  const article = await getArticle(Number(id))
   if (!article) return NextResponse.json({ error: 'not found' }, { status: 404 })
   return NextResponse.json({ article })
 }
@@ -27,13 +27,13 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   // column to the two values the queue filters on.
   if ('category' in patch && patch.category !== 'cm') patch.category = 'general'
 
-  const article = updateArticle(Number(id), patch)
+  const article = await updateArticle(Number(id), patch)
   if (!article) return NextResponse.json({ error: 'not found' }, { status: 404 })
   return NextResponse.json({ article })
 }
 
 export async function DELETE(_req: NextRequest, { params }: Ctx) {
   const { id } = await params
-  deleteArticle(Number(id))
+  await deleteArticle(Number(id))
   return NextResponse.json({ ok: true })
 }

@@ -22,9 +22,9 @@ pnpm dev
 
 Open http://localhost:3000.
 
-`better-sqlite3` is a native module and compiles on install. On Windows that needs
-build tools; if `pnpm install` fails there, install the VS Build Tools or run the
-project under WSL.
+The app stores articles in Postgres. Point `DATABASE_URL` at any Postgres instance
+(AWS RDS in production, a local server or `docker run postgres` in development);
+the schema is created automatically on first query.
 
 **Without an API key** the app still runs: submitting an article saves it with a
 blank title for the desk to fill in, and WhatsApp summaries fall back to the

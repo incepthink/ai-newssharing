@@ -21,9 +21,9 @@ export async function POST(req: NextRequest) {
 
   let articles: Article[] = []
   if (ids?.length) {
-    articles = ids.map((id) => getArticle(id)).filter((a): a is Article => !!a)
+    articles = (await Promise.all(ids.map((id) => getArticle(id)))).filter((a): a is Article => !!a)
   } else if (date) {
-    articles = foldArticles(date)
+    articles = await foldArticles(date)
   } else {
     return NextResponse.json({ error: 'pass either ids[] or date' }, { status: 400 })
   }

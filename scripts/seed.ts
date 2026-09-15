@@ -10,7 +10,7 @@
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { createArticle, db } from '../src/lib/db'
+import { createArticle, ensureSchema, pool } from '../src/lib/db'
 import type { Language } from '../src/lib/types'
 
 interface Seed {
@@ -35,32 +35,41 @@ const seeds: Seed[] = JSON.parse(
   readFileSync(join(process.cwd(), 'scripts/seed-data.json'), 'utf-8'),
 )
 
-db().exec('DELETE FROM articles; DELETE FROM folds;')
+async function main() {
+  await ensureSchema()
+  await pool().query('DELETE FROM articles; DELETE FROM folds;')
 
-let n = 0
-seeds.forEach((s, i) => {
-  // Spread over the last few days so the volume chart has a shape.
-  const foldDate = isoDaysAgo(i % 5)
-  createArticle({
-    raw_text: s.body,
-    body: s.body,
-    title: s.title,
-    language: s.language,
-    district: s.district,
-    dateline: s.dateline,
-    attribution: s.attribution,
-    bullets: s.bullets,
-    release_no: s.release_no,
-    office: 'मुख्यमंत्री सचिवालय (जनसंपर्क कक्ष)',
-    // Rough stand-in for what the desk would decide, so the queue's वर्ग filter
-    // has both sides to show.
-    category: /मुख्यमंत्री|मंत्रिमंडळ/.test(`${s.title} ${s.attribution ?? ''}`) ? 'cm' : 'general',
-    // Leave a few pending so the desk queue isn't empty on first open.
-    status: i % 6 === 0 ? 'pending' : 'approved',
-    fold_date: foldDate,
-    submitted_by: 'seed',
-  })
-  n++
+  let n = 0
+  for (const [i, s] of seeds.entries()) {
+    // Spread over the last few days so the volume chart has a shape.
+    const foldDate = isoDaysAgo(i % 5)
+    await createArticle({
+      raw_text: s.body,
+      body: s.body,
+      title: s.title,
+      language: s.language,
+      district: s.district,
+      dateline: s.dateline,
+      attribution: s.attribution,
+      bullets: s.bullets,
+      release_no: s.release_no,
+      office: 'मुख्यमंत्री सचिवालय (जनसंपर्क कक्ष)',
+      // Rough stand-in for what the desk would decide, so the queue's वर्ग filter
+      // has both sides to show.
+      category: /मुख्यमंत्री|मंत्रिमंडळ/.test(`${s.title} ${s.attribution ?? ''}`) ? 'cm' : 'general',
+      // Leave a few pending so the desk queue isn't empty on first open.
+      status: i % 6 === 0 ? 'pending' : 'approved',
+      fold_date: foldDate,
+      submitted_by: 'seed',
+    })
+    n++
+  }
+
+  console.log(`Seeded ${n} articles across 5 days.`)
+  await pool().end()
+}
+
+main().catch((err) => {
+  console.error(err)
+  process.exit(1)
 })
-
-console.log(`Seeded ${n} articles across 5 days.`)

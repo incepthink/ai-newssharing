@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams
-  const articles = listArticles({
+  const articles = await listArticles({
     fold_date: q.get('date') ?? undefined,
     status: (q.get('status') as Status) ?? undefined,
     category: (q.get('category') as Category) ?? undefined,
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     extractionError = err instanceof Error ? err.message : String(err)
   }
 
-  const article = createArticle({
+  const article = await createArticle({
     raw_text: rawText,
     body: rawText,
     title: extracted?.title ?? '',

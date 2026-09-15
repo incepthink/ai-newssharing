@@ -5,5 +5,5 @@ export const dynamic = 'force-dynamic'
 
 /** Next वृत्त क्र. suggestion. Advisory — the desk can always override it. */
 export async function GET() {
-  return NextResponse.json({ release_no: suggestReleaseNo() })
+  return NextResponse.json({ release_no: await suggestReleaseNo() })
 }

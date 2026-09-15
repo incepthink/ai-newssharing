@@ -12,7 +12,7 @@ type Ctx = { params: Promise<{ date: string }> }
  */
 export async function GET(_req: NextRequest, { params }: Ctx) {
   const { date } = await params
-  const articles = foldArticles(date)
+  const articles = await foldArticles(date)
   const buf = await buildFoldDocx(date, articles)
 
   return new NextResponse(new Uint8Array(buf), {
