@@ -10,8 +10,12 @@
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { loadEnvConfig } from '@next/env'
 import { createArticle, ensureSchema, pool } from '../src/lib/db'
 import type { Language } from '../src/lib/types'
+
+// tsx doesn't read .env the way `next` does, and DATABASE_URL has no default.
+loadEnvConfig(process.cwd())
 
 interface Seed {
   title: string
