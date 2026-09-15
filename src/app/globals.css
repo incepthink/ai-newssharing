@@ -1,0 +1,601 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Serif+Devanagari:wght@500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   Design tokens.
+
+   The product is a government news desk, so the surface reads as newsprint and
+   ink rather than as a SaaS dashboard: a warm off-white ground, near-black
+   text, hairline rules, and one institutional maroon spent only on the thing
+   you are meant to press. Status colour is the second budget — pending,
+   approved and parked are the three words the desk says all day, so each keeps
+   one hue everywhere in the product.
+
+   The `--seq-*` ramp and the `--text-*` / `--grid` names are the chart tokens
+   the map and the volume chart are painted from. They live here rather than
+   only in `viz.css` so a tile or a badge elsewhere can borrow the same blue.
+   ========================================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* --- Ground and surfaces --- */
+  --paper: #f6f5f2;
+  --surface: #ffffff;
+  --surface-2: #faf9f7;
+  --surface-sunk: #f2f0eb;
+  --surface-hover: #f5f3ef;
+
+  /* --- Ink --- */
+  --ink: #191714;
+  --text-primary: #191714;
+  --text-secondary: #4b4640;
+  --muted: #736c63;
+  --text-muted: #736c63;
+  --faint: #9b948a;
+
+  /* --- Rules --- */
+  --edge: #e5e1d9;
+  --edge-strong: #d5cfc4;
+  --grid: #e5e1d9;
+
+  /* --- The institution's maroon --- */
+  --accent: #8c2f1f;
+  --accent-hover: #762518;
+  --accent-press: #611c11;
+  --accent-soft: #fbf0ed;
+  --accent-edge: #eccfc7;
+  --ring: rgb(140 47 31 / 0.20);
+
+  /* --- Status: the desk's three words --- */
+  --ok: #1d6b45;
+  --ok-soft: #edf6f0;
+  --ok-edge: #c6e2d1;
+
+  --warn: #8a5712;
+  --warn-soft: #fdf4e5;
+  --warn-edge: #ecd8ac;
+
+  --hold: #465469;
+  --hold-soft: #eff2f6;
+  --hold-edge: #d3dae4;
+
+  /* --- Chart ramp (single hue, light to dark) --- */
+  --seq-100: #cde2fb;
+  --seq-200: #9ec5f4;
+  --seq-300: #6da7ec;
+  --seq-400: #3987e5;
+  --seq-450: #2a78d6;
+  --seq-500: #256abf;
+  --seq-550: #1c5cab;
+  --seq-600: #184f95;
+  --seq-700: #0d366b;
+  --bar: #2a78d6;
+  --empty: #edebe6;
+
+  /* --- Elevation. Shallow and warm; nothing here floats far off the page. --- */
+  --shadow-xs: 0 1px 2px rgb(25 23 20 / 0.05);
+  --shadow-sm: 0 1px 2px rgb(25 23 20 / 0.05), 0 1px 3px -1px rgb(25 23 20 / 0.05);
+  --shadow-md: 0 1px 2px rgb(25 23 20 / 0.04), 0 8px 20px -10px rgb(25 23 20 / 0.16);
+  --shadow-lg: 0 2px 4px rgb(25 23 20 / 0.04), 0 24px 48px -24px rgb(25 23 20 / 0.24);
+
+  /* --- Radii --- */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 9px;
+  --r-lg: 13px;
+  --r-xl: 18px;
+
+  /* --- Motion. One duration for state, one for anything that moves. --- */
+  --t-fast: 110ms cubic-bezier(0.2, 0, 0.2, 1);
+  --t-base: 180ms cubic-bezier(0.2, 0, 0.2, 1);
+
+  --font-ui: 'Inter', 'Noto Sans Devanagari', 'Nirmala UI', system-ui, sans-serif;
+  --font-display: 'Noto Serif Devanagari', 'Inter', Georgia, serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+html,
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent-press);
+}
+
+/* One focus treatment for the whole product. Keyboard users get a ring that
+   sits outside the control, so it survives on a filled button and on a white
+   input alike; pointer users never see it. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Scrollbars inside panels, so a list that scrolls does not cut a grey canyon
+   through a white card. */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--edge-strong) transparent;
+}
+.scroll-slim::-webkit-scrollbar { width: 10px; height: 10px; }
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: var(--edge-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+.scroll-slim::-webkit-scrollbar-track { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   Components.
+
+   Written as plain CSS rather than @apply chains — Tailwind resolves @apply of
+   one custom component class inside another inconsistently, and a system whose
+   buttons are defined in terms of each other needs that to work.
+   ========================================================================= */
+
+@layer components {
+
+  /* --- Type ------------------------------------------------------------- */
+
+  .display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* --- Surfaces ---------------------------------------------------------- */
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--edge);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .card-quiet {
+    background: var(--surface-2);
+    border: 1px solid var(--edge);
+    border-radius: var(--r-lg);
+  }
+
+  /* A card you can click. The lift is small on purpose — a queue of news is a
+     list to scan, not a deck of cards to admire. */
+  .card-link {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--edge);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-xs);
+    transition: border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
+  }
+  .card-link:hover {
+    border-color: var(--edge-strong);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+  .card-link:active { transform: translateY(0); }
+
+  /* The gate cards in the editor — loud until the desk has made the call. */
+  .card-gate {
+    background: var(--surface);
+    border: 1px solid var(--edge);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-xs);
+    transition: border-color var(--t-base), background var(--t-base);
+  }
+  .card-gate[data-open='true'] {
+    border-color: var(--accent-edge);
+    background: var(--accent-soft);
+  }
+
+  /* --- Buttons ----------------------------------------------------------- */
+
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-quiet,
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    height: 2.25rem;
+    padding: 0 0.875rem;
+    border-radius: var(--r-md);
+    border: 1px solid transparent;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--t-fast), border-color var(--t-fast),
+                color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
+  }
+
+  .btn:active:not(:disabled),
+  .btn-primary:active:not(:disabled),
+  .btn-secondary:active:not(:disabled),
+  .btn-ghost:active:not(:disabled),
+  .btn-quiet:active:not(:disabled),
+  .btn-danger:active:not(:disabled) {
+    transform: translateY(0.5px);
+  }
+
+  .btn:disabled,
+  .btn-primary:disabled,
+  .btn-secondary:disabled,
+  .btn-ghost:disabled,
+  .btn-quiet:disabled,
+  .btn-danger:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  /* The one maroon. At most one of these is visible per region of a screen. */
+  .btn-primary {
+    color: #fff;
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-xs);
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn-primary:active:not(:disabled) { background: var(--accent-press); }
+
+  .btn-secondary {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: var(--accent-edge);
+  }
+  .btn-secondary:hover:not(:disabled) { background: #f6e6e1; }
+
+  .btn-ghost {
+    color: var(--text-primary);
+    background: var(--surface);
+    border-color: var(--edge-strong);
+    box-shadow: var(--shadow-xs);
+  }
+  .btn-ghost:hover:not(:disabled) { background: var(--surface-hover); border-color: #c4bdb1; }
+
+  /* No chrome at rest — for the third and fourth action in a row. */
+  .btn-quiet {
+    color: var(--muted);
+    background: transparent;
+  }
+  .btn-quiet:hover:not(:disabled) { background: var(--surface-sunk); color: var(--text-primary); }
+
+  .btn-danger {
+    color: #fff;
+    background: #a3301f;
+    border-color: #a3301f;
+  }
+  .btn-danger:hover:not(:disabled) { background: #8a2417; }
+
+  .btn-sm { height: 1.875rem; padding: 0 0.625rem; font-size: 0.75rem; border-radius: var(--r-sm); }
+  .btn-lg { height: 2.625rem; padding: 0 1.25rem; font-size: 0.875rem; }
+  .btn-block { width: 100%; }
+  .btn-icon { width: 2.25rem; padding: 0; }
+  .btn-icon.btn-sm { width: 1.875rem; }
+
+  /* --- Fields ------------------------------------------------------------ */
+
+  .field {
+    width: 100%;
+    height: 2.25rem;
+    border: 1px solid var(--edge-strong);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    padding: 0 0.6875rem;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    color: var(--ink);
+    outline: none;
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
+  }
+  .field::placeholder { color: var(--faint); }
+  .field:hover:not(:disabled) { border-color: #c4bdb1; }
+  .field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--ring);
+    outline: none;
+  }
+  .field:disabled { background: var(--surface-sunk); color: var(--muted); cursor: not-allowed; }
+
+  textarea.field {
+    height: auto;
+    padding: 0.625rem 0.75rem;
+    line-height: 1.8;
+    resize: vertical;
+  }
+
+  select.field {
+    appearance: none;
+    padding-right: 1.875rem;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23736c63' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.625rem center;
+    cursor: pointer;
+  }
+
+  /* The headline in the editor is the article's headline, so it is typeset
+     as one rather than as a form field with a big font size. */
+  .field-title {
+    font-family: var(--font-display);
+    font-size: 1.1875rem;
+    font-weight: 600;
+    line-height: 1.5;
+    height: auto;
+    padding: 0.625rem 0.75rem;
+  }
+
+  /* Article text, in the editor and in the composer. Reading length is the
+     constraint, not the width of the column it sits in. */
+  .field-body {
+    font-size: 0.9375rem;
+    line-height: 1.85;
+  }
+
+  .label {
+    display: block;
+    margin-bottom: 0.3125rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .hint {
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    line-height: 1.55;
+    color: var(--faint);
+  }
+
+  .field-search { padding-left: 2.125rem; }
+
+  /* --- Badges ------------------------------------------------------------ */
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3125rem;
+    border: 1px solid var(--edge);
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    border-radius: 999px;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1.55;
+    white-space: nowrap;
+  }
+  .badge-accent { background: var(--accent-soft); border-color: var(--accent-edge); color: var(--accent); font-weight: 600; }
+  .badge-ok     { background: var(--ok-soft);     border-color: var(--ok-edge);     color: var(--ok);     font-weight: 600; }
+  .badge-warn   { background: var(--warn-soft);   border-color: var(--warn-edge);   color: var(--warn);   font-weight: 600; }
+  .badge-hold   { background: var(--hold-soft);   border-color: var(--hold-edge);   color: var(--hold);   font-weight: 600; }
+
+  /* Something the desk still has to fill in. Dashed, so it reads as a gap
+     rather than as a fact about the article. */
+  .badge-missing {
+    background: transparent;
+    border-style: dashed;
+    border-color: var(--accent-edge);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Legacy name, kept so anything still saying `chip` keeps its styling. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3125rem;
+    border: 1px solid var(--edge);
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    border-radius: 999px;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.6875rem;
+    line-height: 1.55;
+    white-space: nowrap;
+  }
+
+  .dot {
+    display: inline-block;
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 999px;
+    flex: none;
+  }
+
+  /* --- Segmented control -------------------------------------------------- */
+
+  /* The filter the desk changes all day. A row of visible choices carrying
+     their counts beats a select: the shape of the queue is legible without
+     opening a menu. */
+  .seg {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+    padding: 0.1875rem;
+    background: var(--surface-sunk);
+    border: 1px solid var(--edge);
+    border-radius: var(--r-md);
+  }
+
+  .seg-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: 1.75rem;
+    padding: 0 0.625rem;
+    border-radius: var(--r-sm);
+    font-family: inherit;
+    font-size: 0.78125rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--t-fast), color var(--t-fast), box-shadow var(--t-fast);
+  }
+  .seg-item:hover { color: var(--text-primary); }
+  .seg-item[data-active='true'] {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .seg-count {
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    padding: 0 0.3125rem;
+    border-radius: 999px;
+    background: rgb(25 23 20 / 0.06);
+    color: var(--muted);
+  }
+  .seg-item[data-active='true'] .seg-count {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  /* --- Navigation --------------------------------------------------------- */
+
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    height: 2.125rem;
+    padding: 0 0.6875rem;
+    border-radius: var(--r-md);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+    transition: background var(--t-fast), color var(--t-fast);
+  }
+  .nav-link:hover { background: var(--surface-sunk); color: var(--text-primary); }
+  .nav-link[data-active='true'] {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* --- Rows ---------------------------------------------------------------- */
+
+  /* A queue is hairlines between rows, not a stack of floating cards: the eye
+     reads down one column instead of across 30 separate objects. */
+  .row-list > * + * { border-top: 1px solid var(--edge); }
+
+  .row {
+    display: block;
+    padding: 0.875rem 1.125rem;
+    transition: background var(--t-fast);
+  }
+  .row:hover { background: var(--surface-hover); }
+  .row[data-selected='true'] { background: var(--accent-soft); }
+
+  /* --- Feedback ------------------------------------------------------------ */
+
+  .note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    border: 1px solid var(--edge);
+    background: var(--surface-2);
+    border-radius: var(--r-md);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+  .note-ok    { background: var(--ok-soft);     border-color: var(--ok-edge);     color: #145233; }
+  .note-warn  { background: var(--warn-soft);   border-color: var(--warn-edge);   color: #6e4409; }
+  .note-alert { background: var(--accent-soft); border-color: var(--accent-edge); color: var(--accent-press); }
+
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-sunk) 25%, #eceae4 37%, var(--surface-sunk) 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease infinite;
+    border-radius: var(--r-sm);
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
+
+  .fade-in { animation: fade-in var(--t-base) both; }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(2px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* --- Misc ---------------------------------------------------------------- */
+
+  .link {
+    color: var(--accent);
+    font-weight: 600;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  .link:hover { text-decoration: underline; }
+
+  .kbd {
+    display: inline-flex;
+    align-items: center;
+    height: 1.25rem;
+    padding: 0 0.3125rem;
+    border: 1px solid var(--edge-strong);
+    border-bottom-width: 2px;
+    border-radius: var(--r-xs);
+    background: var(--surface);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.6875rem;
+    color: var(--muted);
+  }
+
+  .hairline { height: 1px; background: var(--edge); border: 0; }
+}

@@ -1,0 +1,15 @@
+/*
+ * Chart tokens used to live here, scoped to `.viz-root`, which meant a chart
+ * could only be drawn inside that one wrapper and the neutrals had to be
+ * restated — where they promptly drifted from the rest of the product.
+ *
+ * They now sit on `:root` in `globals.css`: one ramp, one set of neutrals, the
+ * map and the volume chart and any badge that wants the blue all reading from
+ * the same place. Article volume is a magnitude, so the encoding stays what it
+ * was — a single-hue sequential ramp, light to dark. One hue, never a rainbow.
+ *
+ * `.viz-root` survives as the page-level wrapper for chart layout only.
+ */
+.viz-root {
+  --surface-1: var(--surface);
+}
