@@ -1,0 +1,569 @@
+"use client";
+
+import { ChevronDown } from "lucide-react";
+import { motion } from "motion/react";
+import { useState } from "react";
+
+import { MINISTER_TIERS } from "@/data/ministers";
+import { DGIPR_MR, releaseCountMr } from "@/lib/dgipr/marathi";
+import {
+  agoMr,
+  articleCountMr,
+  districtCountMr,
+  ministerTierMr,
+  NEWS_MR,
+  toDevanagari,
+} from "@/lib/news/marathi";
+import { WINDOWS } from "@/lib/news/window";
+import type { DgiprMap } from "@/types/dgipr";
+import type {
+  MapMode,
+  MinisterFilter,
+  MinisterTier,
+  NewsMap,
+  NewsStories,
+  WindowId,
+} from "@/types/news";
+
+const RISE = {
+  hidden: { opacity: 0, y: 12 },
+  shown: { opacity: 1, y: 0 },
+};
+
+type Band = { level: number; min: number; max: number };
+
+type NewsPlateProps = {
+  map: NewsMap;
+  bands: Band[];
+  /** What the reader asked for, which may be tighter than what is shown. */
+  window: WindowId;
+  onWindow: (id: WindowId) => void;
+  /** What the sheet is showing. Client state — see `onMode`. */
+  mode: MapMode;
+  onMode: (mode: MapMode) => void;
+  /** The story layer, for the mode chip's count and the pin key. Null when
+   *  `.data/stories.db` has never been built, in which case there is no
+   *  second mode to offer and the control does not appear. */
+  stories: NewsStories | null;
+  /** The government overlay, for the filter chip's count and its key. */
+  dgipr: DgiprMap;
+  /** Whether that overlay is on the sheet. A filter, not a mode — see the note
+   *  on `official` in `NewsMap`. */
+  official: boolean;
+  onOfficial: () => void;
+  /** Narrowing the whole map to one rank or one person. Server state, like the
+   *  window and for the same reason — it decides which rows exist. The current
+   *  selection is read off `map.minister` rather than passed separately, so the
+   *  chips can only ever show what the server actually filtered by. */
+  onMinister: (filter: MinisterFilter | null) => void;
+  articles: number;
+  districts: number;
+  now: Date | null;
+};
+
+/**
+ * The legend: what the map is showing, how to change it, and what its colours
+ * mean.
+ *
+ * Read top to bottom it is a sentence — **what** (the mode), **when** (the
+ * window), **how much that is** (the tally), **what the paint means** (the
+ * ramp). The tally sits under the controls because it is their result: a
+ * reader switching from 24 hours to a week watches the figure move rather than
+ * having to count districts.
+ *
+ * The plate this replaces offered ten sectors and five stages. Neither exists
+ * in this corpus — a newspaper article has no sector taxonomy and no lifecycle
+ * — and inventing one by keyword would have been the map asserting something
+ * the data does not say. Time is the one axis the data actually has, so it is
+ * the one axis the reader gets.
+ */
+export function NewsPlate({
+  map,
+  bands,
+  window,
+  onWindow,
+  mode,
+  onMode,
+  stories,
+  dgipr,
+  official,
+  onOfficial,
+  onMinister,
+  articles,
+  districts,
+  now,
+}: NewsPlateProps) {
+  /** When the story pass last ran, which is a different clock from the
+   *  collector's and is allowed to be behind it. Shown in pin mode only. */
+  const threaded = agoMr(stories?.runAt ?? "", now);
+  const board = map.ministers;
+  const filter = map.minister;
+
+  /**
+   * Which rank's names are shown, which is not the same as which chip is lit.
+   *
+   * Picking a person keeps their rank open underneath them — otherwise
+   * selecting हसन मुश्रीफ would fold away the list he was picked from and leave
+   * the reader with no way back to it except clearing the filter entirely.
+   */
+  const openTier: MinisterTier | null =
+    filter === null
+      ? null
+      : filter.kind === "tier"
+        ? filter.tier
+        : (board.ministers.find((minister) => minister.id === filter.id)?.tier ?? null);
+
+  const chosen =
+    filter?.kind === "one"
+      ? (board.ministers.find((minister) => minister.id === filter.id) ?? null)
+      : null;
+
+  /**
+   * The names offered inside an open rank.
+   *
+   * Only those with something in the window, plus whoever is currently chosen
+   * even when that is nothing — a chip that vanished the moment its own count
+   * reached zero would take the reader's own selection off the screen while
+   * leaving the map filtered by it. Ordered by coverage, because a rank of
+   * thirty-two in Gazette order is a list nobody reads to the end of.
+   */
+  const named = board.ministers
+    .filter(
+      (minister) =>
+        minister.tier === openTier &&
+        (minister.articles > 0 || minister.id === chosen?.id),
+    )
+    .sort((a, b) => b.articles - a.articles || a.nameMr.localeCompare(b.nameMr, "mr"));
+
+  /**
+   * Whether the folding half of the plate is showing.
+   *
+   * Only ever consulted on a phone. At desktop width the plate is a column
+   * beside the state with room for all of it, so the CSS shows every fold
+   * regardless of this flag and hides the button that flips it — which is why
+   * the initial value can be a constant rather than a viewport measurement.
+   * Reading the width here would mean either an effect that pops the plate
+   * open after paint or a media query duplicated in two languages.
+   */
+  const [open, setOpen] = useState(false);
+
+  return (
+    <motion.aside
+      className="brand-plate news-plate"
+      lang="mr"
+      data-open={open || undefined}
+      initial="hidden"
+      animate="shown"
+      variants={{ shown: { transition: { staggerChildren: 0.07, delayChildren: 0.15 } } }}
+    >
+      {/* The plate opens with its controls.
+
+          It used to open with a wordmark — "महाराष्ट्र घडतो आहे" on a violet
+          block across the top of the card. That line is a claim about the
+          state, and this card is an instrument for reading one: it says which
+          window, which minister and which source the sheet is drawn from, and
+          a slogan above those controls is the loudest thing on a panel whose
+          job is to be read quickly and then looked past. The masthead already
+          names the product; the map already makes the claim.
+
+          What the block also held was the phone's fold toggle, which lives on
+          here in a strip of its own — the one part of the plate that never
+          folds, because a button inside the fold cannot close the fold. The
+          strip prints at phone width only; above 64rem nothing folds and the
+          controls are the top of the card. */}
+      <div className="news-plate-head">
+        <button
+          type="button"
+          className="news-plate-toggle"
+          aria-expanded={open}
+          aria-controls="news-plate-controls"
+          aria-label={open ? NEWS_MR.filtersHide : NEWS_MR.filtersShow}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span className="news-plate-toggle-word">{NEWS_MR.filters}</span>
+          <ChevronDown
+            className="news-plate-toggle-mark"
+            aria-hidden
+            size={15}
+            strokeWidth={2}
+          />
+        </button>
+      </div>
+
+      <div className="brand-body">
+        {/* Everything marked `news-plate-fold` is what a phone puts away: the
+            controls and the keys. What is left standing — the tally, and the
+            sentence that replaces it when a narrowing matches nothing — is the
+            plate's claim about the map, and a claim is not something a reader
+            should have to open a panel to read. At desktop width nothing
+            folds. */}
+        <motion.div
+          id="news-plate-controls"
+          className="news-controls news-plate-fold"
+          variants={RISE}
+          transition={{ duration: 0.7 }}
+        >
+          {/* What the sheet is showing. Answered entirely in the browser: both
+              layers were read in the same pass on the server, so flipping
+              between them changes which of two things already in memory is
+              drawn — where the window changes which rows exist at all and has
+              to go back. See `NewsMapShell`.
+
+              Offered only when there is a story layer to offer. A deploy that
+              has never run `pnpm news:stories` gets the choropleth alone,
+              which is a complete map rather than a broken one. */}
+          {stories ? (
+            <fieldset className="news-control">
+              <legend className="news-control-label">{NEWS_MR.mode}</legend>
+              <div className="news-chips">
+                <button
+                  type="button"
+                  className="news-chip"
+                  data-active={mode === "heat" || undefined}
+                  aria-pressed={mode === "heat"}
+                  onClick={() => onMode("heat")}
+                >
+                  {NEWS_MR.modeHeat}
+                </button>
+                <button
+                  type="button"
+                  className="news-chip"
+                  data-active={mode === "pins" || undefined}
+                  aria-pressed={mode === "pins"}
+                  onClick={() => onMode("pins")}
+                >
+                  {NEWS_MR.modePins}
+                  <span className="news-chip-count">
+                    {toDevanagari(stories.total)}
+                  </span>
+                </button>
+              </div>
+            </fieldset>
+          ) : null}
+
+          <fieldset className="news-control">
+            <legend className="news-control-label">{NEWS_MR.window}</legend>
+            <div className="news-chips">
+              {WINDOWS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className="news-chip"
+                  data-active={option.id === window || undefined}
+                  aria-pressed={option.id === window}
+                  onClick={() => onWindow(option.id)}
+                >
+                  {option.labelMr}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          {/* Who the news is about. The one control on this plate backed by a
+              list this app asserts rather than one the corpus states — see the
+              header of `src/data/ministers.ts`, and the date printed under the
+              chips, which is that assertion carrying its source.
+
+              Ranks rather than names, because the corpus will not support
+              forty-one chips: over seven days the Chief Minister is named in 83
+              articles and the whole rest of the cabinet in single figures. The
+              names live inside a rank and appear only where there is something
+              to open. */}
+          <fieldset className="news-control">
+            <legend className="news-control-label">{NEWS_MR.ministers}</legend>
+
+            <div className="news-chips">
+              {MINISTER_TIERS.map((tier) => (
+                <button
+                  key={tier}
+                  type="button"
+                  className="news-chip"
+                  data-active={openTier === tier || undefined}
+                  aria-pressed={openTier === tier}
+                  // A second press on an open rank closes it, so the control
+                  // can undo itself without the reader hunting for the clear.
+                  onClick={() =>
+                    onMinister(
+                      openTier === tier && filter?.kind === "tier"
+                        ? null
+                        : { kind: "tier", tier },
+                    )
+                  }
+                >
+                  {ministerTierMr(tier)}
+                  <span className="news-chip-count">
+                    {toDevanagari(board.tiers[tier])}
+                  </span>
+                </button>
+              ))}
+
+              {filter ? (
+                <button
+                  type="button"
+                  className="news-chip news-chip-clear"
+                  onClick={() => onMinister(null)}
+                >
+                  {NEWS_MR.ministerAll}
+                </button>
+              ) : null}
+            </div>
+
+            {openTier && named.length > 0 ? (
+              <div className="news-chips news-chips-named">
+                {named.map((minister) => (
+                  <button
+                    key={minister.id}
+                    type="button"
+                    className="news-chip news-chip-named"
+                    data-active={chosen?.id === minister.id || undefined}
+                    aria-pressed={chosen?.id === minister.id}
+                    title={minister.portfolioMr}
+                    // Deselecting a person falls back to their rank rather than
+                    // to the whole press: the reader narrowed twice, and one
+                    // press back should undo one of those steps.
+                    onClick={() =>
+                      onMinister(
+                        chosen?.id === minister.id
+                          ? { kind: "tier", tier: minister.tier }
+                          : { kind: "one", id: minister.id },
+                      )
+                    }
+                  >
+                    {minister.nameMr}
+                    <span className="news-chip-count">
+                      {toDevanagari(minister.articles)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            {/* The portfolio, printed only once a person is chosen. It answers
+                "why is this minister's news all about drinking water", and it
+                is the Gazette's own wording rather than a summary of it. */}
+            {chosen ? <p className="news-plate-note">{chosen.portfolioMr}</p> : null}
+          </fieldset>
+
+          {/* The source filter. Sits below the window rather than beside the
+              mode, because it is not an alternative to anything: the mode chips
+              choose between two readings of the press corpus, and this adds a
+              second corpus over whichever one is showing.
+
+              Offered even when the count is zero. An empty government layer is
+              a fact about a quiet week at the directorate, and a control that
+              disappears when its answer is "none" leaves a reader unable to
+              tell that from the feature not existing. */}
+          <fieldset className="news-control">
+            <legend className="news-control-label">{DGIPR_MR.source}</legend>
+            <div className="news-chips">
+              <button
+                type="button"
+                className="news-chip news-chip-official"
+                data-active={official || undefined}
+                aria-pressed={official}
+                onClick={onOfficial}
+              >
+                {DGIPR_MR.tag}
+                <span className="news-chip-count">
+                  {toDevanagari(dgipr.totals.releases)}
+                </span>
+              </button>
+            </div>
+          </fieldset>
+
+        </motion.div>
+
+        {/* Said only when it happened. The window the reader picked was empty,
+            so the map widened it rather than showing a blank state — but a map
+            that silently answers a different question than the one asked is
+            worse than one that shows nothing. */}
+        {/* Said when the filter, rather than the window, is what emptied the
+            map. The two look identical on the sheet and mean opposite things:
+            one is a quiet day in the state, the other is a minister who was not
+            in the news during a day that was not quiet at all. */}
+        {filter && articles === 0 ? (
+          <motion.p
+            className="news-plate-note news-plate-fold"
+            variants={RISE}
+            transition={{ duration: 0.7 }}
+          >
+            {NEWS_MR.ministerEmpty}
+          </motion.p>
+        ) : null}
+
+        {map.widened ? (
+          <motion.p className="news-plate-note news-plate-fold" variants={RISE} transition={{ duration: 0.7 }}>
+            {NEWS_MR.windowWidened}
+          </motion.p>
+        ) : null}
+
+        <motion.div className="brand-rule" variants={RISE} transition={{ duration: 0.7 }} />
+
+        {articles > 0 ? (
+          <motion.p className="brand-count" variants={RISE} transition={{ duration: 0.7 }}>
+            <span className="brand-count-figure">{articleCountMr(articles)}</span>
+            <span className="brand-count-where">{districtCountMr(districts)}</span>
+          </motion.p>
+        ) : (
+          <motion.p className="brand-empty" variants={RISE} transition={{ duration: 0.7 }}>
+            {NEWS_MR.noDatabase}
+          </motion.p>
+        )}
+
+        {/* The key to the government mark, printed whenever the layer is on
+            and under either mode. It says the same thing the district-tier pin
+            key says — somewhere in this district — because it is the same
+            claim; what it has to add is which shape on the sheet is making it
+            and where that shape came from. */}
+        {official ? (
+          <motion.div className="news-ramp news-plate-fold" variants={RISE} transition={{ duration: 0.7 }}>
+            <p className="news-control-label">{DGIPR_MR.layer}</p>
+
+            <ul className="pin-key">
+              <li className="pin-key-row">
+                <svg className="pin-key-mark" viewBox="-13 -13 26 26" aria-hidden>
+                  <circle className="map-dgipr-halo" r="11.5" />
+                  <circle className="map-dgipr-ring" r="6.4" />
+                  <rect
+                    className="map-dgipr-core"
+                    x="-2.4"
+                    y="-2.4"
+                    width="4.8"
+                    height="4.8"
+                    rx="0.7"
+                  />
+                </svg>
+                <span>
+                  <span className="pin-key-name">{DGIPR_MR.keyName}</span>
+                  <span className="pin-key-note">{DGIPR_MR.keyNote}</span>
+                </span>
+              </li>
+            </ul>
+
+            {/* This layer widens its own window when the one the reader picked
+                reached too few districts to read as a map — see `DISTRICT_FLOOR`
+                in `loadDgipr`. Said here, because a layer quietly showing a
+                different fortnight than the map under it is exactly the
+                disagreement the window control exists to prevent. */}
+            {dgipr.widened ? (
+              <p className="pin-key-statewide">{DGIPR_MR.widened}</p>
+            ) : null}
+
+            {dgipr.totals.releases === 0 ? (
+              <p className="pin-key-statewide">{DGIPR_MR.none}</p>
+            ) : null}
+
+            {/* A release whose dateline names no district on the map gets no
+                mark, the same way a statewide story does, and is counted here
+                rather than allowed to vanish. */}
+            {dgipr.totals.unplaced > 0 ? (
+              <p className="pin-key-statewide">
+                {releaseCountMr(dgipr.totals.unplaced)} — {DGIPR_MR.unplaced}
+              </p>
+            ) : null}
+          </motion.div>
+        ) : null}
+
+        {/* The key to the marks, when the marks are stories.
+            `choropleth-layer.tsx` objects that "a pin at a centroid is a lie
+            told with great precision", and `PinLayer` answers it by making the
+            precision visible in the shape — which only works if the shapes have
+            been explained once. This is where they are explained. */}
+        {mode === "pins" && stories ? (
+          <motion.div className="news-ramp news-plate-fold" variants={RISE} transition={{ duration: 0.7 }}>
+            <p className="news-control-label">{NEWS_MR.precision}</p>
+
+            {/* The key explains two shapes, so it is drawn only when there are
+                shapes to explain. An empty window gets the sentence instead —
+                and the stamp below, which is the half that makes the emptiness
+                readable: "no developments" and "nothing has been threaded since
+                Sunday" look identical on the sheet and are entirely different
+                facts about the map. */}
+            {stories.total === 0 ? (
+              <p className="pin-key-empty">{NEWS_MR.noStories}</p>
+            ) : (
+            <ul className="pin-key">
+              <li className="pin-key-row">
+                <svg className="pin-key-mark" viewBox="-14 -24 28 28" aria-hidden>
+                  <path className="map-pin-stake" d="M0 0 L-5.6 -10 A6.6 6.6 0 1 1 5.6 -10 Z" />
+                  <circle className="map-pin-tip" r="1.4" />
+                </svg>
+                <span>
+                  <span className="pin-key-name">{NEWS_MR.tierTaluka}</span>
+                </span>
+              </li>
+
+              <li className="pin-key-row">
+                <svg className="pin-key-mark" viewBox="-14 -14 28 28" aria-hidden>
+                  <circle className="map-pin-halo" r="13" />
+                  <circle className="map-pin-ring" r="6.4" />
+                  <circle className="map-pin-core" r="2.1" />
+                </svg>
+                <span>
+                  <span className="pin-key-name">{NEWS_MR.tierDistrict}</span>
+                </span>
+              </li>
+            </ul>
+            )}
+
+            {/* The key names the two shapes and stops. The statewide count and
+                the threading timestamp used to be printed under it — the first
+                so statewide stories did not silently vanish between modes, the
+                second because `loadStories` does not widen its window the way
+                `loadNewsMap` widens the choropleth's, so the pin layer can be
+                older than the news underneath it. Two lines of provenance under
+                a two-row key read as the map explaining itself rather than
+                showing anything, and they are gone from the sheet.
+
+                The one case that still needs saying survives below: an empty
+                pin layer whose emptiness is the threading pass being behind,
+                which is otherwise indistinguishable from a quiet fortnight. */}
+            {stories.total === 0 && threaded ? (
+              <p className="pin-key-statewide">{NEWS_MR.storiesBehind}</p>
+            ) : null}
+          </motion.div>
+        ) : null}
+
+        {/* The key to the paint. Printed with its count band rather than as a
+            bare gradient, because the ramp is quantile — the steps mean rank,
+            not amount, and a legend that shows only colour would let a reader
+            infer an absolute scale the map does not have. See `scale.ts`. */}
+        {/* The same ramp under a filter as without one. It used to be replaced
+            by a single flat swatch while a minister was chosen, on the argument
+            that a quantile scale over the ten districts one minister reaches
+            ranks counts of one against counts of two. The band numbers printed
+            beside each step answer that: they are recomputed from the narrowed
+            counts, so a reader who sees `१–२` under a minister can see for
+            themselves how thin the spread is rather than being told a rank
+            exists where it does not. Showing the small numbers beats hiding
+            them behind a tone that says only "somewhere here". */}
+        {mode === "heat" && bands.length > 0 ? (
+          <motion.div
+            className="news-ramp news-plate-fold"
+            variants={RISE}
+            transition={{ duration: 0.7 }}
+          >
+            <p className="news-control-label">{NEWS_MR.intensity}</p>
+
+            <div className="news-ramp-steps">
+              {bands.map((band) => (
+                <div key={band.level} className="news-ramp-step">
+                  <span
+                    className="news-ramp-swatch"
+                    data-level={band.level}
+                    aria-hidden
+                  />
+                  <span className="news-ramp-band">
+                    {band.min === band.max
+                      ? toDevanagari(band.min)
+                      : `${toDevanagari(band.min)}–${toDevanagari(band.max)}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        ) : null}
+      </div>
+    </motion.aside>
+  );
+}

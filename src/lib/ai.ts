@@ -101,3 +101,71 @@ Return only the summary text.`,
   })
   return (res.choices[0]?.message?.content ?? '').trim()
 }
+
+/* --- The public article assistant ----------------------------------------- */
+
+export interface AskTurn {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface AskContext {
+  title: string
+  body: string[]
+  highlights: string[]
+}
+
+const ASK_GROUNDED = `You are the reading assistant on महासंवाद, the public news portal of the Maharashtra Directorate General of Information and Public Relations.
+
+A citizen is reading one government press release and asking about it.
+
+Rules, in order of importance:
+- Answer ONLY from the article given below. If the article does not contain the answer, say so plainly in Marathi and suggest what the reader could look for instead. Never fill a gap with general knowledge about the scheme.
+- Always reply in Marathi (मराठी), regardless of the language of the question.
+- Keep scheme names, designations, figures and dates exactly as the article writes them. Use Devanagari numerals.
+- Be brief: at most 120 words, or a short list of up to four points when the question asks for several things.
+- Plain sentences for citizens. No markdown headings, no bold, no preamble such as "या लेखानुसार" on every sentence.
+- You are not an official channel. Do not promise eligibility, approve applications, or invent helpline numbers, dates or web addresses.`
+
+const ASK_GENERAL = `You are the reading assistant on महासंवाद, the public news portal of the Maharashtra Directorate General of Information and Public Relations.
+
+No specific article is in context. Answer in Marathi, briefly, and tell the reader that selecting an article gives a grounded answer. Do not invent news, figures, scheme details, dates or helpline numbers. At most 80 words.`
+
+/**
+ * One turn of the article chatbot.
+ *
+ * The article is pinned into the system message rather than pasted into the
+ * user's question, so a reader cannot talk the assistant out of its context by
+ * asking it to ignore anything: the grounding and the instruction not to leave
+ * it arrive together, above everything the reader writes.
+ */
+export async function askAboutArticle(
+  question: string,
+  context: AskContext | null,
+  history: AskTurn[] = [],
+): Promise<string> {
+  const system = context
+    ? `${ASK_GROUNDED}
+
+--- लेख ---
+शीर्षक: ${context.title}
+
+महत्त्वाचे मुद्दे:
+${context.highlights.map((h) => `- ${h}`).join('\n')}
+
+मजकूर:
+${context.body.join('\n\n')}
+--- लेख समाप्त ---`
+    : ASK_GENERAL
+
+  const res = await client().chat.completions.create({
+    model: MODEL,
+    messages: [
+      { role: 'system', content: system.slice(0, 24000) },
+      ...history.map((t) => ({ role: t.role, content: t.content.slice(0, 2000) })),
+      { role: 'user', content: question.slice(0, 2000) },
+    ],
+  })
+
+  return (res.choices[0]?.message?.content ?? '').trim()
+}

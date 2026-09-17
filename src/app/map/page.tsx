@@ -1,284 +1,175 @@
-'use client'
+import { NewsMapShell } from '@/components/news-map/news-map-shell'
+import { NewsTicker, type NewsItem } from '@/components/news/news-ticker'
+import { asMinisterFilter } from '@/data/ministers'
+import { resolveDistrict } from '@/lib/districts'
+import { DGIPR_MR } from '@/lib/dgipr/marathi'
+import {
+  buildDgiprMap,
+  buildNewsMap,
+  legendBands,
+  loadCorpus,
+  type Corpus,
+} from '@/lib/dgipr/from-db'
+import { buildMapGeometry } from '@/lib/map/geometry'
+import { districtNameMr, NEWS_MR } from '@/lib/news/marathi'
+import { asWindowId } from '@/lib/news/window'
 
-import { useEffect, useMemo, useState } from 'react'
-import { HeatLegend, VolumeChart, heatColor, type DailyPoint } from '@/components/Viz'
-import { MaharashtraMap } from '@/components/map/MaharashtraMap'
-import { DistrictPanel } from '@/components/map/DistrictPanel'
-import { heatBands } from '@/components/map/geometry'
-import { DISTRICTS, districtName } from '@/lib/districts'
-import { toDevanagariDigits } from '@/lib/marathi'
-import { IconMapPin, PageHeader, StatCard } from '@/components/ui'
-import '@/components/viz.css'
+import '@/styles/tokens.css'
+import '@/styles/base.css'
+import '@/styles/map.css'
+import '@/styles/news-map.css'
+import '@/styles/news.css'
+import '@/styles/panel-modal.css'
+import '@/styles/dgipr.css'
+import '@/styles/share.css'
 
-interface Stats {
-  from: string
-  to: string
-  districts: { district: string; count: number }[]
-  daily: DailyPoint[]
+/**
+ * The map reads the database on every request, so it cannot be prerendered.
+ *
+ * It used to be `revalidate = 3600`, which was the right call for a generated
+ * corpus anchored to the hour: the page was a pure function of the clock and
+ * rebuilding it more often would have produced the same bytes. It is now a
+ * function of what the desk has approved, and a release approved at 10:05
+ * should be on the map at 10:05 — a DLO watching their own release appear is
+ * the first thing anyone checks after approving one.
+ */
+export const dynamic = 'force-dynamic'
+
+export const metadata = {
+  title: 'राज्याचा नकाशा',
+  description:
+    'महाराष्ट्रात काय घडतं आहे, ते नकाशावर — ३६ जिल्ह्यांतील मंजूर शासकीय प्रसिद्धिपत्रके, जिल्ह्यानुसार.',
 }
 
-const RANGES = [
-  { days: 7, label: '७ दिवस' },
-  { days: 30, label: '३० दिवस' },
-  { days: 90, label: '९० दिवस' },
-  { days: 365, label: 'वर्षभर' },
-]
+/** How many headlines the band carries before it starts repeating. */
+const TICKER_LENGTH = 40
 
-function shiftIso(iso: string, days: number) {
-  const [y, m, d] = iso.split('-').map(Number)
-  const dt = new Date(y, m - 1, d + days)
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`
-}
-
-/** The ramp step colours, in the order `map.css` paints them. */
-const BAND_COLORS = [
-  'var(--seq-100)',
-  'var(--seq-200)',
-  'var(--seq-300)',
-  'var(--seq-450)',
-  'var(--seq-600)',
-]
-
-export default function MapPage() {
-  const [days, setDays] = useState(30)
-  const [stats, setStats] = useState<Stats | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [selected, setSelected] = useState<string | null>(null)
-
-  useEffect(() => {
-    setLoading(true)
-    fetch(`/api/stats?days=${days}`)
-      .then((r) => r.json())
-      .then(setStats)
-      .finally(() => setLoading(false))
-  }, [days])
-
-  /** The one thing the map is painted from. Everything else on the page —
-   *  the tiles, the bands, the ranked list — is derived from it too, so the
-   *  map and the table can never disagree about a district. */
-  const counts = useMemo(
-    () => new Map((stats?.districts ?? []).map((d) => [d.district, d.count])),
-    [stats],
-  )
-
-  const rows = useMemo(
-    () =>
-      DISTRICTS.map((d) => ({ key: d.key, name: d.mr, count: counts.get(d.key) ?? 0 }))
-        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'mr')),
-    [counts],
-  )
-
-  /**
-   * A daily series with its quiet days in it.
-   *
-   * The API returns only the days that have news, so a fortnight with four
-   * filing days used to plot as four enormous slabs and read as "roughly four
-   * a day, every day". A day with nothing is data — it is drawn as a day with
-   * nothing.
-   */
-  const daily = useMemo(() => {
-    if (!stats?.from || !stats?.to) return []
-    const have = new Map(stats.daily.map((d) => [d.date, d.count]))
-    const out: DailyPoint[] = []
-    for (let iso = stats.from, guard = 0; guard < 400; iso = shiftIso(iso, 1), guard++) {
-      out.push({ date: iso, count: have.get(iso) ?? 0 })
-      if (iso === stats.to) break
-    }
-    return out
-  }, [stats])
-
-  const bands = useMemo(() => heatBands(counts), [counts])
-  const max = Math.max(...rows.map((r) => r.count), 1)
-  const total = rows.reduce((s, r) => s + r.count, 0)
-  const covered = rows.filter((r) => r.count > 0).length
-  const busiest = rows[0]
-
-  return (
-    <div className="viz-root space-y-6">
-      <PageHeader
-        eyebrow="राज्याचा नकाशा · Coverage"
-        title="जिल्हानिहाय प्रमाण"
-        description="कोणत्या जिल्ह्यातून किती बातम्या आल्या, कालानुरूप. फक्त मंजूर लेख मोजले जातात — डेस्कने जिल्हा तपासल्याशिवाय कोणताही लेख इथे येत नाही."
-        actions={
-          <div className="seg" role="group" aria-label="कालावधी">
-            {RANGES.map((r) => (
-              <button
-                key={r.days}
-                className="seg-item"
-                data-active={days === r.days}
-                onClick={() => setDays(r.days)}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-        }
-      />
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard
-          label="एकूण मंजूर लेख"
-          value={toDevanagariDigits(total)}
-          sub={stats ? `${stats.from} ते ${stats.to}` : '…'}
-          tint="var(--seq-450)"
-        />
-        <StatCard
-          label="जिल्हे समाविष्ट"
-          value={`${toDevanagariDigits(covered)} / ${toDevanagariDigits(rows.length)}`}
-          sub={covered < rows.length ? `${toDevanagariDigits(rows.length - covered)} जिल्ह्यांतून काहीही नाही` : 'सर्व जिल्हे'}
-          tint="var(--ok)"
-        />
-        <StatCard
-          label="सर्वाधिक"
-          value={busiest && busiest.count > 0 ? busiest.name : '—'}
-          sub={busiest && busiest.count > 0 ? `${toDevanagariDigits(busiest.count)} लेख` : 'या कालावधीत काहीही नाही'}
-          tint="var(--accent)"
-        />
-      </div>
-
-      {/* The map, and beside it whatever district the reader has opened. The
-          panel takes a column of its own rather than floating over the state:
-          on this page the map is a figure in a document, not the whole screen,
-          and a sheet covering it would hide the thing it is describing. */}
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
-        <div className="card overflow-hidden p-2">
-          <MaharashtraMap
-            counts={counts}
-            selected={selected}
-            onSelect={setSelected}
-            pending={loading}
-          />
-          <div
-            className="mt-1 flex flex-wrap items-center justify-between gap-3 border-t px-3 py-2.5"
-            style={{ borderColor: 'var(--edge)' }}
-          >
-            <h2 className="text-sm font-semibold">जिल्हानिहाय उष्णता</h2>
-            <BandLegend bands={bands} />
-          </div>
-        </div>
-
-        {selected ? (
-          <DistrictPanel
-            districtId={selected}
-            name={districtName(selected)}
-            count={counts.get(selected) ?? 0}
-            from={stats?.from ?? ''}
-            to={stats?.to ?? ''}
-            onClose={() => setSelected(null)}
-          />
-        ) : (
-          <aside className="card self-start p-5">
-            <span
-              className="flex h-9 w-9 items-center justify-center rounded-[10px]"
-              style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
-            >
-              <IconMapPin size={18} />
-            </span>
-            <h3 className="mt-3.5 text-sm font-semibold">जिल्हा निवडा</h3>
-            <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
-              नकाशावरील कोणत्याही जिल्ह्यावर क्लिक करा — त्या कालावधीतील त्या जिल्ह्याचे मंजूर लेख इथे दिसतील.
-            </p>
-            <ul className="mt-4 list-disc space-y-1.5 pl-4 text-xs marker:text-[color:var(--edge-strong)]" style={{ color: 'var(--faint)' }}>
-              <li>स्क्रोलने झूम करा</li>
-              <li>ड्रॅगने नकाशा सरकवा</li>
-              <li>खालच्या क्रमवारीतून थेट जिल्हा उघडा</li>
-            </ul>
-          </aside>
-        )}
-      </section>
-
-      <section className="card p-5">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold">दैनंदिन प्रमाण</h2>
-          <span className="num text-xs" style={{ color: 'var(--faint)' }}>
-            {stats?.from} — {stats?.to}
-          </span>
-        </div>
-        <div className="mt-4">
-          {loading ? (
-            <div className="flex h-[120px] items-end gap-[2px]">
-              {Array.from({ length: 30 }).map((_, i) => (
-                <div key={i} className="skeleton grow" style={{ height: `${25 + ((i * 37) % 70)}%` }} />
-              ))}
-            </div>
-          ) : (
-            <VolumeChart data={daily} />
-          )}
-        </div>
-      </section>
-
-      {/* The same numbers as a ranked list. The map answers "where", this
-          answers "in what order" — a question a choropleth is genuinely bad
-          at, because two adjacent steps of a ramp cannot be ranked by eye. */}
-      <section className="card p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold">क्रमवारी</h2>
-          <HeatLegend max={max} />
-        </div>
-
-        <div className="mt-4 grid gap-x-8 gap-y-0.5 md:grid-cols-2">
-          {rows.map((r) => (
-            <button
-              key={r.key}
-              type="button"
-              onClick={() => setSelected(r.key === selected ? null : r.key)}
-              className="group flex items-center gap-3 rounded-[var(--r-sm)] px-1.5 py-1.5 text-left transition-colors"
-              style={
-                r.key === selected
-                  ? { background: 'var(--accent-soft)' }
-                  : undefined
-              }
-              title={`${r.name} — ${r.count} लेख`}
-            >
-              <span className="w-28 shrink-0 truncate text-[0.8125rem] group-hover:underline">{r.name}</span>
-              <span className="h-2.5 grow rounded-full" style={{ background: 'var(--empty)' }}>
-                <span
-                  className="block h-2.5 rounded-full transition-[width]"
-                  style={{ width: `${Math.max(2, (r.count / max) * 100)}%`, background: heatColor(r.count, max) }}
-                />
-              </span>
-              <span
-                className="num w-7 shrink-0 text-right text-[0.8125rem]"
-                style={{ color: r.count ? 'var(--text-secondary)' : 'var(--faint)' }}
-              >
-                {toDevanagariDigits(r.count)}
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
-    </div>
-  )
+type MapPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
 /**
- * The key to the map's five steps, as the count range each one stands for.
+ * The state as a sheet you can read.
  *
- * A continuous gradient bar would be a lie about this ramp: the steps are
- * quantiles over the districts that have any news at all, so what a colour
- * means is a range of counts, and the range is what the reader needs to read
- * the sheet. Nothing is drawn for a window with no news in it.
+ * Three things are decided here and only here.
+ *
+ * **The geometry.** The 36 districts are projected once, on the server, and
+ * the client is handed plain SVG path strings — it never loads d3-geo or the
+ * 440 kB of source GeoJSON. See `lib/map/geometry.ts`; the result is memoised
+ * per process, so this costs nothing after the first request.
+ *
+ * **The corpus.** Every mark, every shade and every card on this page is a row
+ * in `articles` with `status = 'approved'` — the same rows the fold, the DOCX
+ * builder and `/news` are built on. The page used to run on
+ * `lib/news/sample.ts`, a seeded generator of newspaper headlines, and the
+ * reason that had to go is not polish: the map's claim is that a mark on a
+ * district is a government release from that district, and a generated
+ * headline under that claim is a fabricated government notice. See
+ * `lib/dgipr/from-db.ts`.
+ *
+ * **The reading.** Which window and which minister, parsed from the URL rather
+ * than held in the browser, because they decide which rows exist and the rows
+ * are in Postgres. `NewsMapShell` writes them back; see the note there.
  */
-function BandLegend({ bands }: { bands: { level: number; min: number; max: number }[] }) {
-  if (!bands.length) return null
+export default async function MapPage({ searchParams }: MapPageProps) {
+  const query = await searchParams
+  const requested = asWindowId(one(query.window))
+  const minister = asMinisterFilter(one(query.minister))
+
+  /* `?district=` — how `/news` and a release page send a reader back here.
+     Resolved rather than trusted: the parameter is written by this app from a
+     canonical key, but it also arrives in forwarded links, and a district the
+     geometry has never heard of should open nothing rather than open a panel
+     about a place that is not on the map. */
+  const district = resolveDistrict(one(query.district))
+
+  /* One instant for the whole render. Both layers walk outward from it, and
+     reading the clock twice would let the choropleth and the marks disagree
+     about which side of a window boundary the same release falls on. */
+  const now = Date.now()
+
+  const [geometry, corpus] = await Promise.all([buildMapGeometry(), loadCorpus()])
+
+  /* The district is handed to both builders, not just to the panel. It widens
+     the window until the place it names is actually on the sheet — see
+     `enoughToShow`. Without that, a reader following "नकाशावर पहा" out of a
+     five-day-old Nagpur release lands on a 24-hour map with Nagpur greyed out,
+     which answers a question they did not ask. */
+  const map = buildNewsMap(corpus, requested, minister, now, district)
+  const dgipr = buildDgiprMap(corpus, requested, now, district)
 
   return (
-    <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-      {bands.map((band) => (
-        <span key={band.level} className="flex items-center gap-1.5">
-          <span
-            className="block h-2.5 w-5 rounded-[2px]"
-            style={{ background: BAND_COLORS[band.level - 1] }}
-          />
-          <span className="num">
-            {band.min === band.max
-              ? toDevanagariDigits(band.min)
-              : `${toDevanagariDigits(band.min)}–${toDevanagariDigits(band.max)}`}
-          </span>
-        </span>
-      ))}
-      <span>लेख</span>
-    </div>
+    <main className="newsmap newsmap-page map-page">
+      {/* The band carries the way off the map on its right end. The strip
+          above it — a badge, the directorate's name, the page title and a
+          tally the plate beside the map already prints — was a second header
+          under the masthead, and on a page whose whole subject is a shape that
+          has to be looked at, the one thing a header row costs is the height
+          of the state. The band was already crossing the top of the page; the
+          link rides it instead of paying for a row of its own. */}
+      <NewsTicker
+        items={tickerItems(corpus)}
+        action={{ href: '/news', label: NEWS_MR.allNewsList }}
+      />
+
+      <div className="map-stage">
+        <NewsMapShell
+          geometry={geometry}
+          map={map}
+          dgipr={dgipr}
+          bands={legendBands(map)}
+          window={requested}
+          minister={minister}
+          initialDistrictId={district}
+        />
+      </div>
+    </main>
   )
+}
+
+/** One value out of a query parameter that may arrive repeated. */
+function one(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value
+}
+
+/**
+ * The band's lines: the newest release from each district, then the rest.
+ *
+ * One per district first, so a dozen Mumbai releases cannot take the strip over
+ * and leave the reader watching a Mumbai ticker on a Maharashtra map. After
+ * every district has had its say the remainder fills the band newest first,
+ * which is what keeps it looking like a wire feed rather than a round-robin.
+ *
+ * Every line points at the release's own page on this site. It used to point
+ * out to whichever newspaper filed the piece, because the corpus was scraped
+ * and a link was all this app was entitled to show; these are the department's
+ * own notices and this app holds them, so the link goes where the reader can
+ * actually read one.
+ */
+function tickerItems(corpus: Corpus): NewsItem[] {
+  const seen = new Set<string>()
+  const firsts: typeof corpus.rows = []
+  const rest: typeof corpus.rows = []
+
+  // `loadCorpus` already returns newest first.
+  for (const row of corpus.rows) {
+    const key = row.release.districtId ?? 'state'
+
+    if (seen.has(key)) {
+      rest.push(row)
+      continue
+    }
+
+    seen.add(key)
+    firsts.push(row)
+  }
+
+  return [...firsts, ...rest].slice(0, TICKER_LENGTH).map(({ release }) => ({
+    id: release.id,
+    headline: release.titleMr,
+    place: release.districtId
+      ? districtNameMr(release.districtId)
+      : DGIPR_MR.statewide,
+    url: release.readerUrl ?? `/news/${release.id}`,
+  }))
 }

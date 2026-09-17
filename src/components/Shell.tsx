@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { foldDateMr, todayIso, WEEKDAYS_MR } from '@/lib/marathi'
-import { IconInbox, IconLayers, IconMapPin, IconPen, IconShare } from '@/components/ui'
+import { IconBookOpen, IconInbox, IconLayers, IconMapPin, IconPen, IconShare } from '@/components/ui'
 
 /**
  * The masthead.
@@ -26,11 +26,26 @@ const NAV = [
   { href: '/desk', label: 'वृत्त विभाग', Icon: IconInbox },
   { href: '/fold', label: 'आजचा फोल्ड', Icon: IconLayers },
   { href: '/share', label: 'शेअर करा', Icon: IconShare },
+  { href: '/news', label: 'News', Icon: IconBookOpen },
   { href: '/map', label: 'नकाशा', Icon: IconMapPin },
 ]
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+
+  /**
+   * The map is not a page in the column; it is a surface.
+   *
+   * Every other route is a document — a queue, a fold, an article — and the
+   * shell is right to set it in a centred column with air around it and a
+   * credit line under it. The map is a shape that has to be looked at, and it
+   * sizes itself to whatever is left of the viewport under the masthead. So on
+   * this one route `<main>` gives up its column and its padding, and the
+   * footer does not print: a credit line below a full-height surface is not a
+   * footer, it is a second scroll position the reader has to discover, and the
+   * department's name is already on the masthead above it.
+   */
+  const bare = pathname === '/map' || pathname.startsWith('/map/')
 
   return (
     <>
@@ -94,17 +109,27 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-shell grow px-4 py-8 sm:px-6 sm:py-10">{children}</main>
+      <main
+        className={
+          bare
+            ? 'w-full max-w-none grow overflow-hidden p-0'
+            : 'mx-auto w-full max-w-shell grow px-4 py-8 sm:px-6 sm:py-10'
+        }
+      >
+        {children}
+      </main>
 
-      <footer className="mt-16 border-t" style={{ borderColor: 'var(--edge)' }}>
-        <div
-          className="mx-auto flex max-w-shell flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs sm:px-6"
-          style={{ color: 'var(--faint)' }}
-        >
-          <span>महासंवाद · माहिती व जनसंपर्क महासंचालनालय, महाराष्ट्र शासन</span>
-          <span>वृत्त संकलन, तपासणी, फोल्ड निर्मिती आणि वितरण</span>
-        </div>
-      </footer>
+      {bare ? null : (
+        <footer className="mt-16 border-t" style={{ borderColor: 'var(--edge)' }}>
+          <div
+            className="mx-auto flex max-w-shell flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs sm:px-6"
+            style={{ color: 'var(--faint)' }}
+          >
+            <span>महासंवाद · माहिती व जनसंपर्क महासंचालनालय, महाराष्ट्र शासन</span>
+            <span>वृत्त संकलन, तपासणी, फोल्ड निर्मिती आणि वितरण</span>
+          </div>
+        </footer>
+      )}
     </>
   )
 }

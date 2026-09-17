@@ -1,0 +1,169 @@
+/* The map's base layer.
+
+   Upstream this file is two Tailwind v4 `@layer` blocks that set the whole
+   product's `body`, its focus ring and its scrollbars. This app has a body of
+   its own — a newsprint cream with an institutional maroon accent — and the
+   map is one route inside it, so none of that may be set globally.
+
+   Everything below is therefore scoped to `.newsmap` and to the two portals
+   that escape it. The rules are otherwise the ones upstream ships: the map's
+   typography, its violet focus treatment and its hairline scrollbars stop at
+   the frame's edge and the rest of the product keeps its own. */
+
+.newsmap {
+  color-scheme: light;
+  -webkit-tap-highlight-color: transparent;
+  background-color: var(--color-canvas);
+  color: var(--color-text);
+  font-family: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  font-size: var(--text-body);
+  line-height: 1.65;
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+}
+
+.panel-modal-layer,
+.share-preview-layer {
+  color: var(--color-text);
+  font-family: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  font-size: var(--text-body);
+  line-height: 1.65;
+  font-synthesis-weight: none;
+}
+
+/* Devanagari copy opts in via lang="mr", which nearly everything on this map
+   carries. Anek needed a 1.02em bump to hold its own next to Manrope; Poppins
+   does not — its Devanagari is set on the same generous body as its Latin, and
+   the bump made Marathi the loud half of every bilingual pair. */
+.newsmap :lang(mr),
+.panel-modal-layer:lang(mr),
+.panel-modal-layer :lang(mr),
+.share-preview-layer:lang(mr),
+.share-preview-layer :lang(mr) {
+  font-family: var(--font-poppins), sans-serif;
+}
+
+/* The map's own focus treatment. The ring is violet on a lavender ground, so
+   it needs the halo behind it to separate the two — a bare 2px violet line on
+   a violet-tinted page is a ring you have to look for. */
+.newsmap :focus-visible,
+.panel-modal-layer :focus-visible,
+.share-preview-layer :focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-xs);
+  box-shadow: 0 0 0 6px var(--color-accent-wash);
+}
+
+.newsmap ::selection,
+.panel-modal-layer ::selection,
+.share-preview-layer ::selection {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-deep);
+}
+
+/* The panel is the only scroller on this map; give it a hairline rather than
+   the platform's slab. */
+.newsmap *,
+.panel-modal-layer *,
+.share-preview-layer * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-slate-300) transparent;
+}
+
+.newsmap ::-webkit-scrollbar,
+.panel-modal-layer ::-webkit-scrollbar,
+.share-preview-layer ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.newsmap ::-webkit-scrollbar-thumb,
+.panel-modal-layer ::-webkit-scrollbar-thumb,
+.share-preview-layer ::-webkit-scrollbar-thumb {
+  background-color: var(--color-slate-300);
+  border-radius: 999px;
+}
+
+.newsmap ::-webkit-scrollbar-track,
+.panel-modal-layer ::-webkit-scrollbar-track,
+.share-preview-layer ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Tabular numerals for every count, stat and date on the map. A plain class
+   rather than a Tailwind utility: upstream it is generated from the theme, and
+   this app's Tailwind build knows nothing about that theme. */
+.newsmap .numeric,
+.panel-modal-layer .numeric,
+.share-preview-layer .numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* The house eyebrow: caps, tracked, and in the UI sans rather than the mono it
+   used to be set in. A monospaced label is a document's voice, and the
+   tracking alone is enough to say "this is a label, not a sentence". */
+.newsmap .eyebrow,
+.panel-modal-layer .eyebrow,
+.share-preview-layer .eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--text-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.newsmap .rule,
+.panel-modal-layer .rule {
+  height: 1px;
+  border: 0;
+  background: var(--gradient-rule);
+}
+
+.newsmap .text-press {
+  background: var(--gradient-press);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .newsmap *,
+  .newsmap *::before,
+  .newsmap *::after,
+  .panel-modal-layer *,
+  .share-preview-layer * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- The page itself ------------------------------------------------------
+
+   Upstream the map owns the whole document: `.map-page` is `100dvh` and there
+   is nothing above or below it. Here it is one route inside a shell with a
+   sticky masthead and a footer.
+
+   This used to be a breakout: `width: 100vw` with `margin-inline: calc(50% -
+   50vw)` and negative block margins, to escape a centred `<main>` with `px-4
+   py-8` on it. It escaped, and it also put a horizontal scrollbar on every
+   desktop window in the product — `100vw` is the viewport *including* the
+   vertical scrollbar, so the page was reliably a dozen pixels wider than the
+   space it had, and the whole document could be dragged sideways.
+
+   The shell no longer needs escaping: `<main>` drops its column and its padding
+   on `/map` — see the `bare` branch in `Shell.tsx` — so this is a plain block
+   filling its parent, bounded in both axes.
+   ------------------------------------------------------------------------ */
+
+.newsmap-page {
+  width: 100%;
+  max-width: 100%;
+  margin-inline: 0;
+  margin-block: 0;
+  overflow-x: hidden;
+}

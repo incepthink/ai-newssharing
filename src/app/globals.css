@@ -598,4 +598,332 @@ body {
   }
 
   .hairline { height: 1px; background: var(--edge); border: 0; }
+
+  /* --- Overlays: the reader, the share sheet, the AI drawer ----------------
+     Three surfaces float above the page on the public articles screen, and
+     they share one scrim so that opening a second over a first does not stack
+     two different greys. The panels differ only in where they come from.
+     ---------------------------------------------------------------------- */
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    background: rgb(25 23 20 / 0.34);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    animation: fade-scrim var(--t-base) both;
+  }
+
+  @keyframes fade-scrim {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* A panel in the middle of the screen — the reader and the share sheet.
+     On a phone it is a bottom sheet instead: a centred dialog with a thumb
+     reaching for its close button is a desktop idea. */
+  .sheet {
+    background: var(--surface);
+    border: 1px solid var(--edge);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: auto;
+    max-height: 92vh;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    animation: sheet-up var(--t-base) both;
+  }
+
+  @media (min-width: 640px) {
+    .sheet {
+      margin: auto;
+      max-height: 86vh;
+      border-radius: var(--r-xl);
+      animation: fade-in var(--t-base) both;
+    }
+  }
+
+  @keyframes sheet-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* The AI assistant — a rail on the right at desk width, a sheet from the
+     bottom on a phone, so the composer stays above the thumb either way. */
+  .drawer {
+    background: var(--surface);
+    border: 1px solid var(--edge);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: auto;
+    height: 88vh;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    animation: sheet-up var(--t-base) both;
+  }
+
+  @media (min-width: 768px) {
+    .drawer {
+      margin: 0 0 0 auto;
+      height: 100%;
+      width: 26.5rem;
+      border-radius: 0;
+      border-right: 0;
+      animation: drawer-in var(--t-base) both;
+    }
+  }
+
+  @keyframes drawer-in {
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* --- Reading -------------------------------------------------------------
+     Article text set for reading rather than for scanning: the serif the fold
+     uses for headlines, a long line height, and a measure that stops well
+     short of the panel's width.
+     ---------------------------------------------------------------------- */
+
+  .prose-mr p {
+    font-size: 1rem;
+    line-height: 1.95;
+    color: var(--text-secondary);
+  }
+  .prose-mr p + p { margin-top: 1.1rem; }
+  .prose-mr p:first-child::first-letter { font-weight: 600; }
+
+  /* --- Chat ---------------------------------------------------------------- */
+
+  .bubble {
+    max-width: 88%;
+    padding: 0.5625rem 0.75rem;
+    border-radius: var(--r-lg);
+    font-size: 0.8125rem;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .bubble-user {
+    margin-left: auto;
+    background: var(--accent);
+    color: #fff;
+    border-bottom-right-radius: var(--r-xs);
+  }
+  .bubble-ai {
+    margin-right: auto;
+    background: var(--surface-sunk);
+    color: var(--text-primary);
+    border-bottom-left-radius: var(--r-xs);
+  }
+  .bubble-error {
+    margin-right: auto;
+    background: var(--warn-soft);
+    border: 1px solid var(--warn-edge);
+    color: #6e4409;
+  }
+
+  /* Three dots while the model is thinking. A spinner would claim the whole
+     panel; this claims one bubble. */
+  .typing {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+    height: 1.1rem;
+  }
+  .typing span {
+    width: 0.3125rem;
+    height: 0.3125rem;
+    border-radius: 999px;
+    background: var(--faint);
+    animation: typing 1.1s ease-in-out infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.15s; }
+  .typing span:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes typing {
+    0%, 60%, 100% { opacity: 0.28; transform: translateY(0); }
+    30%           { opacity: 1;    transform: translateY(-2px); }
+  }
+
+  /* --- Quick prompts and dismissible filters -------------------------------- */
+
+  /* A one-tap suggestion. Reads as a thing to press, not as a label. */
+  .chip-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3125rem;
+    border: 1px solid var(--edge-strong);
+    background: var(--surface);
+    color: var(--text-secondary);
+    border-radius: 999px;
+    padding: 0.3125rem 0.6875rem;
+    font-family: inherit;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    text-align: start;
+    cursor: pointer;
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+  }
+  .chip-action:hover:not(:disabled) {
+    background: var(--accent-soft);
+    border-color: var(--accent-edge);
+    color: var(--accent);
+  }
+  .chip-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* An active filter, with its own dismiss. The × is a real button inside the
+     pill rather than the pill itself, so "remove this filter" and "this filter
+     is on" are not the same target. */
+  .chip-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border: 1px solid var(--accent-edge);
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 0.1875rem 0.3125rem 0.1875rem 0.625rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.55;
+    white-space: nowrap;
+  }
+  .chip-filter button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 999px;
+    color: inherit;
+    opacity: 0.65;
+    cursor: pointer;
+    transition: opacity var(--t-fast), background var(--t-fast);
+  }
+  .chip-filter button:hover { opacity: 1; background: rgb(140 47 31 / 0.12); }
+
+  /* --- The article page ----------------------------------------------------
+     `/news/[id]` is the only screen in the product set for continuous reading
+     rather than for scanning, so it gets its own small vocabulary: a trail
+     back to the list, a headline at display size, a summary that reads as a
+     card rather than as a paragraph, and a quote pulled out of the column.
+     ---------------------------------------------------------------------- */
+
+  .crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .crumbs a {
+    color: var(--muted);
+    text-decoration: none;
+    transition: color var(--t-fast);
+  }
+  .crumbs a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  /* The last crumb is the page you are on: it is named, not offered. */
+  .crumbs [aria-current='page'] {
+    color: var(--text-primary);
+    font-weight: 500;
+    /* A headline is too long to sit in a trail whole — and on a phone the
+       trail itself is narrower than the cap, so the cap yields to the row. */
+    max-width: min(22rem, 100%);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .article-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.28;
+    font-size: 1.75rem;
+  }
+  @media (min-width: 640px) { .article-title { font-size: 2.125rem; } }
+  @media (min-width: 1024px) { .article-title { font-size: 2.375rem; } }
+
+  .article-subtitle {
+    font-size: 1rem;
+    line-height: 1.7;
+    font-weight: 400;
+    color: var(--muted);
+  }
+  @media (min-width: 640px) { .article-subtitle { font-size: 1.0625rem; } }
+
+  /* The hero. `aspect-ratio` rather than a fixed height so the plate and a
+     real photograph occupy exactly the same space and the page does not shift
+     when one replaces the other. */
+  .hero-frame {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--r-xl);
+    border: 1px solid var(--edge);
+    background: var(--surface-sunk);
+    aspect-ratio: 16 / 9;
+  }
+  @media (max-width: 639px) { .hero-frame { aspect-ratio: 4 / 3; } }
+
+  /* What stands in for a photograph until there is one. Deliberately
+     typographic and clearly not a picture of anything — a stock image would
+     imply a scene that never happened. */
+  .hero-plate {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    padding: 1.25rem;
+    background:
+      radial-gradient(120% 120% at 82% 12%, rgb(140 47 31 / 0.16) 0%, transparent 58%),
+      linear-gradient(140deg, #1f1b18 0%, #3a2b25 52%, #58332a 100%);
+    color: #f6f5f2;
+  }
+  @media (min-width: 640px) { .hero-plate { padding: 1.75rem; } }
+
+  /* The summary callout. Accent-edged so it reads as the editor speaking
+     rather than as another paragraph of the release. */
+  .summary-card {
+    border: 1px solid var(--accent-edge);
+    background: var(--accent-soft);
+    border-radius: var(--r-lg);
+    padding: 1rem 1.125rem;
+  }
+  .summary-card p {
+    font-size: 0.9375rem;
+    line-height: 1.85;
+    color: var(--text-secondary);
+  }
+
+  /* A line lifted out of the column. The rule is on the inline start edge so
+     it sits correctly whatever the writing direction. */
+  .pull-quote {
+    margin: 1.75rem 0;
+    border-inline-start: 3px solid var(--accent);
+    padding: 0.25rem 0 0.25rem 1.125rem;
+  }
+  .pull-quote p {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+  @media (min-width: 640px) { .pull-quote p { font-size: 1.25rem; } }
+  .pull-quote footer {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+  }
+
+  /* The body on this page is read at arm's length on a phone as often as on a
+     desk, so it runs a touch larger than the panel version. */
+  .prose-article p { font-size: 1.0625rem; }
 }

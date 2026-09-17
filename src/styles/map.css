@@ -1,0 +1,1242 @@
+/* ============================================================================
+   The map surface.
+
+   The composition is one object floating on a wash: a soft lavender page, and
+   the state on top of it as an almost-white plate with a diffuse shadow under
+   it. There is no sheet and no frame any more — the page IS the ground, the
+   land IS the object, and what separates them is value and elevation rather
+   than a border. Every panel on top follows the same rule: white, borderless,
+   rounded, lifted.
+
+   Inside, the paint order is unchanged: the land under one faint gradient, the
+   district hairlines, the coastline, the pins. What changed is that the land
+   is now the quietest surface on screen instead of the only coloured one, so
+   the pins standing on it are the only saturation a reader has to resolve.
+
+   Three layers left this file and are worth knowing about before any of them
+   is reintroduced:
+
+     - **The offset plate.** A green copy of the silhouette shifted by
+       `--plate-offset-*`, sitting behind the sheet as the depth model. Against
+       a coastline as ragged as the Konkan it did not read as registration; it
+       read as a green fringe welded to the south-east and a detached sliver
+       north of Nandurbar. Offset registration is now used only on rectangles,
+       where it works.
+     - **Taluka hairlines.** 356 sub-district borders. The pilot covers one
+       district; the other 35 paid for line work nobody could read, and en
+       masse it crazed the state like old glaze.
+     - **The records hatch.** It turned Amravati into a dark blob at exactly
+       the spot seven pins need to be legible. See `DistrictPath`.
+   ========================================================================= */
+
+.map-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* Upstream this is a bare `100dvh`, because upstream the map is the whole
+     document. Here a sticky masthead sits above it and keeps its 3.5rem
+     whatever the map does, so the map takes what is left rather than the whole
+     viewport and pushing its own bottom edge under the fold. */
+  height: calc(100dvh - var(--newsmap-chrome, 3.5rem));
+  /* Bounded in both axes, not just clipped vertically. Everything inside this
+     page is sized off the viewport — the band's track is `max-content` and two
+     copies wide, the rail floats, the camera translates the state — and any one
+     of them reaching past the right edge puts a scrollbar on the *document*,
+     which then scrolls the masthead sideways off a page whose whole content is
+     a shape that is already fully visible. */
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
+  /* The ground. One lavender wash on a long diagonal. */
+  background-color: var(--color-canvas);
+  background-image: var(--gradient-canvas);
+}
+
+/* What is left of the viewport once the news band has taken its strip off the
+   top. The sheet is positioned against this rather than against the page, so
+   the band pushes the map down instead of covering it — a strip laid over the
+   top of the state would have hidden Nandurbar and Dhule behind chrome, which
+   is exactly the trade a fixed overlay makes and never admits to. */
+.map-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  /* See `.map-page`. The frame inside is `position: absolute; inset: 0` and
+     clips its own contents, but the stage is what stands between the frame's
+     overlays and the document. */
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
+}
+
+/* The page's grain used to be here: a multiplied noise tile at 7%, so a flat
+   block of poster colour did not read as a screenshot of a colour picker. A
+   three-stop lavender wash has its own gradation and does not need it, and
+   multiplied noise over a pale ground is the one thing that reliably makes a
+   light interface look dirty rather than textured. */
+
+/* The sheet. Everything interactive lives inside it.
+
+   It used to be an opaque cream sheet covering the page's colour bands edge to
+   edge — the surface the state was printed on. It is transparent now, and that
+   is the single change the whole retheme turns on: with no sheet under it, the
+   land is a shape floating directly on the lavender ground, lifted by its own
+   contact shadow. A near-white state on a pale sheet would have been one flat
+   field with a hairline in it; a near-white state on lavender is an object.
+
+   So this element carries no paint at all. It exists for the clipping, the
+   stacking context, and to take the pointer. */
+.map-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  isolation: isolate;
+  background-color: transparent;
+  /* The camera owns every gesture inside the frame. */
+  touch-action: none;
+}
+
+/* --- Inside the sheet ----------------------------------------------------- */
+
+/* Drafting paper. Two rules at two scales, the coarser one twice the weight —
+   the same convention a survey sheet uses for its minor and major grid. */
+.map-sheet-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(to right, rgb(90 72 214 / 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(90 72 214 / 0.055) 1px, transparent 1px),
+    linear-gradient(to right, rgb(90 72 214 / 0.028) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(90 72 214 / 0.028) 1px, transparent 1px);
+  background-size:
+    132px 132px,
+    132px 132px,
+    22px 22px,
+    22px 22px;
+}
+
+/* The sheet's own grain, retired with the page's for the same reason. The
+   element is kept — the frame still renders it — so the layer is there if a
+   texture is ever wanted back, but it paints nothing. */
+.map-tooth {
+  display: none;
+}
+
+/* --- The surface --------------------------------------------------------- */
+
+/* No grab hand. The camera still pans on drag, but a hand cursor sitting under
+   the pointer across the entire screen made the whole page look like something
+   you were meant to be dragging, and turned the map into a toy. The pins are
+   the only things here that claim to be clickable, and they are the only
+   things that change the cursor. */
+.map-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  height: 100%;
+  width: 100%;
+  cursor: default;
+}
+
+/* The one exception to "no grab hand": while a drag is actually happening the
+   pointer says so. A resting hand cursor turns the whole page into something
+   you are meant to be dragging; a hand that only appears mid-drag is feedback,
+   and steering a zoomed-in view without it is guesswork. */
+.map-frame[data-panning] .map-surface,
+.map-frame[data-panning] .map-district,
+.map-frame[data-panning] .signal-marker,
+.map-frame[data-panning] .cluster-marker {
+  cursor: grabbing;
+}
+
+/* `transform-box` is set inline by the component; motion overwrites whatever is
+   declared here. The pivot stays at the view-box centre, which is what the
+   camera maths in `use-map-camera.ts` is written around. */
+.map-camera {
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+/* --- The sheet ----------------------------------------------------------- */
+
+/* The fill is the `#map-land-fill` gradient, set as an attribute in
+   `MapCanvas` — a `fill` declaration here would win over it. */
+.map-sheet {
+  pointer-events: none;
+}
+
+/* --- Line work ----------------------------------------------------------- */
+
+/* Borders and hit areas. There is no fill, no hover fill and no selected state
+   by design — see `DistrictPath`. The transparent fill is load-bearing:
+   `fill: none` would not hit-test, and the sheet needs the pointer events. */
+.map-district {
+  fill: transparent;
+  stroke: var(--color-line-district);
+  stroke-width: 0.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: all;
+  /* The land used to do nothing when clicked and the cursor said so. It picks
+     itself out now — records or no records — so the pointer says that instead. */
+  cursor: pointer;
+  animation: district-arrive 820ms var(--ease-out-soft) backwards;
+}
+
+/* The district the open record stands in.
+
+   Its own layer above the hairlines rather than a state on `.map-district`,
+   because the shapes are painted largest-first so small districts stay
+   hoverable — as a state, a lit Mumbai City would have Thane's border drawn
+   over the top of it. See `MapCanvas`.
+
+   Full ink at coastline weight: the one moment an internal border is allowed
+   to be as strong as the state's edge, because it is briefly answering the
+   same question. The wash under it is barely there on purpose — the pins
+   standing on that district are what the reader clicked, and a real tint
+   behind them buries them. */
+.map-district-lit {
+  fill: var(--color-district-lit);
+  stroke: var(--color-line-district-lit);
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+  animation: district-lit 240ms var(--ease-out-soft);
+}
+
+@keyframes district-lit {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* The state's outer line, heaviest on the sheet — though "heaviest" here is a
+   hairline and a half, and slate rather than black. The silhouette is already
+   carried by the change from lavender ground to near-white land; the line only
+   has to keep that edge crisp. A black coast around a white state on a pale
+   page reads as a sticker cut out and laid down, which is the one thing a map
+   must not look like. */
+.map-coast {
+  fill: none;
+  stroke: var(--color-coast);
+  /* The state's own edge, and the only line on the sheet that has to be read
+     from across the room. It carries the silhouette against the lavender
+     ground, so it is drawn heavier than the hairlines it closes — see
+     `--color-coast` for the value that goes with this weight. */
+  stroke-width: 1.35;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+@keyframes district-arrive {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* --- The plate that follows the pointer ---------------------------------- */
+
+.map-readout {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 14;
+  pointer-events: none;
+}
+
+.map-readout-card {
+  /* `transform` holds the anchor offset; `translate` is free to animate. */
+  transform: translate(-50%, calc(-100% - 22px));
+  translate: 0 6px;
+  opacity: 0;
+  max-width: 20rem;
+  padding: 0.5rem 0.85rem 0.55rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  transition:
+    opacity 140ms var(--ease-out-soft),
+    translate 240ms var(--ease-spring);
+}
+
+.map-readout[data-visible] .map-readout-card {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* Near the top of the frame the plate hangs below the pointer instead, and
+   rises into place from above rather than from below. */
+.map-readout[data-below] .map-readout-card {
+  transform: translate(-50%, 24px);
+  translate: 0 -6px;
+}
+
+.map-readout[data-below][data-visible] .map-readout-card {
+  translate: 0 0;
+}
+
+/* A district: one word, set in the Marathi display face. */
+.district-readout-card {
+  padding: 0.35rem 0.9rem 0.4rem;
+}
+
+.district-readout-name {
+  font-family: var(--font-marathi);
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+/* --- The left rail ------------------------------------------------------- */
+
+/* Three plates in a column: the legend, under it the one thing on this screen
+   that asks the reader for something, and under that the way into the
+   statewide view. They share a rail rather than being positioned independently
+   because the legend's height is the data's — sectors with nothing in them are
+   not drawn — so anything pinned below it by a fixed offset would drift the
+   moment the map covered a ninth sector.
+
+   Inert to the pointer as a whole; the only things in here that take a click
+   are the lead plate's button and the statewide badge, both of which say so
+   themselves.
+
+   On a phone the rail spans the frame instead of hugging the top, and the
+   bottom two plates ride the bottom edge — see the narrow-screen block. */
+.map-rail {
+  position: absolute;
+  z-index: 12;
+  top: clamp(0.85rem, 2.2vh, 1.5rem);
+  left: clamp(0.85rem, 1.8vw, 1.5rem);
+  display: flex;
+  /* Wider than it was. The plate stopped being a caption with a key under it
+     the moment the sectors became chips: at 18.5rem the ten sector pills wrapped
+     into six ragged rows and the card read as a list of loose words. */
+  width: clamp(16.5rem, 23vw, 21.5rem);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.7rem;
+  pointer-events: none;
+}
+
+/* The bottom of the rail: the invitation and the statewide badge, kept as one
+   group so that the pair can be lifted to the bottom edge on a phone without
+   the legend coming with them. A column on a desktop, a row on a phone. */
+.map-rail-dock {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.7rem;
+}
+
+/* --- Brand plate --------------------------------------------------------- */
+
+.brand-plate {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+/* The plate opened with a wordmark on a violet block — "महाराष्ट्र घडतो आहे",
+   set in the Marathi face at display size, the one large area of saturated
+   colour in the card and therefore the first thing read on it.
+
+   `.brand-head`, `.brand-title` and `.brand-title-verb` are gone with it. The
+   card is an instrument: the window, the cabinet ranks, the source and the key
+   to the paint. A slogan above those was the loudest thing on a panel whose job
+   is to be read quickly and looked past, and on a phone it was a block of
+   colour standing between the reader and the controls they had opened it for.
+   The body is the whole card now, and the fold toggle that used to ride the
+   block has a strip of its own in `news-map.css`. */
+.brand-body {
+  padding: 0.9rem 1.2rem 1rem;
+}
+
+/* "In the last 48 hours, nine things moved Maharashtra forward." The line the
+   plate is really for: the tally under it says how much is pinned, which is an
+   editorial number, and this says how much the state did. Set in the Marathi
+   display face at reading size — it is a sentence, not a caption, and it is
+   the first thing under the wordmark. */
+.brand-pulse {
+  margin-bottom: 0.7rem;
+  font-family: var(--font-marathi);
+  /* Set at reading size and in full ink. At 15px and muted it was being read
+     as a caption under the wordmark — which is the one thing it is not: it is
+     the plate's actual claim, and the tally under it is the footnote. */
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+.brand-count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin-top: 0.15rem;
+}
+
+/* The chip's padding is deliberately lopsided.
+
+   Devanagari ink is not centred in its line box. "९ नोंदी" carries an anusvāra
+   and an ī-mātrā above the shirorekhā and nothing at all below the baseline,
+   so the glyphs crowd the top of the box and leave the font's whole descender
+   allowance empty underneath them. Padded symmetrically — which is what this
+   was — the chip therefore prints the number visibly high, with a band of
+   mint under it and none above. The extra weight on top is an optical
+   correction, not a layout one: it re-centres the ink, which is the only part
+   of this anybody can see. Re-measure it if the face ever changes. */
+.brand-count-figure {
+  display: inline-block;
+  padding: 0.28rem 0.55rem 0.12rem;
+  border-radius: var(--radius-xs);
+  background: var(--color-accent-soft);
+  font-family: var(--font-marathi);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-accent-deep);
+}
+
+.brand-count-where {
+  font-size: var(--text-caption);
+  color: var(--color-text-subtle);
+}
+
+/* "selected out of 25" — the pins are a curated seven, and the plate says so
+   rather than letting the tally imply the pilot holds only seven notices. */
+.brand-note {
+  margin-top: 0.35rem;
+  font-size: var(--text-micro);
+  color: var(--color-text-subtle);
+}
+
+.brand-rule {
+  height: 1px;
+  margin: 0.85rem 0 0.75rem;
+  background: var(--gradient-rule);
+}
+
+/* When a narrowing matches nothing. A zero in the count chip reads as a map
+   that broke; a sentence reads as an answer, and the reset sits one line
+   above it. */
+.brand-empty {
+  font-family: var(--font-marathi);
+  font-size: var(--text-caption);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+/* --- The filters ---------------------------------------------------------
+   Two axes under the pulse line: what kind of work, and how far along.
+
+   This is where the sector legend went — the rows are buttons now and are
+   otherwise unchanged, because a key to the marks and a control over them
+   want exactly the same object. See `MapFilters`.
+
+   The block is the one part of the legend that takes a pointer, so it turns
+   events back on for itself; the plate around it stays inert so a drag begun
+   over the wordmark still pans the map underneath.
+
+   It is also the one part whose height is unbounded — ten sectors and five
+   stages on a short laptop window would push the invitation below it off the
+   bottom of the rail — so it caps itself and scrolls. On anything tall the cap
+   is never reached and no scrollbar is ever drawn. */
+.map-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-height: min(40vh, 21rem);
+  margin-top: 0.15rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+
+.map-filters::-webkit-scrollbar {
+  width: 4px;
+}
+
+.map-filters::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--color-line-strong);
+}
+
+.map-filters-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.15rem;
+}
+
+.map-filters-label {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: var(--text-micro--letter-spacing);
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+/* Only drawn while there is something to clear, which is why it can afford to
+   be the one accent-coloured word in the card: it is never sitting there as
+   decoration. */
+.map-filters-clear {
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-marathi);
+  font-size: var(--text-caption);
+  color: var(--color-accent-deep);
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out-soft);
+}
+
+.map-filters-clear:hover {
+  background: var(--color-accent-wash);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.filter-group-label {
+  font-family: var(--font-marathi);
+  font-size: var(--text-micro);
+  color: var(--color-text-subtle);
+}
+
+/* Both axes wrap rather than scroll: a chip half off the edge of a card is a
+   chip nobody clicks, and the reader is choosing from a fixed, small set that
+   is worth seeing whole. */
+.filter-sectors,
+.filter-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+/* One sector, as the pin's own head with its name beside it. Off is a hairline
+   on white; on is the sector's hue at wash strength with its own ink around
+   it — the chip becomes the thing it stands for rather than growing a tick. */
+.filter-sector,
+.filter-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.45rem 0.22rem 0.25rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-family: var(--font-marathi);
+  font-size: var(--text-caption);
+  line-height: 1.35;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    border-color 160ms var(--ease-out-soft),
+    background-color 160ms var(--ease-out-soft),
+    color 160ms var(--ease-out-soft),
+    opacity 160ms var(--ease-out-soft);
+}
+
+.filter-sector:hover,
+.filter-status:hover {
+  border-color: var(--color-line-ink);
+  color: var(--color-text);
+}
+
+.filter-sector:focus-visible,
+.filter-status:focus-visible,
+.map-filters-clear:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* A row the other axis has already emptied. Dimmed rather than disabled: it is
+   how a reader swaps one sector for another without going back through the
+   reset, so it has to stay clickable. */
+.filter-sector[data-empty],
+.filter-status[data-empty] {
+  opacity: 0.42;
+}
+
+.filter-sector[aria-pressed="true"] {
+  border-color: var(--sector);
+  background: color-mix(in srgb, var(--sector) 12%, var(--color-surface));
+  color: var(--color-text);
+}
+
+.filter-status[aria-pressed="true"] {
+  border-color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 12%, var(--color-surface));
+  color: var(--color-text);
+}
+
+/* The pin's collar at chip size. Smaller than the 1.75rem the legend rows
+   carried, because it now sits inside a pill rather than leading a full-width
+   row — but the same disc, the same glyph, the same white on the same hue. */
+.filter-sector-icon {
+  display: grid;
+  height: 1.35rem;
+  width: 1.35rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sector);
+  color: var(--color-on-accent);
+  box-shadow: var(--shadow-xs);
+}
+
+/* The stage has no glyph anywhere in the product — it is an ink, and this is
+   that ink at its smallest. Ringed rather than filled so a pale stage still
+   has an edge on white. */
+.filter-status-dot {
+  height: 0.5rem;
+  width: 0.5rem;
+  margin-left: 0.2rem;
+  border-radius: 50%;
+  background: var(--tone);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tone) 22%, transparent);
+}
+
+.filter-sector-count,
+.filter-status-count {
+  font-family: var(--font-marathi);
+  font-size: var(--text-micro);
+  color: var(--color-text-subtle);
+}
+
+.filter-sector[aria-pressed="true"] .filter-sector-count,
+.filter-status[aria-pressed="true"] .filter-status-count {
+  color: var(--color-text);
+}
+
+/* --- Lead plate ---------------------------------------------------------- */
+
+/* "Something happening near you?" — a whole card rather than a line of text,
+   because the map is a field of clickable things and a link among them does
+   not read as one. Same stock as the legend above it: white, borderless, one
+   soft shadow. See `LeadPlate` for why it is not folded into the legend. */
+.lead-plate {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.55rem 0.7rem;
+  padding: 0.85rem 0.95rem 0.9rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  /* The same plate offset the legend above it carries, not the small one. The
+     two sit in one rail a few pixels apart, and a shallower cast under a
+     deeper one did not read as a quieter card — it read as the same card at
+     two distances. Cards in a stack sit at one elevation. */
+  box-shadow: var(--shadow-md);
+}
+
+/* The same disc the legend's sector rows use, so the plate is visibly one of
+   the same family of objects — but on the pale accent rather than a sector
+   pastel, because this one stands for no sector. */
+.lead-plate-icon {
+  display: grid;
+  height: 1.75rem;
+  width: 1.75rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-deep);
+}
+
+.lead-plate-prompt {
+  font-family: var(--font-marathi);
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  color: var(--color-text);
+}
+
+.lead-plate-hint {
+  margin-top: 0.2rem;
+  font-size: var(--text-micro);
+  line-height: 1.45;
+  color: var(--color-text-subtle);
+}
+
+/* The only thing on the rail that takes a pointer. Full width of the text
+   column and in the accent — the only filled button on this half of the
+   screen, which is the weight an invitation should carry without competing
+   with a pin. It casts its own violet rather than a grey shadow: a filled
+   button dropping a neutral shade looks pasted onto the card, and this one is
+   meant to look like part of it. */
+.lead-plate-cta {
+  grid-column: 2;
+  padding: 0.45rem 0.85rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  box-shadow: var(--shadow-accent);
+  font-family: var(--font-marathi);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-on-accent);
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    background-color 160ms var(--ease-out-soft),
+    box-shadow 200ms var(--ease-out-soft),
+    transform 160ms var(--ease-spring);
+}
+
+/* The compact label waits for the phone, where the prompt beside it is gone
+   and "click here" would point at nothing. See `LeadPlate`. */
+.lead-plate-cta-short {
+  display: none;
+}
+
+.lead-plate-cta:hover {
+  background: var(--color-accent-hover);
+  box-shadow: var(--shadow-accent-hover);
+  transform: translateY(-1px);
+}
+
+.lead-plate-cta:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-accent);
+}
+
+.lead-plate-cta:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* --- Chrome -------------------------------------------------------------- */
+
+.map-controls {
+  position: absolute;
+  right: clamp(0.85rem, 2.4vw, 1.75rem);
+  bottom: clamp(0.85rem, 2.4vw, 1.75rem);
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.map-controls-rule {
+  height: 1px;
+  margin: 0 0.35rem;
+  background: var(--color-line);
+}
+
+.map-controls button {
+  display: grid;
+  height: 2.125rem;
+  width: 2.125rem;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    color 180ms var(--ease-out-soft),
+    background-color 180ms var(--ease-out-soft),
+    transform 180ms var(--ease-spring);
+}
+
+.map-controls button:hover {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-deep);
+}
+
+.map-controls button:active {
+  transform: scale(0.9);
+}
+
+.map-attribution {
+  position: absolute;
+  left: clamp(0.85rem, 2.4vw, 1.75rem);
+  bottom: clamp(0.85rem, 2.4vw, 1.75rem);
+  z-index: 11;
+  max-width: 30rem;
+  font-size: var(--text-micro);
+  line-height: 1.45;
+  color: var(--color-text-subtle);
+  pointer-events: none;
+}
+
+/* --- Narrow screens ------------------------------------------------------ */
+
+@media (max-width: 64rem) {
+  /* The rail stops being a stack in the corner and becomes the frame's two
+     edges: the legend is a header across the top, and the dock — the
+     invitation and the statewide badge — rides the bottom, which is the half
+     of a phone a thumb actually reaches. The map gets the whole middle.
+
+     It clears the attribution line by its own height, so the two never sit on
+     top of each other. */
+  .map-rail {
+    width: auto;
+    right: clamp(0.85rem, 1.8vw, 1.5rem);
+    bottom: calc(clamp(0.85rem, 2.4vw, 1.75rem) + 1.4rem);
+    justify-content: space-between;
+  }
+
+  /* Side by side rather than stacked: two controls on one line read as one bar,
+     where two full-width cards read as a second panel.
+
+     Left-packed and each as wide as its own words. Letting the invitation grow
+     into the free space pushed the badge into the zoom cluster in the corner
+     and then off the edge — a dock is a row of objects, not a split bar. The
+     tail clears the cluster, which still owns the bottom-right at this width;
+     on a phone it has moved to the middle of the right edge and the reservation
+     is dropped. */
+  .map-rail-dock {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    padding-right: 3.4rem;
+  }
+
+  .map-rail-dock .lead-plate {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .map-rail-dock .statewide-badge {
+    flex: 0 0 auto;
+    align-self: auto;
+  }
+
+  /* On a phone the legend is a header, not a card, and the invitation under it
+     becomes a single line with a button — the hint is the first thing to go,
+     because the button already says what it does. */
+  .lead-plate {
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.55rem 0.5rem 0.7rem;
+  }
+
+  .lead-plate-hint {
+    display: none;
+  }
+
+  .lead-plate-cta {
+    grid-column: 3;
+  }
+
+  .brand-body {
+    padding: 0.7rem 1rem 0.8rem;
+  }
+
+  /* On a phone the plate is a header, not a card, so everything that was a
+     second column of reading goes. */
+  .brand-note,
+  .brand-rule {
+    display: none;
+  }
+
+  /* The filters stay — "water work only" is if anything a phone question — but
+     they stop being a block and become two lines that scroll sideways. The
+     sector names go with them: the disc is the same disc that is on the pins,
+     and at this width naming ten of them costs more screen than the map has to
+     give. The name survives on the button's `aria-label`. */
+  .map-filters {
+    max-height: none;
+    margin-top: 0.45rem;
+    gap: 0.35rem;
+    overflow: visible;
+  }
+
+  .map-filters-label,
+  .filter-group-label {
+    display: none;
+  }
+
+  .map-filters-head {
+    min-height: 0;
+    justify-content: flex-end;
+  }
+
+  .filter-sectors,
+  .filter-statuses {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .filter-sectors::-webkit-scrollbar,
+  .filter-statuses::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-sectors > li,
+  .filter-statuses > li {
+    flex: 0 0 auto;
+  }
+
+  .filter-sector-word {
+    display: none;
+  }
+
+  .filter-sector {
+    padding-right: 0.35rem;
+  }
+
+  .brand-pulse {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .brand-count {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 40rem) {
+  .map-page {
+    /* A phone shows so little ground around the state that the desktop wash
+       reads as one flat tone. Steepened and shortened so some gradation still
+       lands inside the strip that is actually visible. */
+    background-image: linear-gradient(
+      170deg,
+      var(--color-lavender-100) 0%,
+      var(--color-lavender-300) 100%
+    );
+  }
+
+  .map-controls {
+    /* The record sheet owns the bottom of the screen; the zoom cluster moves
+       up out of its way. */
+    bottom: auto;
+    top: 50%;
+    translate: 0 -50%;
+    right: 0.75rem;
+  }
+
+  .map-controls button {
+    height: 2.375rem;
+    width: 2.375rem;
+  }
+
+  .map-attribution {
+    right: 4rem;
+    max-width: none;
+  }
+
+  /* --- The plate, cut down ----------------------------------------------
+     At phone width the legend was taking the top fifth of the screen to say
+     three things, and the state — the whole point of the page — started below
+     the fold of the eye rather than at it. Everything here is the same plate
+     one notch smaller. Nothing is removed that was not already gone at 64rem;
+     the card simply stops claiming space it does not need. */
+  .brand-body {
+    padding: 0.55rem 0.85rem 0.7rem;
+  }
+
+  .brand-pulse {
+    margin-bottom: 0.45rem;
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+
+  .brand-count-figure {
+    padding: 0.22rem 0.4rem 0.1rem;
+    font-size: 0.9375rem;
+  }
+
+  .brand-count-where {
+    font-size: var(--text-micro);
+  }
+
+  /* --- The bottom dock, at two pills ------------------------------------
+     363px of dock, and the badge needs 160 of them to say its own name. The
+     invitation cannot also carry a prompt at that width, so it collapses to
+     its glyph and its button, and the button swaps to the label that names the
+     thing rather than the gesture — "click here" under nothing points at
+     nothing. The full prompt survives on the button's `aria-label`, so a screen
+     reader hears the same sentence a desktop reads. */
+  .map-rail-dock {
+    padding-right: 0;
+  }
+
+  .map-rail-dock .lead-plate {
+    flex: 0 0 auto;
+  }
+
+  /* Cut from the same die as the badge beside it. Two controls on one line
+     with different corners and different shadow depths do not read as a pair
+     of buttons, they read as one plate printed twice with the registration
+     slipping — the same argument the rail's own stack makes about its cards,
+     applied along the other axis. */
+  .lead-plate {
+    grid-template-columns: auto auto;
+    gap: 0.45rem;
+    padding: 0.32rem 0.4rem;
+    border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .lead-plate-text {
+    display: none;
+  }
+
+  .lead-plate-icon {
+    height: 1.6rem;
+    width: 1.6rem;
+  }
+
+  .lead-plate-cta {
+    grid-column: 2;
+    padding: 0.32rem 0.7rem 0.36rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+  }
+
+  .lead-plate-cta-long {
+    display: none;
+  }
+
+  .lead-plate-cta-short {
+    display: inline;
+  }
+
+  .statewide-badge {
+    gap: 0.35rem;
+    padding: 0.3rem 0.55rem 0.3rem 0.34rem;
+  }
+
+  .statewide-badge-mark {
+    height: 1.6rem;
+    width: 1.6rem;
+  }
+
+  .statewide-badge-word {
+    font-size: 0.8125rem;
+  }
+}
+
+/* --- The statewide badge -------------------------------------------------- */
+
+/* The way into the one view that is not about a place.
+
+   It sat in the water south-east of the coast until the zoom caught up with
+   it: painted over the sheet rather than in it, it holds still while the
+   coastline slides out from under it, and a control adrift on land reads as
+   the one thing it must never read as — a pin. So it came off the sheet
+   altogether — and then spent a while pinned to the frame's own bottom-left
+   corner, which fixed the pin problem and introduced a smaller one: a control
+   alone in a corner belongs to nothing, and a reader who had read the legend
+   and the invitation had no reason to look down there for a third thing.
+
+   It now sits in the rail, under the invitation, as the last card of the stack
+   it was always a sibling of — all three are controls the reader consults
+   before touching the map. On a phone the rail's bottom half rides the bottom
+   edge and it lands beside the invitation, where a thumb is.
+
+   Off the sheet it has room to say its own name, so the word is set beside the
+   glyph rather than waiting on a hover no touchscreen sends. Only the
+   instruction folds away. Yellow is held back for the pressed state, which is
+   how this product says "in force". */
+.statewide-badge {
+  position: relative;
+  /* The rail stretches its children; a pill is as wide as its words. */
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.34rem 0.75rem 0.34rem 0.4rem;
+  border-radius: 999px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  /* The rail is inert so the map pans under it; this is one of the two things
+     in it that takes a click. */
+  pointer-events: auto;
+  transition:
+    background-color 180ms var(--ease-out-soft),
+    box-shadow 180ms var(--ease-out-soft),
+    transform 180ms var(--ease-spring);
+}
+
+.statewide-badge:hover {
+  background: var(--color-accent-soft);
+  box-shadow: var(--shadow-md);
+}
+
+.statewide-badge:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Pressed. The pill fills with the accent and everything on it inverts — the
+   word to white, the glyph disc to white, the count to the accent's own deep
+   tint. Violet is held back for exactly this, which is how the product says
+   "in force". */
+.statewide-badge[data-active] {
+  background: var(--color-accent);
+  box-shadow: var(--shadow-accent);
+}
+
+.statewide-badge[data-active]:hover {
+  background: var(--color-accent-hover);
+  box-shadow: var(--shadow-accent-hover);
+}
+
+.statewide-badge[data-active] .statewide-badge-word {
+  color: var(--color-on-accent);
+}
+
+/* The glyph, in its own disc at the head of the pill — the pins are discs, and
+   this is the other thing you press to change the record on screen. It stands
+   for no sector, so it carries no sector colour. */
+.statewide-badge-mark {
+  display: grid;
+  height: 1.75rem;
+  width: 1.75rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-deep);
+}
+
+.statewide-badge[data-active] .statewide-badge-mark {
+  background: var(--color-surface);
+  color: var(--color-accent);
+}
+
+.statewide-badge-word {
+  font-family: var(--font-marathi);
+  font-size: 0.875rem;
+  line-height: 1.25;
+  color: var(--color-text);
+}
+
+/* The count, closing the pill, in the same ink-on-cream the legend uses.
+   Pressed, it inverts to white so it stays legible on the violet. */
+.statewide-badge-count {
+  display: grid;
+  height: 1.25rem;
+  min-width: 1.25rem;
+  place-items: center;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--color-slate-100);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-text-muted);
+}
+
+.statewide-badge[data-active] .statewide-badge-count {
+  background: var(--color-surface);
+  color: var(--color-accent-deep);
+}
+
+/* The instruction, hanging under the pill on its left edge — above it now sits
+   the invitation it shares a rail with, and a caption that covers the card it
+   was printed under is a caption in the wrong place. Shown on hover, on
+   keyboard focus, and whenever the view is on: pressed, its job is to say how
+   to get back. */
+.statewide-badge-hint {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  width: max-content;
+  max-width: 11rem;
+  padding: 0.3rem 0.6rem 0.34rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-marathi);
+  font-size: var(--text-micro);
+  line-height: 1.35;
+  text-align: start;
+  color: var(--color-text-subtle);
+  opacity: 0;
+  transform: translateY(-0.25rem);
+  pointer-events: none;
+  transition:
+    opacity 160ms var(--ease-out-soft),
+    transform 160ms var(--ease-out-soft);
+}
+
+.statewide-badge:hover .statewide-badge-hint,
+.statewide-badge:focus-visible .statewide-badge-hint,
+.statewide-badge[data-active] .statewide-badge-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --- The state as the subject -------------------------------------------- */
+
+/* What the sheet does when the map stops being about districts.
+
+   No wash and no fill: the state is already one near-white plate, and tinting
+   it would only say "selected" about something that has no alternative. The
+   districts recede instead — their hairlines are a way of dividing a place,
+   and nothing on screen is divided by them any more — and the coastline comes
+   forward, because the coastline is the one line that means "all of this".
+
+   This is what carries the whole distinction now that the statewide records
+   are pinned like any other. Three pins on a plate ruled into thirty-six
+   districts would read as three places; on one undivided plate inside a single
+   heavier coast they read as three marks on the state. The pins themselves are
+   left exactly as they are — same disc, same sector, same stem — because a
+   reader who has learnt what a pin means should not have to learn a second
+   thing.
+
+   The land keeps its pointer: a click on it is how a reader leaves. */
+.map-frame[data-scope="state"] .map-district {
+  stroke: rgb(26 26 48 / 0.045);
+  transition: stroke 260ms var(--ease-out-soft);
+}
+
+.map-frame[data-scope="state"] .map-coast {
+  stroke-width: 2.2;
+}
+
+.map-coast {
+  transition: stroke-width 260ms var(--ease-out-soft);
+}
+
+/* On a phone the pill keeps its corner — the legend is a header across the top
+   and the zoom cluster has moved to the middle of the right edge, so the bottom
+   left is still the quietest part of the frame. Only the caption goes: there is
+   no hover to summon it, and the one state that would show it anyway is the one
+   where the record sheet has climbed over the pill entirely. The sheet’s own
+   close button is the way back out of that view. */
+@media (max-width: 64rem) {
+  .statewide-badge-hint {
+    display: none;
+  }
+}
+
+/* ============================================================================
+   The strip above the band, removed.
+
+   It carried the महासंवाद badge, the directorate's line, "राज्याचा नकाशा" and a
+   tally of every approved release in the store, with the way to `/news` at its
+   right end — a page header under the product's own masthead, on the one route
+   that cannot spare a row. The map sizes itself to what is left of the viewport
+   under the chrome, so every pixel that strip took came off the state.
+
+   The one thing on it a reader needed is the way out, and that has moved onto
+   the right end of the news band, which was already crossing the top of the
+   page: see `.news-ticker-action` in `news.css`. Everything else the page says
+   elsewhere — the masthead names the department, the plate beside the map
+   counts what is in the window, and the document title is still "राज्याचा
+   नकाशा".
+   ========================================================================= */

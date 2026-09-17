@@ -112,7 +112,8 @@ export function DistrictPanel({
           <ul className="row-list">
             {articles.map((a) => (
               <li key={a.id}>
-                <Link href={`/desk/${a.id}`} className="row">
+                {/* And the row itself: the reader page, not the desk record. */}
+                <Link href={`/news/${a.id}`} className="row">
                   <div className="text-sm font-medium leading-snug">
                     {a.title || <span style={{ color: 'var(--faint)' }}>(शीर्षक नाही)</span>}
                   </div>
@@ -128,12 +129,25 @@ export function DistrictPanel({
         )}
       </div>
 
+      {/* The way on, and it is a citizen's way rather than an official's.
+
+          This used to point at `/desk?district=…&status=approved` — the queue,
+          with its status column and its pending rows. That is the right
+          destination when the person holding the map works here, and the wrong
+          one for everybody else: a reader who has just looked at how much news
+          came out of their district wants to read it, not to inspect the state
+          of its review. `/news?district=…` opens the listing with the district
+          already chosen in the filter bar; the desk remains one click away
+          through the masthead for the people who need it.
+
+          The same change, and the same reasoning, in `DgiprPanel`'s footer —
+          which is the panel the live map actually opens. */}
       <Link
-        href={`/desk?district=${districtId}&status=approved`}
+        href={`/news?district=${districtId}`}
         className="flex shrink-0 items-center justify-between gap-2 border-t px-4 py-3 text-xs font-semibold"
         style={{ borderColor: 'var(--edge)', color: 'var(--accent)', background: 'var(--surface-2)' }}
       >
-        डेस्कवर सर्व पहा
+        अधिक बातम्या पहा
         <IconArrowRight size={13} />
       </Link>
     </aside>

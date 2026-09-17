@@ -53,6 +53,11 @@ export const IconShare = (p: IconProps) => (
 export const IconMapPin = (p: IconProps) => (
   <Icon {...p}><path d="M20 10c0 5.2-8 12-8 12s-8-6.8-8-12a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.8" /></Icon>
 )
+/* The folded sheet, not the pin. `IconMapPin` marks one place on a map; this
+   names the map itself, which is what the link out of `/news` is pointing at. */
+export const IconMap = (p: IconProps) => (
+  <Icon {...p}><path d="m9 4.5 6 3 5-2.5v14l-5 2.5-6-3-5 2.5v-14Z" /><path d="M9 4.5v14" /><path d="M15 7.5v14" /></Icon>
+)
 export const IconSearch = (p: IconProps) => (
   <Icon {...p}><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></Icon>
 )
@@ -86,6 +91,9 @@ export const IconChevronUp = (p: IconProps) => (
 export const IconChevronDown = (p: IconProps) => (
   <Icon {...p}><path d="m6 9.5 6 6 6-6" /></Icon>
 )
+export const IconChevronRight = (p: IconProps) => (
+  <Icon {...p}><path d="m9.5 6 6 6-6 6" /></Icon>
+)
 export const IconArrowLeft = (p: IconProps) => (
   <Icon {...p}><path d="M19 12H5" /><path d="m11 6-6 6 6 6" /></Icon>
 )
@@ -100,8 +108,37 @@ export const IconWhatsApp = ({ size = 16, ...rest }: IconProps) => (
     <path d="M12.04 2.5A9.42 9.42 0 0 0 2.6 11.9c0 1.66.44 3.28 1.26 4.7L2.5 21.5l5.05-1.32a9.4 9.4 0 0 0 4.49 1.14h.01a9.42 9.42 0 0 0 9.44-9.4 9.35 9.35 0 0 0-2.76-6.65 9.34 9.34 0 0 0-6.69-2.77Zm0 17.24h-.01a7.83 7.83 0 0 1-3.98-1.09l-.28-.17-2.96.77.79-2.88-.19-.3a7.77 7.77 0 0 1-1.2-4.17 7.83 7.83 0 0 1 7.84-7.81c2.09 0 4.06.81 5.54 2.29a7.76 7.76 0 0 1 2.29 5.53 7.83 7.83 0 0 1-7.84 7.83Zm4.3-5.86c-.24-.12-1.4-.68-1.61-.76-.22-.08-.38-.12-.54.12-.16.24-.62.76-.76.92-.14.16-.28.18-.52.06-.24-.12-1-.37-1.9-1.17-.7-.62-1.18-1.4-1.32-1.63-.14-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.2-.47-.4-.4-.54-.41h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.7 2.6 4.12 3.64.58.25 1.03.4 1.38.51.58.18 1.1.16 1.52.1.46-.07 1.4-.57 1.6-1.13.2-.55.2-1.03.14-1.13-.06-.1-.22-.16-.46-.28Z" />
   </svg>
 )
+export const IconFacebook = ({ size = 16, ...rest }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" {...rest}>
+    <path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.52 1.49-3.91 3.77-3.91 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.78-1.63 1.57v1.89h2.78l-.44 2.91h-2.34V22c4.78-.76 8.44-4.92 8.44-9.94Z" />
+  </svg>
+)
 export const IconEmblem = ({ size = 16, ...rest }: IconProps) => (
   <Icon {...rest} size={size}><path d="M12 2.5 4 6v6.2c0 4.6 3.4 8.2 8 9.3 4.6-1.1 8-4.7 8-9.3V6Z" /><path d="M12 7.5v8M8.5 11h7" /></Icon>
+)
+export const IconBookOpen = (p: IconProps) => (
+  <Icon {...p}><path d="M12 6.8v13" /><path d="M12 6.8C10.6 5.6 8.8 5 6.6 5H3v13h3.6c2.2 0 4 .6 5.4 1.8" /><path d="M12 6.8C13.4 5.6 15.2 5 17.4 5H21v13h-3.6c-2.2 0-4 .6-5.4 1.8" /></Icon>
+)
+export const IconMessage = (p: IconProps) => (
+  <Icon {...p}><path d="M20.5 11.6c0 4-3.8 7.2-8.5 7.2a9.9 9.9 0 0 1-2.6-.34L4.2 20.2l1.3-3.5a6.9 6.9 0 0 1-2-4.7c0-4 3.8-7.2 8.5-7.2s8.5 3.2 8.5 7.2Z" /><path d="M9 11.5h.01M12 11.5h.01M15 11.5h.01" /></Icon>
+)
+export const IconSend = (p: IconProps) => (
+  <Icon {...p}><path d="M20.5 3.5 10.8 13.2" /><path d="M20.5 3.5 14.3 20.5l-3.5-7.3-7.3-3.5Z" /></Icon>
+)
+export const IconTrash = (p: IconProps) => (
+  <Icon {...p}><path d="M4 6.5h16" /><path d="M9.5 6.5V4.8A1.3 1.3 0 0 1 10.8 3.5h2.4a1.3 1.3 0 0 1 1.3 1.3v1.7" /><path d="M6.5 6.5 7.4 19a1.5 1.5 0 0 0 1.5 1.4h6.2a1.5 1.5 0 0 0 1.5-1.4l.9-12.5" /><path d="M10.5 10.5v6M13.5 10.5v6" /></Icon>
+)
+export const IconSliders = (p: IconProps) => (
+  <Icon {...p}><path d="M4 7.5h10M18 7.5h2M4 16.5h4M12 16.5h8" /><circle cx="16" cy="7.5" r="2.1" /><circle cx="10" cy="16.5" r="2.1" /></Icon>
+)
+export const IconLink = (p: IconProps) => (
+  <Icon {...p}><path d="M10.2 13.8a3.6 3.6 0 0 0 5.1 0l3-3a3.6 3.6 0 0 0-5.1-5.1l-1.2 1.2" /><path d="M13.8 10.2a3.6 3.6 0 0 0-5.1 0l-3 3a3.6 3.6 0 0 0 5.1 5.1l1.2-1.2" /></Icon>
+)
+/** X, drawn as its wordmark glyph — an outline "bird" would be a different site. */
+export const IconX = ({ size = 16, ...rest }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" {...rest}>
+    <path d="M17.53 3h3.04l-6.64 7.59L21.75 21h-6.11l-4.79-6.26L5.37 21H2.33l7.1-8.12L2.25 3h6.27l4.33 5.72L17.53 3Zm-1.07 16.17h1.69L7.62 4.73H5.81l10.65 14.44Z" />
+  </svg>
 )
 
 /* --- Page header ---------------------------------------------------------- */

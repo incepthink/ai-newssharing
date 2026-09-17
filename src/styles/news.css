@@ -1,0 +1,259 @@
+/* ============================================================================
+   The news band.
+
+   It used to be the only dark object in the product — a black strip inverted
+   out of a page of cream sheets, because a second cream plate across the full
+   width would have read as more chrome on the same sheet.
+
+   It is white now, and it stops needing to be inverted for the same reason the
+   map sheet stopped needing to be opaque: the ground behind everything is
+   lavender, so white is already a distinct object on it. The band is the top
+   edge of the page, lifted off the wash by its own shadow, exactly like the
+   cards below it.
+
+   The palette is the house one: the label block is the accent violet with the
+   wordmark's white on it, the headlines are ordinary body ink, and the only
+   other colour on the band is the sector dot leading each headline — the same
+   saturated hue the legend keys and the pin wears.
+   ========================================================================= */
+
+.news-ticker {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 0;
+  /* The track inside is `max-content` wide and holds two copies of the list,
+     so the band is the one element on this page that would happily be four
+     screens across. It is bounded here as well as clipped in the viewport
+     below: a strip that overflows its own parent puts the scrollbar on the
+     document, and a marquee that drags the whole page sideways is worse than
+     no marquee. */
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  align-items: stretch;
+  /* The band is printed on the sheet, not floating over it: one heavy rule
+     underneath — the band is lifted off the wash rather than ruled off it. */
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text);
+}
+
+/* Fine drafting grid, in cream rather than ink — the same tooth the map sheet
+   has, inverted with the band so the strip read as the same paper seen from
+   the other side. The band is no longer inverted and the grid is no longer
+   drawn: a ruled 22px lattice behind moving headlines is texture competing
+   with the one thing on this strip that is meant to be read. */
+
+/* The one fixed thing on the band, so the strip still says what it is at any
+   moment of the loop. On the accent violet, because it is the same claim the
+   wordmark makes and should be read in the same voice — and it is the same
+   block, in the same colour, at the other end of the screen. */
+.news-ticker-label {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem clamp(0.8rem, 1.6vw, 1.25rem) 0.55rem;
+  background: var(--color-accent);
+  font-family: var(--font-marathi);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-on-accent);
+  white-space: nowrap;
+}
+
+/* The live dot. Coral, because coral is the product's one urgent ink and this
+   is the only thing on the page claiming to be happening now. */
+.news-ticker-dot {
+  height: 0.5rem;
+  width: 0.5rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--color-on-accent);
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 0.28);
+  animation: news-ticker-live 1.8s var(--ease-in-out-soft) infinite;
+}
+
+@keyframes news-ticker-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.28; }
+}
+
+/* Fades at both ends rather than a hard cut: a headline sliced mid-glyph by a
+   crisp edge reads as clipped text, and the same headline dissolving reads as
+   one that has gone past. */
+.news-ticker-viewport {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 2.5rem,
+    #000 calc(100% - 2.5rem),
+    transparent 100%
+  );
+}
+
+/* Two copies of the list, translated by exactly half the track — so the loop
+   closes on itself with no gap and no jump back to the start. */
+.news-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: news-ticker-scroll var(--ticker-duration, 60s) linear infinite;
+}
+
+@keyframes news-ticker-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* A line you cannot stop is a line you cannot finish reading. */
+.news-ticker:hover .news-ticker-track,
+.news-ticker:focus-within .news-ticker-track {
+  animation-play-state: paused;
+}
+
+.news-ticker-run {
+  display: flex;
+  align-items: center;
+}
+
+.news-ticker-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  padding: 0.5rem clamp(0.9rem, 1.8vw, 1.5rem) 0.55rem;
+  white-space: nowrap;
+}
+
+/* The disc that leads each headline. It doubles as the separator between
+   items, which is why there is no rule or bullet between them. It carries no
+   meaning of its own — it is punctuation, not a key. */
+.news-ticker-mark {
+  align-self: center;
+  height: 0.5rem;
+  width: 0.5rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--color-slate-400);
+}
+
+.news-ticker-head {
+  font-family: var(--font-marathi);
+  font-size: 0.9375rem;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.news-ticker-place {
+  font-size: var(--text-caption);
+  line-height: 1.3;
+  color: var(--color-text-subtle);
+}
+
+/* The band's other bookend: the way off the page.
+
+   It is the map's header button, which used to sit on a strip of its own above
+   this one — a whole row under the product's masthead to hold one link, on the
+   route that has the least height to spare. The band was already crossing the
+   top of the page and already had a fixed block at its left end, so the link is
+   simply the right one. It sits outside `.news-ticker-viewport`, so the running
+   track passes under the mask and stops short of it rather than under it.
+
+   Filled in the institution's accent, because it is the one thing on this strip
+   a reader is meant to press — the headlines are links too, but they are the
+   band's content, not its control. */
+/* With nothing approved in the store there are no headlines and no label — see
+   `NewsTicker` — so the strip is one link and the empty viewport beside it, and
+   the link goes to the end it is meant to be at rather than sitting alone on
+   the left. */
+.news-ticker[data-empty] .news-ticker-action {
+  margin-left: auto;
+}
+
+.news-ticker-action {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem clamp(0.8rem, 1.6vw, 1.25rem) 0.55rem;
+  background: var(--color-accent);
+  font-family: var(--font-marathi);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-on-accent);
+  white-space: nowrap;
+  transition: background 140ms var(--ease-out-soft);
+}
+
+.news-ticker-action:hover {
+  background: var(--color-accent-hover);
+}
+
+/* On a phone the label loses its word and keeps its dot: at this width the
+   strip is mostly label otherwise, and the headlines are what it is for. The
+   action at the other end loses its word for the same reason and on the same
+   terms — the list icon is unambiguous and the link keeps its `aria-label`. */
+@media (max-width: 40rem) {
+  .news-ticker-label {
+    padding: 0.45rem 0.7rem 0.5rem;
+    font-size: 0.8125rem;
+  }
+
+  .news-ticker-action {
+    padding: 0.45rem 0.7rem 0.5rem;
+  }
+
+  .news-ticker-action-word {
+    display: none;
+  }
+
+  .news-ticker-place {
+    display: none;
+  }
+
+  .news-ticker-viewport {
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0,
+      #000 1.25rem,
+      #000 calc(100% - 1.25rem),
+      transparent 100%
+    );
+  }
+}
+
+/* A marquee is motion with no way to opt out of it, so the reduced-motion pass
+   removes it rather than shortening it — the base layer's blanket
+   `animation-duration: 0.01ms` would otherwise snap the track to the end of
+   its travel and leave the band looking empty. The headlines stay, as a strip
+   the reader scrolls themselves. */
+@media (prefers-reduced-motion: reduce) {
+  .news-ticker-track {
+    animation-name: none;
+    transform: none;
+  }
+
+  .news-ticker-dot {
+    animation-name: none;
+  }
+
+  .news-ticker-viewport {
+    overflow-x: auto;
+    mask-image: none;
+  }
+
+  /* The second copy is duplication with nothing to hide it now. */
+  .news-ticker-run[aria-hidden] {
+    display: none;
+  }
+}
