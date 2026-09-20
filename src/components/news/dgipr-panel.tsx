@@ -68,12 +68,8 @@ type DgiprPanelProps = {
  * same district sit at the bottom as a rail, so a Mumbai mark carrying four
  * notices opens one and offers three rather than hiding them behind the map.
  *
- * Every release on this panel comes from `articles` with `status = 'approved'`
- * — see `lib/dgipr/from-db.ts`. That is what lets the card carry a वृत्त क्र.,
- * a department and a minister attribution: they are columns on the desk's own
- * record, and they are what makes the thing on screen a citable notice rather
- * than a headline.
  */
+
 export function DgiprPanel({ releases, openId, onOpen, onClose }: DgiprPanelProps) {
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -129,22 +125,9 @@ export function DgiprPanel({ releases, openId, onOpen, onClose }: DgiprPanelProp
     exitShareMode();
   }
 
-  /**
-   * Share one release, from the card it is printed on.
-   *
-   * The bar at the foot of the sheet is built for assembling a bulletin — pick
-   * four, send them as one message — and that is the case it should stay tuned
-   * for. It is not the common case. The common one is a reader who has found
-   * the release they came for and wants to forward that, and making them enter
-   * a mode, find the same card again and tick it is three steps for something
-   * that is one decision.
-   *
-   * So this does the three steps for them and lands on the preview, which is
-   * the screen that matters: nothing is sent until somebody has read what is
-   * about to go out.
-   */
   function shareOne(release: DgiprRelease) {
-    setShareFor(openId);
+    setExpandedFor(release.id);
+    setShareFor(release.id);
     setSelectedIds([release.id]);
     setPreviewOpen(true);
   }
@@ -177,6 +160,9 @@ export function DgiprPanel({ releases, openId, onOpen, onClose }: DgiprPanelProp
      no district — a statewide notice — sends the reader to the unfiltered list
      rather than to `?district=null`, which would filter everything away. */
   const districtId = releases.find((release) => release.districtId)?.districtId ?? null;
+  const districtTitle = districtId ? districtNameMr(districtId) : DGIPR_MR.statewide;
+  const tallyText = `${toDevanagari(releases.length)} ${releases.length === 1 ? "बातमी" : "बातम्या"}`;
+
   const moreHref = districtId
     ? `/news?district=${encodeURIComponent(districtId)}`
     : "/news";
@@ -195,13 +181,13 @@ export function DgiprPanel({ releases, openId, onOpen, onClose }: DgiprPanelProp
   return (
     <>
       <AnimatePresence>
-        {open ? (
+        {releases.length > 0 ? (
           <motion.aside
-            key={open.districtId ?? open.id}
+            key={districtId ?? openId ?? "dgipr-panel"}
             className="news-panel dgipr-panel"
             lang="mr"
             role="dialog"
-            aria-label={open.titleMr}
+            aria-label={`${districtTitle} — ${tallyText}`}
             variants={panelVariants}
             initial="hidden"
             animate="shown"
@@ -210,202 +196,90 @@ export function DgiprPanel({ releases, openId, onOpen, onClose }: DgiprPanelProp
             <header className="news-panel-head">
               <div>
                 <p className="news-panel-eyebrow dgipr-eyebrow">{eyebrow}</p>
-
-                <h2 className="news-panel-title dgipr-title">{open.titleMr}</h2>
-
-                {/* The minister the department attributed the release to. It
-                    sits directly under the headline because that is where
-                    DGIPR sets it on the release itself, and because on a
-                    cabinet item it is half of what the headline means. */}
-                {open.attributionMr ? (
-                  <p className="dgipr-attribution">{open.attributionMr}</p>
-                ) : null}
-
-                <p className="dgipr-dateline">
-                  <span className="dgipr-dateline-place">{datelineMr(open)}</span>
-                  <span className="dgipr-dateline-date numeric">
-                    {releaseDateMr(open.date)}
-                  </span>
-                </p>
+                <h2 className="news-panel-title dgipr-title">{districtTitle}</h2>
+                <p className="news-panel-tally">{tallyText}</p>
               </div>
 
               <PanelTools
                 onClose={onClose}
-                onExpand={openId ? () => setExpandedFor(openId) : undefined}
+                onExpand={() => setExpandedFor(openId ?? releases[0]?.id ?? null)}
               />
             </header>
 
-            {/* Who issued it, under what number, and what it is filed under.
-                For an official notice none of this is metadata — a release from
-                the directorate and a release from the Nanded district office
-                are different claims, and the reader should not have to infer
-                which one they are holding. The वृत्त क्र. is the citation: it is
-                what somebody ringing the office about this release quotes. */}
-            <div className="dgipr-issuer">
-              {open.authorMr ? (
-                <p className="dgipr-issuer-line">
-                  <span className="dgipr-label">{DGIPR_MR.issuedBy}</span>
-                  {open.authorMr}
-                </p>
-              ) : null}
+            <div className="news-panel-list dgipr-panel-list" ref={listRef}>
+              {releases.map((release) => {
+                const summary =
+                  release.summary60Mr?.trim() ||
+                  release.summaryMr.split(/\n\s*\n/)[0]?.trim() ||
+                  "";
+                const who = release.attributionMr ?? release.departmentMr ?? release.authorMr;
+                const articleUrl = release.readerUrl ?? release.url ?? `/news/${release.id}`;
 
-              {open.departmentMr ? (
-                <p className="dgipr-issuer-line">
-                  <span className="dgipr-label">{DGIPR_MR.department}</span>
-                  {open.departmentMr}
-                </p>
-              ) : null}
+                return (
+                  <article key={release.id} className="dgipr-panel-card">
+                    <div className="dgipr-card-badges">
+                      {release.categoryMr ? (
+                        <span className="dgipr-card-badge dgipr-category">{release.categoryMr}</span>
+                      ) : null}
+                      {who ? (
+                        <span className="dgipr-card-badge dgipr-card-badge-who">{who}</span>
+                      ) : null}
+                    </div>
 
-              <p className="dgipr-issuer-line">
-                <span className="dgipr-label">{DGIPR_MR.category}</span>
-                <span className="dgipr-category">{open.categoryMr}</span>
-              </p>
+                    <h3 className="dgipr-panel-card-heading">
+                      <Link href={articleUrl} className="dgipr-panel-card-title">
+                        {release.titleMr}
+                      </Link>
+                    </h3>
 
-              {open.releaseNo ? (
-                <p className="dgipr-issuer-line">
-                  <span className="dgipr-label">{DGIPR_MR.releaseNo}</span>
-                  <span className="numeric">{toDevanagari(open.releaseNo)}</span>
-                </p>
-              ) : null}
+                    {release.attributionMr && release.attributionMr !== who ? (
+                      <p className="dgipr-attribution">{release.attributionMr}</p>
+                    ) : null}
+
+                    <p className="dgipr-dateline">
+                      <span className="dgipr-dateline-place">{datelineMr(release)}</span>
+                      <span className="dgipr-dateline-date numeric">{releaseDateMr(release.date)}</span>
+                      {release.releaseNo ? (
+                        <span className="dgipr-card-no numeric">· {DGIPR_MR.releaseNo} {toDevanagari(release.releaseNo)}</span>
+                      ) : null}
+                    </p>
+
+                    {summary ? (
+                      <div className="dgipr-card-summary">
+                        <p className="dgipr-card-label">{DGIPR_MR.summary60}</p>
+                        <p className="dgipr-card-lead">{summary}</p>
+                      </div>
+                    ) : null}
+
+                    <div className="dgipr-actions">
+                      <Link
+                        className="dgipr-action dgipr-action-read"
+                        href={articleUrl}
+                      >
+                        <ArrowUpRight size={14} strokeWidth={2.2} aria-hidden />
+                        पूर्ण बातमी वाचा
+                      </Link>
+
+                      {release.docxUrl ? (
+                        <a className="dgipr-action" href={release.docxUrl} download>
+                          <FileDown size={14} strokeWidth={2.2} aria-hidden />
+                          वर्ड फाइल (DOCX)
+                        </a>
+                      ) : null}
+
+                      <Link
+                        className="dgipr-action"
+                        href={`/share?id=${encodeURIComponent(release.id)}`}
+                      >
+                        <Share2 size={14} strokeWidth={2.2} aria-hidden />
+                        शेअर करा
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
 
-            <div className="news-panel-list dgipr-body" ref={listRef}>
-              {open.posterUrl ? (
-                /* Two kinds of image arrive here and `next/image` suits neither.
-                   The curated rows point at `public/dgipr/posters/*.svg`, which
-                   the optimiser passes through untouched anyway; the live rows
-                   point at the directorate's own photographs on mahasamvad.in,
-                   which are somebody else's host and would need a `remotePatterns`
-                   entry to buy nothing. A plain `<img>` serves both. */
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  className="dgipr-poster"
-                  src={open.posterUrl}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : null}
-
-              {/* The sixty-word reading, above the release rather than instead
-                  of it. A reader who has just clicked a district wants to know
-                  whether this is the notice they came for, and the answer is
-                  the first sixty words — but the whole text is directly below,
-                  so nothing is being withheld and no summary is standing in for
-                  a document. See `lib/dgipr/summary.ts` on why the cut is
-                  mechanical. */}
-              {open.summary60Mr ? (
-                <motion.div className="dgipr-summary" variants={ITEM}>
-                  <p className="dgipr-label">{DGIPR_MR.summary60}</p>
-                  <p className="dgipr-summary-text">{open.summary60Mr}</p>
-                </motion.div>
-              ) : null}
-
-              {/* The released text, in the paragraphs it was issued in. Split on
-                  the blank lines the source carries rather than rendered as one
-                  block: a press release is written in paragraphs and a wall of
-                  two thousand Devanagari characters is not readable. */}
-              <div className="dgipr-text">
-                {open.summaryMr
-                  .split(/\n\s*\n/)
-                  .map((para) => para.trim())
-                  .filter(Boolean)
-                  .map((para, index) => (
-                    <motion.p key={index} variants={ITEM}>
-                      {para}
-                    </motion.p>
-                  ))}
-              </div>
-
-              {open.tags.length > 0 ? (
-                <div className="dgipr-tags">
-                  <p className="dgipr-label">{DGIPR_MR.tags}</p>
-                  <ul className="dgipr-tag-list">
-                    {open.tags.map((tag) => (
-                      <li key={tag} className="dgipr-tag">
-                        {tag}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              {/* The three things a reader can do with the release in front of
-                  them: open its own page, keep the editable copy, or forward
-                  it. Together rather than scattered, because they are one
-                  decision — "and now what" — asked at the foot of the document
-                  the reader has just finished. */}
-              <ReleaseActions
-                release={open}
-                onShare={isShareable(open) ? () => shareOne(open) : undefined}
-              />
-
-              {open.pdfUrl ? (
-                <a
-                  className="dgipr-pdf"
-                  href={open.pdfUrl}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  {DGIPR_MR.readPdf}
-                  <ArrowUpRight size={14} strokeWidth={2.2} aria-hidden />
-                </a>
-              ) : null}
-
-              {/* The release on mahasamvad.in. Not a "read more" — the body above
-                  is already the release in full — but attribution the reader can
-                  follow, which matters more here than anywhere else on the map:
-                  this panel is the one place the app prints a whole document, and
-                  a government notice should be checkable against the department
-                  that issued it. Only the live rows have one; a release that came
-                  through this desk has no mahasamvad permalink. */}
-              {open.url ? (
-                <a
-                  className="dgipr-pdf"
-                  href={open.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  {DGIPR_MR.readSource}
-                  <ArrowUpRight size={14} strokeWidth={2.2} aria-hidden />
-                </a>
-              ) : null}
-
-              {/* The rest of this district's notices. A stacked mark opens one
-                  and would otherwise hide the others behind the map. */}
-              {others.length > 0 ? (
-                <div className="dgipr-more">
-                  <p className="dgipr-label">
-                    {releaseCountMr(releases.length)} · {datelineMr(open)}
-                  </p>
-
-                  {others.map((release) => (
-                    <button
-                      key={release.id}
-                      type="button"
-                      className="dgipr-more-row"
-                      onClick={() => onOpen(release)}
-                    >
-                      <span className="dgipr-more-category">{release.categoryMr}</span>
-                      <span className="dgipr-more-headline">{release.titleMr}</span>
-                      <span className="dgipr-more-date numeric">
-                        {releaseDateMr(release.date)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-
-            {/* The foot used to be the directorate's name and nothing else — a
-                credit under a document. It still carries it, but the credit is
-                no longer the only thing there, because a citizen who has read
-                one release from a district almost always wants the rest of
-                them, and until now the only way on was back to the map.
-
-                It points at `/news?district=…` and not at `/desk?district=…`.
-                The desk is a queue with a status column, which is an official's
-                question; this panel is read by whoever opened the map. */}
             <footer className="news-panel-foot dgipr-foot">
               <p>{DGIPR_MR.issuer}</p>
 
@@ -438,7 +312,7 @@ export function DgiprPanel({ releases, openId, onOpen, onClose }: DgiprPanelProp
           Picking one opens it in the panel and hands the map back, because the
           panel is still where a release is read in full. */}
       <PanelModal
-        open={expanded && Boolean(open)}
+        open={expanded && releases.length > 0}
         onClose={closeExpanded}
         /* One press, one step back — preview, share mode, grid, panel. The
            preview stops Escape before it reaches here (see the capture-phase
@@ -447,8 +321,8 @@ export function DgiprPanel({ releases, openId, onOpen, onClose }: DgiprPanelProp
         onEscape={shareMode ? exitShareMode : closeExpanded}
         className="dgipr-modal"
         eyebrow={<span className="dgipr-eyebrow">{eyebrow}</span>}
-        title={open ? datelineMr(open) : ""}
-        tally={releaseCountMr(releases.length)}
+        title={districtTitle}
+        tally={tallyText}
         /* No `foot`. The directorate's name used to close this sheet as a
            credit; it now opens the share message as its first bold line, which
            is where it is actually read. The docked panel keeps its own. */
@@ -541,14 +415,14 @@ function ReleaseActions({
       {readerUrl ? (
         <Link className="dgipr-action dgipr-action-read" href={readerUrl}>
           <ArrowUpRight size={14} strokeWidth={2.2} aria-hidden />
-          {DGIPR_MR.read}
+          पूर्ण बातमी वाचा
         </Link>
       ) : null}
 
       {release.docxUrl ? (
         <a className="dgipr-action" href={release.docxUrl} download>
           <FileDown size={14} strokeWidth={2.2} aria-hidden />
-          {DGIPR_MR.downloadDocx}
+          वर्ड फाइल (DOCX)
         </a>
       ) : null}
 
@@ -560,7 +434,7 @@ function ReleaseActions({
           aria-haspopup="dialog"
         >
           <Share2 size={14} strokeWidth={2.2} aria-hidden />
-          {DGIPR_MR.share}
+          शेअर करा
         </button>
       ) : null}
     </div>
@@ -680,22 +554,18 @@ function ReleaseCard({
             district's notices actually has, and they come first because a
             badge is read before a headline is. */}
         <div className="dgipr-card-badges">
+          {release.categoryMr ? (
+            <span className="dgipr-card-badge dgipr-category">{release.categoryMr}</span>
+          ) : null}
           {who ? (
             <span className="dgipr-card-badge dgipr-card-badge-who">{who}</span>
           ) : null}
-
-          {/* The canonical district, not the dateline. The dateline is the
-              word the department wrote and it is printed in the panel's head;
-              this is the district the map filed the release under, which is
-              what the reader just clicked and what the footer link carries. */}
           <span className="dgipr-card-badge dgipr-card-badge-where">
             {release.districtId ? districtNameMr(release.districtId) : DGIPR_MR.statewide}
           </span>
         </div>
 
         <div className="dgipr-card-meta">
-          <span className="dgipr-category">{release.categoryMr}</span>
-
           <time className="dgipr-card-date numeric" dateTime={release.date}>
             {releaseDateMr(release.date)}
           </time>
@@ -717,10 +587,10 @@ function ReleaseCard({
         </button>
 
         {summary ? (
-          <>
+          <div className="dgipr-card-summary">
             <p className="dgipr-card-label">{DGIPR_MR.summary60}</p>
             <p className="dgipr-card-lead">{summary}</p>
-          </>
+          </div>
         ) : null}
 
         {shareMode && !shareable ? (

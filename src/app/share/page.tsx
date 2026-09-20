@@ -11,6 +11,7 @@ import {
   IconCheck,
   IconCopy,
   IconLayers,
+  IconMail,
   IconShare,
   IconSparkle,
   IconWhatsApp,
@@ -35,6 +36,11 @@ export default function SharePage() {
   const [scope, setScope] = useState<'fold' | 'picked' | null>(null)
   const [busy, setBusy] = useState(false)
   const [copied, setCopied] = useState<number | null>(null)
+  const [emailToast, setEmailToast] = useState<{
+    index: number
+    type: 'ok' | 'error'
+    message: string
+  } | null>(null)
 
   const load = useCallback(async (d: string) => {
     setArticles(null)
@@ -82,6 +88,34 @@ export default function SharePage() {
     await navigator.clipboard.writeText(text)
     setCopied(i)
     setTimeout(() => setCopied(null), 1800)
+  }
+
+  async function handleEmail(text: string, i: number) {
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error('क्लिपबोर्ड उपलब्ध नाही')
+      }
+      await navigator.clipboard.writeText(text)
+      setEmailToast({
+        index: i,
+        type: 'ok',
+        message: 'पूर्ण सारांश कॉपी केला आहे. Gmail मध्ये Ctrl + V करा.',
+      })
+
+      const subject = `DGIPR Daily News Summary - ${date}`
+      const url = `https://mail.google.com/mail/?view=cm&fs=1&tf=1&su=${encodeURIComponent(subject)}`
+      window.open(url, '_blank', 'noopener,noreferrer')
+
+      setTimeout(() => {
+        setEmailToast((cur) => (cur?.index === i ? null : cur))
+      }, 6000)
+    } catch {
+      setEmailToast({
+        index: i,
+        type: 'error',
+        message: 'क्लिपबोर्डवर कॉपी करता आले नाही. कृपया ब्राउझरमध्ये परवानगी द्या किंवा स्वतः कॉपी करा.',
+      })
+    }
   }
 
   const list = articles ?? []
@@ -254,10 +288,38 @@ export default function SharePage() {
                         </>
                       )}
                     </button>
+                    <button
+                      type="button"
+                      className="btn-ghost btn-sm"
+                      onClick={() => handleEmail(m, i)}
+                    >
+                      <IconMail size={14} /> ईमेल करा
+                    </button>
                     <span className="num ml-auto self-center text-xs" style={{ color: 'var(--faint)' }}>
                       {toDevanagariDigits(m.length)} अक्षरे
                     </span>
                   </div>
+
+                  {emailToast && emailToast.index === i && (
+                    <div
+                      className="flex items-center justify-between gap-2 border-t px-4 py-2.5 text-xs font-medium"
+                      style={{
+                        background: emailToast.type === 'ok' ? 'var(--ok-soft)' : 'var(--warn-soft)',
+                        color: emailToast.type === 'ok' ? 'var(--ok)' : 'var(--warn)',
+                        borderColor: 'var(--edge)',
+                      }}
+                    >
+                      <span>{emailToast.message}</span>
+                      <button
+                        type="button"
+                        className="btn-quiet text-xs"
+                        onClick={() => setEmailToast(null)}
+                        aria-label="बंद करा"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

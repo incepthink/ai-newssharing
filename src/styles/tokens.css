@@ -194,68 +194,48 @@
      a colour this file happens to know. A semantic is a promise that the map
      looks like the rest of the product. */
 
-  /* Ground. The product's newsprint cream, edge to edge — the same `--paper`
-     the masthead and every other page stand on. */
-  --color-canvas: var(--paper);
+  /* Ground. Warm off-white, elegant and clean */
+  --color-canvas: #faf8f5;
 
-  /* Surfaces. White and lifted, which survives the move unchanged: the house
-     system also separates a card from the ground by elevation. What it adds is
-     a hairline, so `.map-frame`'s panels now read as the product's cards. */
-  --color-surface: var(--surface);
-  --color-surface-raised: var(--surface);
-  --color-surface-sunken: var(--surface-sunk);
-  --color-surface-hover: var(--surface-hover);
+  /* Surfaces. Pure white cards with soft hairline borders */
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #f7f5f2;
+  --color-surface-hover: #fdf2f4;
 
-  /* The state. Still the quietest surface on screen and still read by value
-     rather than by hue — that argument was never about lavender, it was about
-     the land not competing with the marks standing on it. White on cream does
-     the same job cream on lavender did. */
-  --color-land: var(--surface);
-  --color-land-deep: var(--surface-sunk);
+  /* The state */
+  --color-land: #ffffff;
+  --color-land-deep: #f7f5f2;
 
-  /* The coastline. The product's ink at the same weight the lavender system
-     used: enough that the outline is unambiguously a line, short of full ink so
-     the district hairlines inside it keep their place in the hierarchy. */
-  --color-coast: rgb(25 23 20 / 0.42);
+  /* The coastline */
+  --color-coast: rgb(26 26 26 / 0.36);
 
-  /* Lines. The house rules, by reference. `globals.css` has exactly the two
-     weights this file wants — `--edge` divides content inside a card and
-     `--edge-strong` divides one region from another — so there is nothing to
-     translate. `line-ink` has no counterpart and stays an alpha of the ink. */
-  --color-line: var(--edge);
-  --color-line-strong: var(--edge-strong);
-  --color-line-ink: rgb(25 23 20 / 0.24);
+  /* Lines. Clean, refined hairlines */
+  --color-line: #e8e5e0;
+  --color-line-strong: #d8d4cd;
+  --color-line-ink: rgb(26 26 26 / 0.20);
 
-  /* District borders. Lighter than the coast by design: the coast carries the
-     state's edge, these only have to divide, and 36 of them at coast weight
-     turned the state into a net with the map caught in it. */
-  --color-line-district: var(--edge-strong);
+  /* District borders */
+  --color-line-district: #dfdbd4;
 
-  /* The district holding whatever the reader has open. Maroon, because maroon
-     is what "picked" looks like everywhere else in this product. The wash under
-     it stays almost nothing — a district is 1/36th of the sheet, and any real
-     tint at that size buries the marks standing on it. */
-  --color-line-district-lit: var(--accent);
-  --color-district-lit: rgb(140 47 31 / 0.10);
+  /* The district holding whatever the reader has open. Deep maroon. */
+  --color-line-district-lit: #8F1835;
+  --color-district-lit: rgb(143 24 53 / 0.12);
 
-  /* Text — three levels, and no fourth. The house ink, its secondary and its
-     muted, in that order. */
-  --color-text: var(--ink);
-  --color-text-muted: var(--text-secondary);
-  --color-text-subtle: var(--muted);
+  /* Text: Dark charcoal & muted gray */
+  --color-text: #1a1a1a;
+  --color-text-muted: #595550;
+  --color-text-subtle: #7a756e;
   --color-text-inverse: #ffffff;
 
-  /* Accent. The institution's maroon, and the rule it is spent under is the
-     house rule: it marks the thing you are meant to press and the thing you
-     have picked, and it appears nowhere else. `--ring` is what `globals.css`
-     puts behind a focused control, so the map's focus halo is the product's. */
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-deep: var(--accent-press);
-  --color-accent-soft: var(--accent-soft);
-  --color-accent-wash: var(--ring);
+  /* Accent: Deep maroon / burgundy (#8F1835) */
+  --color-accent: #8F1835;
+  --color-accent-hover: #7a132c;
+  --color-accent-deep: #680f24;
+  --color-accent-soft: #fdf2f4;
+  --color-accent-wash: #fbf0f2;
   --color-on-accent: #ffffff;
-  --color-focus: var(--accent);
+  --color-focus: #8F1835;
 
   /* Official — the government layer, and the only second hue the map carries.
 
@@ -351,17 +331,17 @@
      subject is a map. */
   --gradient-canvas: linear-gradient(
     155deg,
-    var(--surface-2) 0%,
-    var(--paper) 45%,
-    var(--surface-sunk) 100%
+    #faf8f5 0%,
+    #f6f4ef 45%,
+    #f2eee7 100%
   );
 
   /* The state. Almost-white, with just enough fall across it that a 3000px
      silhouette is not dead flat. */
   --gradient-land: linear-gradient(
     155deg,
-    var(--surface) 0%,
-    var(--surface-sunk) 100%
+    #ffffff 0%,
+    #f7f5f2 100%
   );
 
   /* Used on type only — never as a fill for a shape that means something. A
@@ -371,9 +351,9 @@
      a different site's stylesheet leaking in. */
   --gradient-press: linear-gradient(
     100deg,
-    var(--accent-press) 0%,
-    var(--accent) 60%,
-    var(--accent-hover) 100%
+    #680f24 0%,
+    #8F1835 60%,
+    #a82243 100%
   );
 
   /* A hairline that fades out at both ends — the house divider. */
@@ -489,8 +469,8 @@
      it. Lighter than the violet version was: a saturated violet can carry a
      0.45 cast on a pale ground and read as a glow, where the same weight of a
      dark red on cream reads as a bruise. */
-  --shadow-accent: 0 8px 20px -6px rgb(140 47 31 / 0.30);
-  --shadow-accent-hover: 0 12px 28px -6px rgb(140 47 31 / 0.38);
+  --shadow-accent: 0 8px 20px -6px rgb(143 24 53 / 0.28);
+  --shadow-accent-hover: 0 12px 28px -6px rgb(143 24 53 / 0.35);
 
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);

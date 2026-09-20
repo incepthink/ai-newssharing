@@ -54,8 +54,9 @@ export function NewsBrowser({
   }, [])
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <>
+      <div className="space-y-6">
+        <PageHeader
         eyebrow="महासंवाद · नागरिकांसाठी"
         title={NEWS_LABEL_MR}
         description="राज्य शासनाच्या योजना, निर्णय आणि उपक्रमांवरील सविस्तर बातम्या. मंत्री, विभाग किंवा जिल्ह्यानुसार शोधा, वर्ड फाइल उतरवा, शेअर करा — किंवा बातमीबद्दल थेट प्रश्न विचारा."
@@ -125,11 +126,12 @@ export function NewsBrowser({
         </div>
       )}
 
-      <p className="pt-2 text-center text-xs leading-relaxed" style={{ color: 'var(--faint)' }}>
-        माहिती व जनसंपर्क महासंचालनालय, महाराष्ट्र शासन
-        <br />
-        या पानावरील बातम्या हे मांडणी दाखविण्यासाठीचा प्रातिनिधिक नमुना मजकूर आहे.
-      </p>
+        <p className="pt-2 text-center text-xs leading-relaxed" style={{ color: 'var(--faint)' }}>
+          माहिती व जनसंपर्क महासंचालनालय, महाराष्ट्र शासन
+          <br />
+          या पानावरील बातम्या हे मांडणी दाखविण्यासाठीचा प्रातिनिधिक नमुना मजकूर आहे.
+        </p>
+      </div>
 
       {/* Order matters: whatever is rendered last sits on top, so the assistant
           opens over the share sheet rather than under it. */}
@@ -142,6 +144,6 @@ export function NewsBrowser({
           onClose={() => setAskOpen(false)}
         />
       )}
-    </div>
+    </>
   )
 }

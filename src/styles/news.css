@@ -33,10 +33,10 @@
   max-width: 100%;
   overflow: hidden;
   align-items: stretch;
-  /* The band is printed on the sheet, not floating over it: one heavy rule
-     underneath — the band is lifted off the wash rather than ruled off it. */
+  /* Lifted cleanly with a subtle border and shadow */
   background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid var(--color-line);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.04);
   color: var(--color-text);
 }
 
@@ -61,7 +61,7 @@
   background: var(--color-accent);
   font-family: var(--font-marathi);
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
   color: var(--color-on-accent);
   white-space: nowrap;
@@ -185,32 +185,33 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem clamp(0.8rem, 1.6vw, 1.25rem) 0.55rem;
-  background: var(--color-accent);
+  background: transparent;
+  border-left: 1px solid var(--color-line);
   font-family: var(--font-marathi);
   font-size: var(--text-caption);
   font-weight: 600;
   line-height: 1.3;
-  color: var(--color-on-accent);
+  color: var(--color-accent);
   white-space: nowrap;
-  transition: background 140ms var(--ease-out-soft);
+  transition:
+    background 140ms var(--ease-out-soft),
+    color 140ms var(--ease-out-soft);
 }
 
 .news-ticker-action:hover {
-  background: var(--color-accent-hover);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
 }
 
-/* On a phone the label loses its word and keeps its dot: at this width the
-   strip is mostly label otherwise, and the headlines are what it is for. The
-   action at the other end loses its word for the same reason and on the same
-   terms — the list icon is unambiguous and the link keeps its `aria-label`. */
+/* On mobile/narrow screens */
 @media (max-width: 40rem) {
   .news-ticker-label {
-    padding: 0.45rem 0.7rem 0.5rem;
+    padding: 0.45rem 0.65rem 0.5rem;
     font-size: 0.8125rem;
   }
 
   .news-ticker-action {
-    padding: 0.45rem 0.7rem 0.5rem;
+    padding: 0.45rem 0.65rem 0.5rem;
   }
 
   .news-ticker-action-word {
@@ -229,6 +230,18 @@
       #000 calc(100% - 1.25rem),
       transparent 100%
     );
+  }
+}
+
+@media (max-width: 23rem) {
+  .news-ticker-label {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
+    gap: 0.3rem;
+  }
+
+  .news-ticker-action {
+    padding: 0.4rem 0.5rem;
   }
 }
 

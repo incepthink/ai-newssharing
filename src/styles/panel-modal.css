@@ -36,13 +36,15 @@
   position: relative;
   z-index: 1;
   display: flex;
-  width: min(84rem, 100%);
-  height: 100%;
+  width: min(78rem, 100%);
+  height: auto;
+  max-height: calc(100vh - clamp(1rem, 4vh, 3.5rem));
   flex-direction: column;
   overflow: hidden;
   border-radius: var(--radius-xl);
   background: var(--color-surface);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 20px 40px -12px rgb(26 26 48 / 0.22), 0 0 0 1px rgb(0 0 0 / 0.05);
+  border: 1px solid var(--color-line);
 }
 
 /* The panel's header at the panel's own proportions, one size up. The eyebrow
@@ -55,7 +57,8 @@
   justify-content: space-between;
   gap: 1rem;
   padding: clamp(0.9rem, 2vw, 1.4rem) clamp(1rem, 2.2vw, 1.6rem);
-  border-bottom: var(--rule-line);
+  border-bottom: 1px solid var(--color-line-strong);
+  background: var(--color-surface);
 }
 
 .panel-modal-heading {
@@ -65,9 +68,9 @@
 .panel-modal-title {
   margin-top: 0.15rem;
   font-family: var(--font-marathi);
-  font-size: clamp(1.5rem, 1.1rem + 1.1vw, 2rem);
-  font-weight: 600;
-  line-height: 1.18;
+  font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1.2;
   color: var(--color-text);
 }
 
@@ -84,25 +87,61 @@
   padding: clamp(0.9rem, 2vw, 1.4rem) clamp(1rem, 2.2vw, 1.6rem);
 }
 
-/* The one thing width buys.
-
-   `auto-fill` and not `auto-fit`: a district that filed two articles gets two
-   cards at card width with the rest of the row empty, rather than two cards
-   stretched across an entire page — a headline set across 40rem is not a
-   headline anyone reads, and the grid should look like a grid whether it is
-   holding two of these or forty.
-
-   `align-items: start` so a card with no picture and a two-line headline stays
-   the height it needs instead of being pulled to the tallest in its row. */
+/* Modern responsive grid that distributes cards harmoniously across the modal width. */
 .panel-modal-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20.5rem), 1fr));
   align-items: start;
-  gap: clamp(0.7rem, 1.2vw, 1rem);
+  gap: clamp(0.85rem, 1.4vw, 1.25rem);
+}
+
+/* When there is only one article (like in Screenshot 1), present it as a balanced,
+   centered card rather than leaving ~70% empty void. */
+.panel-modal-grid > *:only-child {
+  max-width: 48rem;
+  margin: 0.5rem auto;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .panel-modal-grid > .news-card:only-child {
+    display: grid;
+    grid-template-columns: 18rem 1fr;
+    align-items: stretch;
+  }
+
+  .panel-modal-grid > .news-card:only-child .news-card-image {
+    height: 100%;
+    min-height: 13rem;
+    max-height: 18rem;
+    border-bottom: 0;
+    border-right: 1px solid var(--color-line);
+  }
+
+  .panel-modal-grid > .news-card:only-child .news-card-body {
+    padding: 1.25rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .panel-modal-grid > .news-card:only-child .news-card-headline {
+    font-size: 1.2rem;
+    line-height: 1.45;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+
+  .panel-modal-grid > .news-card:only-child .news-card-standfirst {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin-top: 0.5rem;
+  }
 }
 
 .panel-modal-foot {
   padding: 0.7rem clamp(1rem, 2.2vw, 1.6rem) 0.85rem;
+  border-top: 1px solid var(--color-line);
 }
 
 /* --- An article, as a card ------------------------------------------------
@@ -120,15 +159,19 @@
   gap: 0;
   padding: 0;
   overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
   background: var(--color-surface);
   box-shadow: var(--shadow-xs);
   transition:
     box-shadow 160ms var(--ease-out-soft),
+    border-color 160ms var(--ease-out-soft),
     transform 160ms var(--ease-out-soft);
 }
 
 .panel-modal-grid .news-card:hover {
   background: var(--color-surface);
+  border-color: var(--color-line-strong);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
@@ -151,25 +194,32 @@
 
 .panel-modal-grid .news-card-image {
   width: 100%;
-  height: 9rem;
+  height: 10.5rem;
+  object-fit: cover;
   border-radius: 0;
+  border-bottom: 1px solid var(--color-line);
 }
 
 .panel-modal-grid .news-card-body {
-  padding: 0.7rem 0.85rem 0.9rem;
+  padding: 0.85rem 1rem 1rem;
 }
 
 .panel-modal-grid .news-card-headline {
-  font-size: 1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
   line-height: 1.45;
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
+  color: var(--color-text);
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 .panel-modal-grid .news-card-standfirst {
   font-size: var(--text-caption);
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+  margin-top: 0.35rem;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 .panel-modal-grid .news-card-out {
@@ -348,11 +398,12 @@
 
 @media (max-width: 860px) {
   .panel-modal-layer {
-    padding: 0;
+    padding: 0.75rem;
   }
 
   .panel-modal-sheet {
-    border-radius: 0;
+    max-height: calc(100vh - 1.5rem);
+    border-radius: var(--radius-lg);
   }
 
   /* Three things do not fit on one line at this width, so the head wraps and
@@ -360,6 +411,8 @@
      box squeezed against a close button is a search box nobody aims at. */
   .panel-modal-head {
     flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
   }
 
   .panel-modal-heading {
@@ -375,13 +428,34 @@
     max-width: none;
   }
 
-  /* One column, and the picture shrinks with it: a 9rem photograph on a phone
-     pushes the second headline off the screen. */
+  /* One column on mobile screens */
   .panel-modal-grid {
     grid-template-columns: 1fr;
+    gap: 0.85rem;
   }
 
   .panel-modal-grid .news-card-image {
-    height: 7rem;
+    height: 8.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .panel-modal-layer {
+    padding: 0;
+  }
+
+  .panel-modal-sheet {
+    height: 100%;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: 0;
+  }
+
+  .panel-modal-body {
+    padding: 0.75rem 0.85rem 1rem;
+  }
+
+  .panel-modal-title {
+    font-size: 1.35rem;
   }
 }

@@ -125,6 +125,12 @@ export const IconMessage = (p: IconProps) => (
 export const IconSend = (p: IconProps) => (
   <Icon {...p}><path d="M20.5 3.5 10.8 13.2" /><path d="M20.5 3.5 14.3 20.5l-3.5-7.3-7.3-3.5Z" /></Icon>
 )
+export const IconMail = (p: IconProps) => (
+  <Icon {...p}>
+    <rect width="20" height="16" x="2" y="4" rx="2" />
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+  </Icon>
+)
 export const IconTrash = (p: IconProps) => (
   <Icon {...p}><path d="M4 6.5h16" /><path d="M9.5 6.5V4.8A1.3 1.3 0 0 1 10.8 3.5h2.4a1.3 1.3 0 0 1 1.3 1.3v1.7" /><path d="M6.5 6.5 7.4 19a1.5 1.5 0 0 0 1.5 1.4h6.2a1.5 1.5 0 0 0 1.5-1.4l.9-12.5" /><path d="M10.5 10.5v6M13.5 10.5v6" /></Icon>
 )

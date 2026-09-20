@@ -10,10 +10,13 @@ const HEADER_RULE = '-----------'
 const ARTICLE_RULE = '──────────────'
 
 /**
- * WhatsApp's hard ceiling is 65,536 characters, but clients get unhappy well
- * before that. We split at article boundaries and never mid-article.
+ * WhatsApp's hard technical message payload limit is 65,536 characters.
+ * We enforce this protocol ceiling (with a safety margin for framing)
+ * so the day's fold stays as ONE continuous message under all normal conditions.
+ * We split strictly at article boundaries and never mid-article only if
+ * this technical ceiling is exceeded.
  */
-const MAX_CHARS = 3500
+const WHATSAPP_MAX_CHARS = 65000
 
 export interface ArticleMessage {
   article: Article
@@ -81,7 +84,7 @@ export function buildMessages(
   let current = head + '\n'
 
   for (const b of blocks) {
-    if (current.length + b.length > MAX_CHARS && current !== head + '\n') {
+    if (current.length + b.length > WHATSAPP_MAX_CHARS && current !== head + '\n') {
       messages.push(current.trimEnd())
       current = head + '\n'
     }

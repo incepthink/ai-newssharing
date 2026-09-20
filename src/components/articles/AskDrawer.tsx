@@ -137,7 +137,12 @@ export function AskDrawer({
   const prompts = article ? QUICK_PROMPTS : QUICK_PROMPTS_NO_CONTEXT
 
   return (
-    <Overlay onClose={onClose} labelledBy={TITLE_ID} panelClassName="drawer">
+    <Overlay
+      onClose={onClose}
+      labelledBy={TITLE_ID}
+      overlayClassName="overlay-drawer"
+      panelClassName="drawer"
+    >
       <OverlayHeader
         id={TITLE_ID}
         eyebrow="महासंवाद सहाय्यक"
@@ -147,138 +152,171 @@ export function AskDrawer({
 
       {/* --- Context banner ------------------------------------------------ */}
       <div
-        className="border-b px-4 py-2.5"
+        className="shrink-0 border-b px-4 py-2"
         style={{
           borderColor: article ? 'var(--accent-edge)' : 'var(--edge)',
           background: article ? 'var(--accent-soft)' : 'var(--surface-2)',
         }}
       >
-        <div className="flex items-start gap-2">
+        <div className="flex items-center gap-2">
           <IconSparkle
             size={13}
-            className="mt-0.5 shrink-0"
+            className="shrink-0"
             style={{ color: article ? 'var(--accent)' : 'var(--faint)' }}
           />
           <div className="min-w-0 grow">
-            <div className="eyebrow" style={{ color: article ? 'var(--accent)' : 'var(--faint)' }}>
-              संदर्भ लेख
-            </div>
-            <div className="mt-0.5 line-clamp-2 text-xs font-semibold leading-snug">
-              {article ? article.title : 'निवडलेला नाही — सर्वसाधारण प्रश्न विचारा'}
+            <div className="flex items-center gap-1.5 overflow-hidden">
+              <span
+                className="eyebrow shrink-0 text-[0.625rem]"
+                style={{ color: article ? 'var(--accent)' : 'var(--muted)' }}
+              >
+                संदर्भ लेख:
+              </span>
+              <span
+                className="truncate text-xs font-medium"
+                style={{ color: article ? 'var(--text-primary)' : 'var(--muted)' }}
+              >
+                {article ? article.title : 'निवडलेला नाही — सर्वसाधारण प्रश्न'}
+              </span>
             </div>
           </div>
           {article && onClearArticle && (
             <button
               type="button"
-              className="btn-quiet btn-sm btn-icon shrink-0"
+              className="btn-quiet btn-sm btn-icon h-6 w-6 shrink-0"
               onClick={clearContext}
               aria-label="संदर्भ लेख काढा"
               title="संदर्भ लेख काढा"
             >
-              <IconClose size={13} />
+              <IconClose size={12} />
             </button>
           )}
         </div>
       </div>
 
       {/* --- Thread -------------------------------------------------------- */}
-      <div ref={thread} className="scroll-slim grow space-y-2.5 overflow-y-auto px-4 py-4">
-        {turns.length === 0 && (
-          <div className="py-6 text-center">
-            <p className="text-sm font-semibold">काय जाणून घ्यायचे आहे?</p>
+      <div
+        ref={thread}
+        className="scroll-slim flex-1 min-h-0 overflow-y-auto"
+      >
+        {turns.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+            <div
+              className="mb-3 flex h-10 w-10 items-center justify-center rounded-full"
+              style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
+            >
+              <IconSparkle size={20} />
+            </div>
+            <h3 className="display text-base font-semibold" style={{ color: 'var(--ink)' }}>
+              काय जाणून घ्यायचे आहे?
+            </h3>
             <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
               {article
                 ? 'उत्तरे फक्त या बातमीतील माहितीवर आधारित असतील.'
                 : 'एखादी बातमी उघडून विचारल्यास उत्तरे त्या बातमीपुरती मर्यादित राहतील.'}
             </p>
           </div>
-        )}
+        ) : (
+          <div className="space-y-3 p-4">
+            {turns.map((t, i) =>
+              t.role === 'note' ? (
+                <div key={i} className="flex items-center gap-2 py-1">
+                  <span className="hairline grow" />
+                  <span className="shrink-0 text-[0.6875rem]" style={{ color: 'var(--faint)' }}>
+                    {t.content}
+                  </span>
+                  <span className="hairline grow" />
+                </div>
+              ) : (
+                <div
+                  key={i}
+                  className={
+                    t.role === 'user'
+                      ? 'bubble bubble-user'
+                      : t.failed
+                        ? 'bubble bubble-error'
+                        : 'bubble bubble-ai'
+                  }
+                >
+                  {t.content}
+                </div>
+              ),
+            )}
 
-        {turns.map((t, i) =>
-          t.role === 'note' ? (
-            <div key={i} className="flex items-center gap-2 py-1">
-              <span className="hairline grow" />
-              <span className="shrink-0 text-[0.6875rem]" style={{ color: 'var(--faint)' }}>
-                {t.content}
-              </span>
-              <span className="hairline grow" />
-            </div>
-          ) : (
-            <div
-              key={i}
-              className={
-                t.role === 'user'
-                  ? 'bubble bubble-user'
-                  : t.failed
-                    ? 'bubble bubble-error'
-                    : 'bubble bubble-ai'
-              }
-            >
-              {t.content}
-            </div>
-          ),
-        )}
-
-        {busy && (
-          <div className="bubble bubble-ai" aria-label="उत्तर तयार होत आहे">
-            <span className="typing"><span /><span /><span /></span>
+            {busy && (
+              <div className="bubble bubble-ai" aria-label="उत्तर तयार होत आहे">
+                <span className="typing"><span /><span /><span /></span>
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* --- Quick prompts and composer ------------------------------------ */}
-      <div className="border-t px-4 py-3" style={{ borderColor: 'var(--edge)' }}>
-        <div className="scroll-slim -mx-1 mb-2.5 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          {prompts.map((p) => (
-            <button
-              key={p}
-              type="button"
-              className="chip-action shrink-0"
-              onClick={() => send(p)}
-              disabled={busy}
-            >
-              {p}
-            </button>
-          ))}
+      <div
+        className="shrink-0 border-t"
+        style={{ borderColor: 'var(--edge)', background: 'var(--surface)' }}
+      >
+        {/* Suggested questions container */}
+        <div className="px-4 pt-2.5 pb-1">
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto py-1">
+            {prompts.map((p) => (
+              <button
+                key={p}
+                type="button"
+                className="chip-action shrink-0 whitespace-nowrap text-xs"
+                onClick={() => send(p)}
+                disabled={busy}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <form
-          className="flex items-end gap-1.5"
-          onSubmit={(e) => { e.preventDefault(); send(draft) }}
-        >
-          <input
-            className="field grow"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="तुमचा प्रश्न लिहा…"
-            aria-label="प्रश्न"
-            disabled={busy}
-          />
-          <button
-            type="submit"
-            className="btn-primary btn-icon shrink-0"
-            disabled={busy || draft.trim() === ''}
-            aria-label="पाठवा"
+        {/* Input composer */}
+        <div className="px-4 pb-3 pt-1">
+          <form
+            className="flex items-center gap-2"
+            onSubmit={(e) => { e.preventDefault(); send(draft) }}
           >
-            <IconSend size={14} />
-          </button>
-          {turns.length > 0 && (
-            <button
-              type="button"
-              className="btn-quiet btn-icon shrink-0"
-              onClick={() => setTurns([])}
+            <input
+              className="field grow"
+              style={{ height: '2.5rem' }}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="तुमचा प्रश्न लिहा…"
+              aria-label="प्रश्न"
               disabled={busy}
-              aria-label="संभाषण साफ करा"
-              title="संभाषण साफ करा"
+            />
+            <button
+              type="submit"
+              className="btn-primary btn-icon shrink-0"
+              style={{ height: '2.5rem', width: '2.5rem' }}
+              disabled={busy || draft.trim() === ''}
+              aria-label="पाठवा"
             >
-              <IconTrash size={14} />
+              <IconSend size={15} />
             </button>
-          )}
-        </form>
+            {turns.length > 0 && (
+              <button
+                type="button"
+                className="btn-quiet btn-icon shrink-0"
+                style={{ height: '2.5rem', width: '2.5rem' }}
+                onClick={() => setTurns([])}
+                disabled={busy}
+                aria-label="संभाषण साफ करा"
+                title="संभाषण साफ करा"
+              >
+                <IconTrash size={15} />
+              </button>
+            )}
+          </form>
 
-        <p className="hint">
-          उत्तरे स्वयंचलितपणे तयार केली जातात. अधिकृत माहितीसाठी मूळ बातमी पहा.
-        </p>
+          <p className="hint mt-2 text-[0.6875rem] leading-tight" style={{ color: 'var(--muted)' }}>
+            उत्तरे स्वयंचलितपणे तयार केली जातात. अधिकृत माहितीसाठी मूळ बातमी पहा.
+          </p>
+        </div>
       </div>
     </Overlay>
   )
