@@ -90,16 +90,18 @@
 /* Modern responsive grid that distributes cards harmoniously across the modal width. */
 .panel-modal-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20.5rem), 1fr));
-  align-items: start;
-  gap: clamp(0.85rem, 1.4vw, 1.25rem);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 23.5rem));
+  align-items: stretch;
+  justify-content: start;
+  gap: clamp(0.85rem, 1.4vw, 1.15rem);
 }
 
-/* When there is only one article (like in Screenshot 1), present it as a balanced,
-   centered card rather than leaving ~70% empty void. */
+/* When there is only one article, present it as a compact, balanced card
+   positioned on the left side of the modal. */
 .panel-modal-grid > *:only-child {
-  max-width: 48rem;
-  margin: 0.5rem auto;
+  max-width: 24.5rem;
+  justify-self: start;
+  margin: 0.25rem 0;
   width: 100%;
 }
 

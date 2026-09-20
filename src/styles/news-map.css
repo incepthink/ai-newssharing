@@ -1027,7 +1027,7 @@
     left: 0;
     bottom: 0;
     width: auto;
-    max-height: 78vh;
+    max-height: calc(100% - clamp(0.75rem, 2vh, 1.25rem));
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     border: 1px solid var(--color-line);
     border-bottom: 0;
@@ -1035,6 +1035,12 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+  }
+
+  .news-panel-head {
+    position: sticky;
+    top: 0;
+    z-index: 5;
   }
 
   .news-panel-list {
@@ -1050,7 +1056,7 @@
 
 @media (max-width: 480px) {
   .news-panel {
-    max-height: 85vh;
+    max-height: calc(100% - 0.75rem);
   }
 
   .news-panel-head {

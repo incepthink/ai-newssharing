@@ -1,6 +1,8 @@
 import { NewsBrowser } from '@/components/articles/NewsBrowser'
 import { SAMPLE_ARTICLES } from '@/lib/articles/sample'
 import { STATEWIDE } from '@/lib/articles/feature'
+import { toFeatureArticle } from '@/lib/articles/from-db'
+import { listArticles } from '@/lib/db'
 import { resolveDistrict } from '@/lib/districts'
 
 /**
@@ -11,33 +13,9 @@ import { resolveDistrict } from '@/lib/districts'
  * many, which is a different job and gets a different shape: an editorial
  * grid, four facets across the top, and a card that opens its own page.
  *
- * There is deliberately no map *on* this page. The grouped district select is
- * a better instrument on a phone — where most of this audience is — than a GIS
- * canvas that costs a few hundred kilobytes to answer the same question worse.
- * What there is instead is a door: `NewsBrowser` carries "नकाशावर पहा" in its
- * header, and `/map` carries "सर्व बातम्यांची यादी" back. Two readings of one
- * corpus, each naming the other.
- *
- * Reading happens at `/news/[id]`, a real page, which is what a forwarded link,
- * a bookmark, a browser's back button and a search engine all expect. What
- * stays floating in the browser is only what is genuinely a detour — the share
- * sheet and the assistant.
- *
- * The page is a server component for one reason: `?district=`. A reader
- * arriving from a district panel on the map has already chosen, and that choice
- * has to be in the first render rather than applied by an effect afterwards —
- * see `NewsBrowser`.
- *
- * NOTE ON THE DATA. The grid below is still `@/lib/articles/sample`, and the
- * map beside it is not: `/map` reads approved rows out of Postgres. The two can
- * be told apart by their ids — a release from the desk is `/news/123` and a
- * sample feature is `/news/<slug>` — and `/news/[id]` serves both, so every
- * link the map hands out resolves. What this listing cannot do yet is *list*
- * the desk's rows, because its four facets are a taxonomy the `articles` table
- * does not carry: `minister` and `department` here are portfolio slugs from
- * `feature.ts`, and the desk stores an `attribution` string and an `office`
- * line. Making them agree is a schema decision rather than a page change, so it
- * is left named here rather than papered over with a guessed mapping.
+ * Data source: Reads approved rows out of Postgres (`articles` table), sharing
+ * the exact same dataset with `/map`. If the database is empty or unavailable,
+ * it gracefully falls back to `SAMPLE_ARTICLES`.
  */
 export const metadata = {
   title: 'बातम्या',
@@ -62,5 +40,15 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
   const district =
     asked === STATEWIDE ? STATEWIDE : (resolveDistrict(asked) ?? '')
 
-  return <NewsBrowser articles={SAMPLE_ARTICLES} initialDistrict={district} />
+  let articles = SAMPLE_ARTICLES
+  try {
+    const dbArticles = await listArticles({ status: 'approved' })
+    if (dbArticles && dbArticles.length > 0) {
+      articles = dbArticles.map(toFeatureArticle)
+    }
+  } catch (err) {
+    console.error('Failed to load articles from database, falling back to sample:', err)
+  }
+
+  return <NewsBrowser articles={articles} initialDistrict={district} />
 }

@@ -51,6 +51,21 @@ export function ArticleCard({
 
   return (
     <article className="card-link relative flex flex-col overflow-hidden">
+      {article.heroImage ? (
+        <div
+          className="relative aspect-[16/9] w-full overflow-hidden border-b"
+          style={{ borderColor: 'var(--edge)', background: 'var(--surface-2)' }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={article.heroImage}
+            alt=""
+            className="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      ) : null}
       <div className="flex grow flex-col p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="badge badge-accent">{categoryLabel(article.category)}</span>

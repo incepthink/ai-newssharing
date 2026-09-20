@@ -226,6 +226,17 @@ export function DgiprPanel({ releases, openId, onOpen, onClose }: DgiprPanelProp
                       ) : null}
                     </div>
 
+                    {release.posterUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        className="dgipr-poster"
+                        src={release.posterUrl}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : null}
+
                     <h3 className="dgipr-panel-card-heading">
                       <Link href={articleUrl} className="dgipr-panel-card-title">
                         {release.titleMr}

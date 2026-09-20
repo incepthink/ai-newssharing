@@ -195,17 +195,14 @@ export function toRelease(article: Article): DgiprRelease {
        what the panel's खुणा row is for. */
     tags: article.bullets ?? [],
     featured: article.category === "cm",
-    posterUrl: null,
+    posterUrl: article.poster_url ?? null,
     /* No PDF: this store holds text and builds its sheets on request. The DOCX
        endpoint is the one that exists, and the reader page stands where a PDF
        would on a curated mahasamvad row. */
     pdfUrl: null,
     docxUrl: releaseDocxHref(article.id),
     readerUrl: releaseHref(article.id),
-    /* No mahasamvad permalink. A release that came through this desk has not
-       been published there by this app, and pointing at a URL that may not
-       exist would be a worse failure than showing no source link at all. */
-    url: null,
+    url: article.source_url ?? null,
   };
 }
 
@@ -234,7 +231,7 @@ function toNewsArticle(release: DgiprRelease, article: Article): NewsArticle {
     section: release.categoryMr,
     headline: release.titleMr,
     description: release.summary60Mr ?? null,
-    imageUrl: null,
+    imageUrl: article.poster_url ?? null,
     author: release.authorMr,
     publishedAt: publishedAt(article),
     modifiedAt: null,

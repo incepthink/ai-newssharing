@@ -38,6 +38,10 @@ export interface Article {
   approved_at: string | null
   /** ISO date (YYYY-MM-DD) of the fold this belongs to. */
   fold_date: string
+  /** Featured image URL from Mahasamvad or desk upload. */
+  poster_url?: string | null
+  /** Canonical source permalink (e.g. Mahasamvad post link). */
+  source_url?: string | null
 }
 
 export interface Fold {

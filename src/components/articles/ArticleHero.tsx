@@ -30,6 +30,7 @@ export function ArticleHero({ article }: { article: FeatureArticle }) {
           alt={article.title}
           fill
           priority
+          unoptimized
           sizes="(min-width: 1024px) 60rem, 100vw"
           className="object-cover"
         />

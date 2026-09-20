@@ -285,6 +285,19 @@ function ReleaseReader({ release }: { release: Article }) {
           </div>
         </header>
 
+        {release.poster_url ? (
+          <figure className="hero-frame mt-5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={release.poster_url}
+              alt={release.title}
+              className="h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </figure>
+        ) : null}
+
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-8">
           {/* The rail is first in the source so that on a phone — where the grid
               collapses to one column — the summary and the actions come before

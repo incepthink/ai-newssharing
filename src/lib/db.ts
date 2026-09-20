@@ -96,7 +96,9 @@ CREATE TABLE IF NOT EXISTS articles (
   submitted_by  TEXT NOT NULL DEFAULT 'dlo',
   submitted_at  TEXT NOT NULL,
   approved_at   TEXT,
-  fold_date     TEXT NOT NULL
+  fold_date     TEXT NOT NULL,
+  poster_url    TEXT,
+  source_url    TEXT
 );
 
 CREATE TABLE IF NOT EXISTS folds (
@@ -111,14 +113,17 @@ CREATE TABLE IF NOT EXISTS folds (
  * so columns introduced after someone's database was created need this.
  */
 const MIGRATIONS = `
-ALTER TABLE articles ADD COLUMN IF NOT EXISTS byline   TEXT;
-ALTER TABLE articles ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'general';
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS byline     TEXT;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS category   TEXT NOT NULL DEFAULT 'general';
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS poster_url TEXT;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS source_url TEXT;
 `
 
 const INDEXES = `
-CREATE INDEX IF NOT EXISTS idx_articles_fold  ON articles(fold_date, status);
-CREATE INDEX IF NOT EXISTS idx_articles_dist  ON articles(district, status);
-CREATE INDEX IF NOT EXISTS idx_articles_cat   ON articles(category, fold_date);
+CREATE INDEX IF NOT EXISTS idx_articles_fold   ON articles(fold_date, status);
+CREATE INDEX IF NOT EXISTS idx_articles_dist   ON articles(district, status);
+CREATE INDEX IF NOT EXISTS idx_articles_cat    ON articles(category, fold_date);
+CREATE INDEX IF NOT EXISTS idx_articles_source ON articles(source_url);
 `
 
 /**
@@ -178,6 +183,8 @@ function toArticle(r: Row): Article {
     submitted_at: r.submitted_at as string,
     approved_at: (r.approved_at as string) ?? null,
     fold_date: r.fold_date as string,
+    poster_url: (r.poster_url as string) ?? null,
+    source_url: (r.source_url as string) ?? null,
   }
 }
 
@@ -199,17 +206,23 @@ export interface CreateArticleInput {
   byline?: string | null
   status?: Status
   submitted_by?: string
+  submitted_at?: string
+  approved_at?: string | null
   fold_date: string
+  poster_url?: string | null
+  source_url?: string | null
 }
 
 export async function createArticle(input: CreateArticleInput): Promise<Article> {
   const row = await one(
     `INSERT INTO articles
       (category, raw_text, title, body, district, language, release_no, office, department,
-       attribution, bullets, dateline, byline, status, submitted_by, submitted_at, fold_date)
+       attribution, bullets, dateline, byline, status, submitted_by, submitted_at, approved_at, fold_date,
+       poster_url, source_url)
      VALUES
       (@category, @raw_text, @title, @body, @district, @language, @release_no, @office, @department,
-       @attribution, @bullets, @dateline, @byline, @status, @submitted_by, @submitted_at, @fold_date)
+       @attribution, @bullets, @dateline, @byline, @status, @submitted_by, @submitted_at, @approved_at, @fold_date,
+       @poster_url, @source_url)
      RETURNING *`,
     {
       category: input.category ?? 'general',
@@ -227,8 +240,11 @@ export async function createArticle(input: CreateArticleInput): Promise<Article>
       byline: input.byline ?? null,
       status: input.status ?? 'pending',
       submitted_by: input.submitted_by ?? 'dlo',
-      submitted_at: new Date().toISOString(),
+      submitted_at: input.submitted_at ?? new Date().toISOString(),
+      approved_at: input.approved_at ?? (input.status === 'approved' ? new Date().toISOString() : null),
       fold_date: input.fold_date,
+      poster_url: input.poster_url ?? null,
+      source_url: input.source_url ?? null,
     },
   )
   return toArticle(row!)
@@ -236,6 +252,11 @@ export async function createArticle(input: CreateArticleInput): Promise<Article>
 
 export async function getArticle(id: number): Promise<Article | null> {
   const r = await one('SELECT * FROM articles WHERE id = @id', { id })
+  return r ? toArticle(r) : null
+}
+
+export async function getArticleBySourceUrl(sourceUrl: string): Promise<Article | null> {
+  const r = await one('SELECT * FROM articles WHERE source_url = @sourceUrl', { sourceUrl })
   return r ? toArticle(r) : null
 }
 
@@ -268,7 +289,7 @@ export async function listArticles(f: ListFilter = {}): Promise<Article[]> {
 
 const UPDATABLE = [
   'title', 'body', 'district', 'language', 'release_no', 'office', 'department',
-  'attribution', 'dateline', 'byline', 'status', 'category',
+  'attribution', 'dateline', 'byline', 'status', 'category', 'poster_url', 'source_url',
 ] as const
 
 export async function updateArticle(id: number, patch: Partial<Article>): Promise<Article | null> {
