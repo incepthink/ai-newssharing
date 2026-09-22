@@ -106,6 +106,12 @@ CREATE TABLE IF NOT EXISTS folds (
   article_order TEXT NOT NULL DEFAULT '[]',
   finalized_at  TEXT
 );
+
+CREATE TABLE IF NOT EXISTS recipients (
+  email      TEXT PRIMARY KEY,
+  name       TEXT,
+  added_at   TEXT NOT NULL
+);
 `
 
 /**
@@ -124,6 +130,8 @@ CREATE INDEX IF NOT EXISTS idx_articles_fold   ON articles(fold_date, status);
 CREATE INDEX IF NOT EXISTS idx_articles_dist   ON articles(district, status);
 CREATE INDEX IF NOT EXISTS idx_articles_cat    ON articles(category, fold_date);
 CREATE INDEX IF NOT EXISTS idx_articles_source ON articles(source_url);
+CREATE INDEX IF NOT EXISTS idx_articles_rel    ON articles(release_no, language);
+CREATE INDEX IF NOT EXISTS idx_recipients_added ON recipients(added_at);
 `
 
 /**
@@ -260,6 +268,24 @@ export async function getArticleBySourceUrl(sourceUrl: string): Promise<Article 
   return r ? toArticle(r) : null
 }
 
+/**
+ * Finds the article a `ms-<release_no>.docx` link refers to. release_no is not
+ * unique — the Marathi and English versions of one release share it — so the
+ * language is part of the key, and the newest row wins if a number was reused.
+ */
+export async function getArticleByReleaseNo(
+  releaseNo: string,
+  language: Language,
+): Promise<Article | null> {
+  const r = await one(
+    `SELECT * FROM articles
+      WHERE release_no = @releaseNo AND language = @language
+      ORDER BY id DESC LIMIT 1`,
+    { releaseNo, language },
+  )
+  return r ? toArticle(r) : null
+}
+
 export interface ListFilter {
   fold_date?: string
   status?: Status
@@ -389,4 +415,40 @@ export async function dailyCounts(from: string, to: string): Promise<{ date: str
     { from, to },
   )
   return rows.map((r) => ({ date: r.date as string, count: Number(r.count) }))
+}
+
+/* ------------------------------------------------------------- recipients */
+
+export interface Recipient {
+  email: string
+  name: string | null
+  added_at: string
+}
+
+/** The saved distribution list for the daily email. */
+export async function listRecipients(): Promise<Recipient[]> {
+  const rows = await all(
+    `SELECT email, name, added_at FROM recipients ORDER BY added_at`,
+  )
+  return rows.map((r) => ({
+    email: r.email as string,
+    name: (r.name as string | null) ?? null,
+    added_at: r.added_at as string,
+  }))
+}
+
+/** Idempotent: re-adding an address refreshes its name and keeps its place. */
+export async function addRecipient(email: string, name?: string | null): Promise<void> {
+  await run(
+    `INSERT INTO recipients (email, name, added_at)
+     VALUES (@email, @name, @added_at)
+     ON CONFLICT (email) DO UPDATE SET name = COALESCE(EXCLUDED.name, recipients.name)`,
+    { email: email.trim().toLowerCase(), name: name ?? null, added_at: new Date().toISOString() },
+  )
+}
+
+export async function removeRecipient(email: string): Promise<void> {
+  await run(`DELETE FROM recipients WHERE email = @email`, {
+    email: email.trim().toLowerCase(),
+  })
 }

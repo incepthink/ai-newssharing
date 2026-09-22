@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { districtName } from '@/lib/districts'
 import { foldWeekdayLineMr, todayIso, toDevanagariDigits } from '@/lib/marathi'
 import type { Article } from '@/lib/types'
+import type { Recipient } from '@/lib/db'
 import {
   DistrictBadge,
   EmptyState,
@@ -41,6 +42,12 @@ export default function SharePage() {
     type: 'ok' | 'error'
     message: string
   } | null>(null)
+  const [mail, setMail] = useState<{ configured: boolean; reason: string | null } | null>(null)
+  const [recipients, setRecipients] = useState<Recipient[]>([])
+  const [openPanel, setOpenPanel] = useState<number | null>(null)
+  const [newAddr, setNewAddr] = useState('')
+  const [attachDocx, setAttachDocx] = useState(true)
+  const [sending, setSending] = useState<number | null>(null)
 
   const load = useCallback(async (d: string) => {
     setArticles(null)
@@ -57,6 +64,19 @@ export default function SharePage() {
   }, [])
 
   useEffect(() => { load(date) }, [date, load])
+
+  // SMTP state and the saved list are fetched once — the send button stays
+  // disabled with a reason rather than failing after the user has typed.
+  useEffect(() => {
+    fetch('/api/email')
+      .then((r) => r.json())
+      .then((d) => setMail({ configured: !!d.configured, reason: d.reason ?? null }))
+      .catch(() => setMail({ configured: false, reason: 'सेवा उपलब्ध नाही' }))
+    fetch('/api/recipients')
+      .then((r) => r.json())
+      .then((d) => setRecipients(d.recipients ?? []))
+      .catch(() => setRecipients([]))
+  }, [])
 
   function toggle(id: number) {
     setPicked((p) => {
@@ -90,31 +110,80 @@ export default function SharePage() {
     setTimeout(() => setCopied(null), 1800)
   }
 
-  async function handleEmail(text: string, i: number) {
+  async function addAddress() {
+    const raw = newAddr.trim()
+    if (!raw) return
     try {
-      if (!navigator.clipboard?.writeText) {
-        throw new Error('क्लिपबोर्ड उपलब्ध नाही')
-      }
-      await navigator.clipboard.writeText(text)
+      const r = await fetch('/api/recipients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: raw }),
+      })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error ?? 'failed')
+      setRecipients(d.recipients ?? [])
+      setNewAddr('')
+    } catch {
+      setEmailToast({
+        index: openPanel ?? 0,
+        type: 'error',
+        message: 'पत्ता जोडता आला नाही. ईमेल पत्ता तपासा.',
+      })
+    }
+  }
+
+  async function dropAddress(email: string) {
+    try {
+      const r = await fetch(`/api/recipients?email=${encodeURIComponent(email)}`, {
+        method: 'DELETE',
+      })
+      const d = await r.json()
+      setRecipients(d.recipients ?? [])
+    } catch {
+      /* the list simply stays as it was */
+    }
+  }
+
+  /**
+   * Sends the message the desk is looking at. The text travels to the server
+   * as-is, so the email carries exactly the preview above — no regeneration.
+   */
+  async function sendEmail(text: string, i: number) {
+    setSending(i)
+    setEmailToast(null)
+    try {
+      const r = await fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          date,
+          subject: `DGIPR Daily News Summary - ${date}`,
+          attachDocx: attachDocx && scope === 'fold',
+        }),
+      })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error ?? 'पाठवता आले नाही')
+
       setEmailToast({
         index: i,
         type: 'ok',
-        message: 'पूर्ण सारांश कॉपी केला आहे. Gmail मध्ये Ctrl + V करा.',
+        message: `${toDevanagariDigits(d.sent ?? 0)} पत्त्यांवर ईमेल पाठवला${
+          d.attached?.length ? ' (DOCX जोडले)' : ''
+        }.`,
       })
-
-      const subject = `DGIPR Daily News Summary - ${date}`
-      const url = `https://mail.google.com/mail/?view=cm&fs=1&tf=1&su=${encodeURIComponent(subject)}`
-      window.open(url, '_blank', 'noopener,noreferrer')
-
+      setOpenPanel(null)
       setTimeout(() => {
         setEmailToast((cur) => (cur?.index === i ? null : cur))
       }, 6000)
-    } catch {
+    } catch (err) {
       setEmailToast({
         index: i,
         type: 'error',
-        message: 'क्लिपबोर्डवर कॉपी करता आले नाही. कृपया ब्राउझरमध्ये परवानगी द्या किंवा स्वतः कॉपी करा.',
+        message: err instanceof Error ? err.message : 'ईमेल पाठवता आला नाही.',
       })
+    } finally {
+      setSending(null)
     }
   }
 
@@ -291,7 +360,9 @@ export default function SharePage() {
                     <button
                       type="button"
                       className="btn-ghost btn-sm"
-                      onClick={() => handleEmail(m, i)}
+                      onClick={() => setOpenPanel(openPanel === i ? null : i)}
+                      disabled={mail !== null && !mail.configured}
+                      title={mail && !mail.configured ? (mail.reason ?? '') : undefined}
                     >
                       <IconMail size={14} /> ईमेल करा
                     </button>
@@ -299,6 +370,93 @@ export default function SharePage() {
                       {toDevanagariDigits(m.length)} अक्षरे
                     </span>
                   </div>
+
+                  {openPanel === i && (
+                    <div
+                      className="space-y-3 border-t px-4 py-3.5"
+                      style={{ borderColor: 'var(--edge)', background: 'var(--surface-2)' }}
+                    >
+                      <div className="text-xs font-semibold" style={{ color: 'var(--muted)' }}>
+                        प्रापतकर्ते
+                      </div>
+
+                      {recipients.length === 0 ? (
+                        <p className="text-xs" style={{ color: 'var(--faint)' }}>
+                          अजून एकही पत्ता नाही. खाली जोडा.
+                        </p>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {recipients.map((r) => (
+                            <span
+                              key={r.email}
+                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs"
+                              style={{ background: 'var(--surface)', border: '1px solid var(--edge)' }}
+                            >
+                              {r.name ? `${r.name} · ${r.email}` : r.email}
+                              <button
+                                type="button"
+                                onClick={() => dropAddress(r.email)}
+                                aria-label={`${r.email} काढून टाका`}
+                                style={{ color: 'var(--faint)' }}
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap gap-2">
+                        <input
+                          type="email"
+                          className="input flex-1 text-xs"
+                          style={{ minWidth: '14rem' }}
+                          placeholder="name@example.gov.in"
+                          value={newAddr}
+                          onChange={(e) => setNewAddr(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              addAddress()
+                            }
+                          }}
+                        />
+                        <button type="button" className="btn-ghost btn-sm" onClick={addAddress}>
+                          जोडा
+                        </button>
+                      </div>
+
+                      {scope === 'fold' && (
+                        <label className="flex items-center gap-2 text-xs" style={{ color: 'var(--muted)' }}>
+                          <input
+                            type="checkbox"
+                            checked={attachDocx}
+                            onChange={(e) => setAttachDocx(e.target.checked)}
+                          />
+                          संपूर्ण फोल्डची DOCX प्रत जोडा
+                        </label>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="btn-primary btn-sm"
+                          onClick={() => sendEmail(m, i)}
+                          disabled={sending === i || recipients.length === 0}
+                        >
+                          <IconMail size={14} />
+                          {sending === i ? 'पाठवत आहे...' : 'पाठवा'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-quiet text-xs"
+                          onClick={() => setOpenPanel(null)}
+                        >
+                          रद्द करा
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {emailToast && emailToast.index === i && (
                     <div

@@ -1,4 +1,4 @@
-import type { Article } from './types'
+import type { Article, Language } from './types'
 import { datelineEn, datelineMr, foldDateMr } from './marathi'
 
 /**
@@ -34,10 +34,26 @@ function header(date: string): string {
   ].join('\n')
 }
 
-function docxUrl(a: Article, baseUrl: string): string {
+/** The name of an article's Word copy: `ms-216059.docx`, `ms-216059-en.docx`. */
+export function docxFilename(a: Pick<Article, 'id' | 'release_no' | 'language'>): string {
   const suffix = a.language === 'mr' ? '' : `-${a.language}`
   const id = a.release_no ?? String(a.id)
-  return `${baseUrl.replace(/\/$/, '')}/dgipr/docs/ms-${id}${suffix}.docx`
+  return `ms-${id}${suffix}.docx`
+}
+
+/**
+ * The inverse of docxFilename — how /dgipr/docs/[file] finds the article again.
+ * `key` is a release_no, or an id for the articles that have no release_no.
+ * Returns null for anything this builder would never have produced.
+ */
+export function parseDocxFilename(file: string): { key: string; language: Language } | null {
+  const m = /^ms-(.+?)(?:-(mr|hi|en))?\.docx$/i.exec(file)
+  if (!m) return null
+  return { key: m[1], language: (m[2]?.toLowerCase() as Language) ?? 'mr' }
+}
+
+function docxUrl(a: Article, baseUrl: string): string {
+  return `${baseUrl.replace(/\/$/, '')}/dgipr/docs/${docxFilename(a)}`
 }
 
 function block({ article: a, summary }: ArticleMessage, baseUrl: string): string {
