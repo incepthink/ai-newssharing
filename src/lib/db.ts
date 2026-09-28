@@ -113,6 +113,8 @@ CREATE TABLE IF NOT EXISTS folds (
 const MIGRATIONS = `
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS byline   TEXT;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'general';
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_url    TEXT;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_credit TEXT;
 `
 
 const INDEXES = `
@@ -173,6 +175,8 @@ function toArticle(r: Row): Article {
     bullets: JSON.parse((r.bullets as string) || '[]'),
     dateline: (r.dateline as string) ?? null,
     byline: (r.byline as string) ?? null,
+    image_url: (r.image_url as string) ?? null,
+    image_credit: (r.image_credit as string) ?? null,
     status: r.status as Status,
     submitted_by: r.submitted_by as string,
     submitted_at: r.submitted_at as string,
@@ -197,6 +201,8 @@ export interface CreateArticleInput {
   bullets?: string[]
   dateline?: string | null
   byline?: string | null
+  image_url?: string | null
+  image_credit?: string | null
   status?: Status
   submitted_by?: string
   fold_date: string
@@ -206,10 +212,12 @@ export async function createArticle(input: CreateArticleInput): Promise<Article>
   const row = await one(
     `INSERT INTO articles
       (category, raw_text, title, body, district, language, release_no, office, department,
-       attribution, bullets, dateline, byline, status, submitted_by, submitted_at, fold_date)
+       attribution, bullets, dateline, byline, image_url, image_credit, status, submitted_by,
+       submitted_at, fold_date)
      VALUES
       (@category, @raw_text, @title, @body, @district, @language, @release_no, @office, @department,
-       @attribution, @bullets, @dateline, @byline, @status, @submitted_by, @submitted_at, @fold_date)
+       @attribution, @bullets, @dateline, @byline, @image_url, @image_credit, @status, @submitted_by,
+       @submitted_at, @fold_date)
      RETURNING *`,
     {
       category: input.category ?? 'general',
@@ -225,6 +233,8 @@ export async function createArticle(input: CreateArticleInput): Promise<Article>
       bullets: JSON.stringify(input.bullets ?? []),
       dateline: input.dateline ?? null,
       byline: input.byline ?? null,
+      image_url: input.image_url ?? null,
+      image_credit: input.image_credit ?? null,
       status: input.status ?? 'pending',
       submitted_by: input.submitted_by ?? 'dlo',
       submitted_at: new Date().toISOString(),
@@ -236,6 +246,26 @@ export async function createArticle(input: CreateArticleInput): Promise<Article>
 
 export async function getArticle(id: number): Promise<Article | null> {
   const r = await one('SELECT * FROM articles WHERE id = @id', { id })
+  return r ? toArticle(r) : null
+}
+
+/**
+ * Find a release by the number the desk prints on it, not by row id.
+ *
+ * Every DOCX link this app has ever put in a WhatsApp message is keyed by
+ * `release_no` + language, so the handler that serves those links needs to go
+ * that way round. `release_no` is not unique in the schema — nothing stops a
+ * number being reused or entered twice — so ties resolve to the newest row,
+ * which is the one the desk most recently stood behind.
+ */
+export async function getArticleByReleaseNo(
+  releaseNo: string,
+  language: Language,
+): Promise<Article | null> {
+  const r = await one(
+    'SELECT * FROM articles WHERE release_no = @release_no AND language = @language ORDER BY id DESC LIMIT 1',
+    { release_no: releaseNo, language },
+  )
   return r ? toArticle(r) : null
 }
 
@@ -268,7 +298,7 @@ export async function listArticles(f: ListFilter = {}): Promise<Article[]> {
 
 const UPDATABLE = [
   'title', 'body', 'district', 'language', 'release_no', 'office', 'department',
-  'attribution', 'dateline', 'byline', 'status', 'category',
+  'attribution', 'dateline', 'byline', 'status', 'category', 'image_url', 'image_credit',
 ] as const
 
 export async function updateArticle(id: number, patch: Partial<Article>): Promise<Article | null> {

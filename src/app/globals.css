@@ -49,6 +49,16 @@
   --accent-edge: #eccfc7;
   --ring: rgb(140 47 31 / 0.20);
 
+  /* --- The public news page's two supporting hues. Saffron marks featured
+     content (the lead, InFocus); green marks places (district chips, the map).
+     Each is used as a soft wash with its dark ink, never as body text colour
+     on its own. --- */
+  --saffron: #e8871e;
+  --saffron-soft: #fceee0;
+  --saffron-ink: #905413;
+  --place: #1f6b4a;
+  --place-soft: #e9f0ed;
+
   /* --- Status: the desk's three words --- */
   --ok: #1d6b45;
   --ok-soft: #edf6f0;
@@ -80,6 +90,7 @@
   --shadow-sm: 0 1px 2px rgb(25 23 20 / 0.05), 0 1px 3px -1px rgb(25 23 20 / 0.05);
   --shadow-md: 0 1px 2px rgb(25 23 20 / 0.04), 0 8px 20px -10px rgb(25 23 20 / 0.16);
   --shadow-lg: 0 2px 4px rgb(25 23 20 / 0.04), 0 24px 48px -24px rgb(25 23 20 / 0.24);
+  --shadow-card: 0 1px 2px rgb(25 23 20 / 0.05), 0 10px 28px -14px rgb(25 23 20 / 0.18);
 
   /* --- Radii --- */
   --r-xs: 4px;
@@ -598,6 +609,23 @@ body {
   }
 
   .hairline { height: 1px; background: var(--edge); border: 0; }
+
+  /* A band that runs edge to edge of the window from inside the page column —
+     the news page's utility strip and footer. The shadow paints the colour out
+     sideways and the clip keeps it from adding a horizontal scroll. */
+  .bleed {
+    background: var(--bleed, var(--surface-sunk));
+    box-shadow: 0 0 0 100vmax var(--bleed, var(--surface-sunk));
+    clip-path: inset(0 -100vmax);
+  }
+
+  /* Where a story's photograph would be. Hatched so it reads as an empty
+     frame, never as a picture of something. */
+  .photo-plate {
+    background-color: var(--empty);
+    background-image: repeating-linear-gradient(135deg, rgb(25 23 20 / 0.045) 0 1px, transparent 1px 14px);
+    color: var(--muted);
+  }
 
   /* --- Overlays: the reader, the share sheet, the AI drawer ----------------
      Three surfaces float above the page on the public articles screen, and

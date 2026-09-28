@@ -195,7 +195,10 @@ export function toRelease(article: Article): DgiprRelease {
        what the panel's खुणा row is for. */
     tags: article.bullets ?? [],
     featured: article.category === "cm",
-    posterUrl: null,
+    /* The desk's own photograph column. Null means no picture, and every
+       surface that reads this draws a plate rather than a stand-in photo. */
+    posterUrl: article.image_url,
+    posterCreditMr: article.image_credit,
     /* No PDF: this store holds text and builds its sheets on request. The DOCX
        endpoint is the one that exists, and the reader page stands where a PDF
        would on a curated mahasamvad row. */
@@ -218,7 +221,7 @@ function publishedAt(article: Article): string {
  * A release as the choropleth's row type.
  *
  * `NewsArticle` is a newspaper record and most of it has no counterpart here:
- * there is no section page, no picture, no revision count and — importantly —
+ * there is no section page, no revision count and — importantly —
  * no prominence, because prominence is inferred from where *editors* put a
  * link and nobody edits a press release into a front page. Those stay null
  * rather than being filled with plausible-looking zeroes, and the panel and
@@ -234,7 +237,7 @@ function toNewsArticle(release: DgiprRelease, article: Article): NewsArticle {
     section: release.categoryMr,
     headline: release.titleMr,
     description: release.summary60Mr ?? null,
-    imageUrl: null,
+    imageUrl: release.posterUrl,
     author: release.authorMr,
     publishedAt: publishedAt(article),
     modifiedAt: null,

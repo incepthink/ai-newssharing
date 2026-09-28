@@ -59,8 +59,12 @@ export type DgiprRelease = {
   tags: string[];
   featured: boolean;
   /** Served from this app's own `public/dgipr/posters/`; the pull copies them
-   *  across so the snapshot is self-contained. */
+   *  across so the snapshot is self-contained. A desk row carries its own
+   *  `image_url` here — for the mahasamvad imports, the post's photograph. */
   posterUrl: string | null;
+  /** Who the photograph is credited to, printed beside it. Optional because
+   *  the curated rows' posters are this app's own drawings. */
+  posterCreditMr?: string | null;
   /**
    * The release as a printable sheet, under this app's own `public/dgipr/`.
    *

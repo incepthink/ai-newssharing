@@ -32,6 +32,11 @@ export interface Article {
   dateline: string | null
   /** Writer credit after the separator, e.g. अश्विनी पुजारी/विसंअ */
   byline: string | null
+  /** The story's photograph — an absolute URL, or null when it has none. */
+  image_url: string | null
+  /** Who took or issued the photograph, printed beside it — e.g. महासंवाद.
+   *  A photo without a credit is not shown as anyone's. */
+  image_credit: string | null
   status: Status
   submitted_by: string
   submitted_at: string

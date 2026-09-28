@@ -1,5 +1,6 @@
 import type { Article } from './types'
 import { datelineEn, datelineMr, foldDateMr } from './marathi'
+import { releaseDocxHref } from './dgipr/from-db'
 
 /**
  * WhatsApp message builder. Format taken from dgipr-whatsapp-2026-09-02.txt —
@@ -31,10 +32,18 @@ function header(date: string): string {
   ].join('\n')
 }
 
+/**
+ * `ms-<release no>[-<lang>].docx` under /dgipr/docs is the link shape the desk
+ * has been sending all along, and `app/dgipr/docs/[file]/route.ts` now serves
+ * it — so this keeps emitting it, and old and new messages resolve the same
+ * way. A release with no number yet has nothing to key that path on, so it
+ * falls back to the row-id route rather than inventing a number.
+ */
 function docxUrl(a: Article, baseUrl: string): string {
+  const base = baseUrl.replace(/\/$/, '')
+  if (!a.release_no) return `${base}${releaseDocxHref(a.id)}`
   const suffix = a.language === 'mr' ? '' : `-${a.language}`
-  const id = a.release_no ?? String(a.id)
-  return `${baseUrl.replace(/\/$/, '')}/dgipr/docs/ms-${id}${suffix}.docx`
+  return `${base}/dgipr/docs/ms-${a.release_no}${suffix}.docx`
 }
 
 function block({ article: a, summary }: ArticleMessage, baseUrl: string): string {

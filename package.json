@@ -8,7 +8,8 @@
     "start": "node scripts/with-system-ca.mjs next start",
     "lint": "next lint",
     "seed": "node scripts/with-system-ca.mjs tsx scripts/seed.ts",
-    "reanchor": "node scripts/with-system-ca.mjs tsx scripts/reanchor-dates.ts"
+    "reanchor": "node scripts/with-system-ca.mjs tsx scripts/reanchor-dates.ts",
+    "backfill:images": "node scripts/with-system-ca.mjs tsx scripts/backfill-images.ts"
   },
   "dependencies": {
     "d3-geo": "^3.1.1",

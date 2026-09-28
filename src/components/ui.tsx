@@ -94,6 +94,25 @@ export const IconChevronDown = (p: IconProps) => (
 export const IconChevronRight = (p: IconProps) => (
   <Icon {...p}><path d="m9.5 6 6 6-6 6" /></Icon>
 )
+export const IconChevronLeft = (p: IconProps) => (
+  <Icon {...p}><path d="m14.5 6-6 6 6 6" /></Icon>
+)
+export const IconCamera = (p: IconProps) => (
+  <Icon {...p}><path d="M4 8h3l2-2.5h6L17 8h3v11H4Z" /><circle cx="12" cy="13.5" r="3.6" /></Icon>
+)
+/* Play and pause are filled: at the size a carousel control is drawn, two
+   stroked bars read as an equals sign. */
+export const IconPlay = ({ size = 16, ...rest }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" {...rest}>
+    <path d="M7 4.5v15l12.5-7.5Z" />
+  </svg>
+)
+export const IconPause = ({ size = 16, ...rest }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" {...rest}>
+    <rect x="6" y="4.5" width="4" height="15" rx="1" />
+    <rect x="14" y="4.5" width="4" height="15" rx="1" />
+  </svg>
+)
 export const IconArrowLeft = (p: IconProps) => (
   <Icon {...p}><path d="M19 12H5" /><path d="m11 6-6 6 6 6" /></Icon>
 )

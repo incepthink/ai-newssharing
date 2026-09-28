@@ -30,6 +30,11 @@ export default {
         ok: 'var(--ok)',
         warn: 'var(--warn)',
         hold: 'var(--hold)',
+        saffron: 'var(--saffron)',
+        'saffron-soft': 'var(--saffron-soft)',
+        'saffron-ink': 'var(--saffron-ink)',
+        place: 'var(--place)',
+        'place-soft': 'var(--place-soft)',
       },
       borderRadius: {
         sm: 'var(--r-sm)',
@@ -43,6 +48,7 @@ export default {
         sm: 'var(--shadow-sm)',
         md: 'var(--shadow-md)',
         lg: 'var(--shadow-lg)',
+        card: 'var(--shadow-card)',
       },
       maxWidth: {
         shell: '80rem',

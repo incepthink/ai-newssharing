@@ -50,7 +50,7 @@ Same template either way. Selection just filters the article list.
 
 ## 4. The DOCX link
 
-Each article links to its own hosted file:
+Each article links to its own file:
 
 ```
 https://<host>/dgipr/docs/ms-3372.docx        ← Marathi (default, no suffix)
@@ -59,11 +59,27 @@ https://<host>/dgipr/docs/ms-3349-hi.docx     ← Hindi
 ```
 
 Pattern: `ms-<release number>[-<lang>].docx`, where the number matches
-`वृत्त क्र.` from the fold. Marathi carries no suffix.
+`वृत्त क्र.` from the fold. Marathi carries no suffix. The number alone does
+not identify a release — one release carries the same number in all three
+languages — so the suffix is load-bearing, not decoration.
 
-**This means per-article DOCX files must be generated and publicly hosted** at a
-stable URL before the WhatsApp message can be sent — the message is a set of links,
-not attachments.
+These are **not static files.** This spec originally called for per-article DOCX
+files to be "generated and publicly hosted" at that path before a message could
+be sent. That hosting was never built, nothing routed the path, and so every
+DOCX link in every message the desk sent returned 404.
+
+The path is now served by `app/dgipr/docs/[file]/route.ts`, which parses the
+filename, looks the release up by number and language, and builds the document
+on request from the approved text. The URL did not change, which is the point:
+links already sitting in recipients' phones resolve too, and those were
+unreachable by any fix to the message builder.
+
+A release with no number yet has nothing to key that path on. It falls back to
+the row-id route, `/api/articles/<id>/docx`, rather than inventing a number.
+
+The message is a set of links, not attachments. Links are absolute, built from
+`NEXT_PUBLIC_BASE_URL` — which must be set to the public origin in every
+deployed environment, or recipients get links to a host they cannot reach.
 
 ## 5. Length
 

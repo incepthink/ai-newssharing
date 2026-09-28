@@ -94,6 +94,9 @@ function toDeskArticle(a: FeatureArticle): Article {
     bullets: a.highlights,
     dateline: a.dateline,
     byline: a.byline,
+    // The fold sheet is text only; a photograph never goes into the document.
+    image_url: null,
+    image_credit: null,
     status: 'approved',
     submitted_by: 'mahasamvad',
     submitted_at: a.publishedAt,
