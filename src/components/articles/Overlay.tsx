@@ -18,12 +18,14 @@ export function Overlay({
   onClose,
   labelledBy,
   panelClassName,
+  overlayClassName,
   children,
 }: {
   onClose: () => void
   labelledBy: string
   /** `sheet` or `drawer` — the panel classes from globals.css. */
   panelClassName: string
+  overlayClassName?: string
   children: ReactNode
 }) {
   const panel = useRef<HTMLDivElement>(null)
@@ -77,7 +79,7 @@ export function Overlay({
 
   return (
     <div
-      className="overlay"
+      className={`overlay ${overlayClassName || ''} m-0`.trim()}
       // A mousedown that starts inside the panel and ends on the scrim — the
       // tail of a text selection — must not close it, so the scrim listens for
       // the press rather than the click, and only when it is the target.
@@ -121,7 +123,7 @@ export function OverlayHeader({
 }) {
   return (
     <div
-      className="sticky top-0 z-10 flex items-start gap-3 border-b px-4 py-3 sm:px-5"
+      className="sticky top-0 z-10 flex shrink-0 items-start gap-3 border-b px-4 py-3 sm:px-5"
       style={{ borderColor: 'var(--edge)', background: 'var(--surface)' }}
     >
       <div className="min-w-0 grow">

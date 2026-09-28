@@ -196,19 +196,18 @@ export function toRelease(article: Article): DgiprRelease {
     tags: article.bullets ?? [],
     featured: article.category === "cm",
     /* The desk's own photograph column. Null means no picture, and every
-       surface that reads this draws a plate rather than a stand-in photo. */
-    posterUrl: article.image_url,
-    posterCreditMr: article.image_credit,
+       surface that reads this draws a plate rather than a stand-in photo. A
+       mahasamvad import not yet backfilled into it (`npm run backfill:images`)
+       still shows the post's own photograph, credited as the backfill would. */
+    posterUrl: article.image_url ?? article.poster_url ?? null,
+    posterCreditMr: article.image_url ? article.image_credit : article.poster_url ? "महासंवाद" : null,
     /* No PDF: this store holds text and builds its sheets on request. The DOCX
        endpoint is the one that exists, and the reader page stands where a PDF
        would on a curated mahasamvad row. */
     pdfUrl: null,
     docxUrl: releaseDocxHref(article.id),
     readerUrl: releaseHref(article.id),
-    /* No mahasamvad permalink. A release that came through this desk has not
-       been published there by this app, and pointing at a URL that may not
-       exist would be a worse failure than showing no source link at all. */
-    url: null,
+    url: article.source_url ?? null,
   };
 }
 

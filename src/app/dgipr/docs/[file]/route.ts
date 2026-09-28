@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getArticleByReleaseNo } from '@/lib/db'
+import { getArticle, getArticleByReleaseNo } from '@/lib/db'
 import { buildArticleDocx } from '@/lib/docx/article'
-import type { Language } from '@/lib/types'
+import { docxFilename, parseDocxFilename } from '@/lib/whatsapp'
+import type { Article } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,31 +25,37 @@ export const dynamic = 'force-dynamic'
  * migration step — the messages are out there and cannot be recalled.
  */
 
-const FILENAME = /^ms-(.+?)(?:-(en|hi))?\.docx$/
-
 type Ctx = { params: Promise<{ file: string }> }
+
+const notFound = () => NextResponse.json({ error: 'not found' }, { status: 404 })
 
 export async function GET(_req: NextRequest, { params }: Ctx) {
   const { file } = await params
+  const parsed = parseDocxFilename(decodeURIComponent(file))
+  if (!parsed) return notFound()
 
-  const m = FILENAME.exec(decodeURIComponent(file))
-  if (!m) return NextResponse.json({ error: 'not found' }, { status: 404 })
+  const { key, language } = parsed
+  let article: Article | null = await getArticleByReleaseNo(key, language)
 
-  const [, releaseNo, suffix] = m
-  const language = (suffix ?? 'mr') as Language
+  // An article with no release_no is linked by its id instead. Only accept the
+  // row if it really is one of those — otherwise ms-<id> could serve an
+  // unrelated article that happens to carry <id> as its release number.
+  if (!article && /^\d+$/.test(key)) {
+    const byId = await getArticle(Number(key))
+    if (byId && byId.release_no === null && byId.language === language) article = byId
+  }
 
-  const article = await getArticleByReleaseNo(releaseNo, language)
   // A link can outlive the row it named — a release withdrawn, a number
   // corrected. 404 is the honest answer; serving a different release under a
   // number a recipient was given would be worse than serving nothing.
-  if (!article) return NextResponse.json({ error: 'not found' }, { status: 404 })
+  if (!article) return notFound()
 
   const buf = await buildArticleDocx(article)
 
   return new NextResponse(new Uint8Array(buf), {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'Content-Disposition': `attachment; filename="ms-${releaseNo}${suffix ? `-${suffix}` : ''}.docx"`,
+      'Content-Disposition': `attachment; filename="${docxFilename(article)}"`,
       // Approved text can still be corrected at the desk; a recipient opening
       // the link tomorrow should get the corrected copy, not a cached one.
       'Cache-Control': 'no-store',

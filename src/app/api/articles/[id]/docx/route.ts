@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getArticle } from '@/lib/db'
 import { buildArticleDocx } from '@/lib/docx/article'
+import { docxFilename } from '@/lib/whatsapp'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,7 +14,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
   if (!article) return NextResponse.json({ error: 'not found' }, { status: 404 })
 
   const buf = await buildArticleDocx(article)
-  const name = `ms-${article.release_no ?? article.id}${article.language === 'mr' ? '' : `-${article.language}`}.docx`
+  const name = docxFilename(article)
 
   return new NextResponse(new Uint8Array(buf), {
     headers: {

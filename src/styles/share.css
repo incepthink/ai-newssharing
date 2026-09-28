@@ -81,21 +81,22 @@
 .share-bar-exit:focus-visible,
 .share-bar-select:focus-visible,
 .share-bar-send:focus-visible {
-  outline: 2px solid var(--color-official);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* The way in. Quiet — it is offering a second reading of a sheet the reader
-   came here to read, not asking them to do anything. */
+/* The way in. Clean white/gray with subtle border */
 .share-bar-enter {
   align-self: flex-start;
-  background: var(--color-official-soft);
-  color: var(--color-official-deep);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line-strong);
+  color: var(--color-text);
 }
 
 .share-bar-enter:hover {
-  background: var(--color-official);
-  color: var(--color-on-official);
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 /* The way out, quieter still: it undoes rather than does. */
@@ -120,17 +121,16 @@
   color: var(--color-text);
 }
 
-/* The one thing on the bar the reader is actually heading for, so it takes the
-   width and the ink. */
+/* The primary send button in deep maroon */
 .share-bar-send {
   flex: 1;
-  background: var(--color-official);
-  color: var(--color-on-official);
+  background: var(--color-accent);
+  color: #ffffff;
   font-weight: 600;
 }
 
 .share-bar-send:hover:not(:disabled) {
-  background: var(--color-official-hover);
+  background: var(--color-accent-hover);
 }
 
 .share-bar-select:disabled,
@@ -185,7 +185,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.9rem 1.1rem;
-  border-bottom: 1px solid var(--color-official-soft);
+  border-bottom: 1px solid var(--color-line);
 }
 
 .share-preview-heading {
@@ -305,21 +305,20 @@
 }
 
 .share-preview-action:focus-visible {
-  outline: 2px solid var(--color-official);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* WhatsApp is where these messages go, so it is the one that looks like a
-   destination and the rest look like alternatives. */
+/* Primary share action in deep maroon */
 .share-preview-action-primary {
-  background: var(--color-official);
-  color: var(--color-on-official);
+  background: var(--color-accent);
+  color: #ffffff;
   font-weight: 600;
 }
 
 .share-preview-action-primary:hover {
-  background: var(--color-official-hover);
-  color: var(--color-on-official);
+  background: var(--color-accent-hover);
+  color: #ffffff;
 }
 
 .share-preview-action-block {

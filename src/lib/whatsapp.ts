@@ -1,6 +1,5 @@
-import type { Article } from './types'
+import type { Article, Language } from './types'
 import { datelineEn, datelineMr, foldDateMr } from './marathi'
-import { releaseDocxHref } from './dgipr/from-db'
 
 /**
  * WhatsApp message builder. Format taken from dgipr-whatsapp-2026-09-02.txt —
@@ -11,10 +10,13 @@ const HEADER_RULE = '-----------'
 const ARTICLE_RULE = '──────────────'
 
 /**
- * WhatsApp's hard ceiling is 65,536 characters, but clients get unhappy well
- * before that. We split at article boundaries and never mid-article.
+ * WhatsApp's hard technical message payload limit is 65,536 characters.
+ * We enforce this protocol ceiling (with a safety margin for framing)
+ * so the day's fold stays as ONE continuous message under all normal conditions.
+ * We split strictly at article boundaries and never mid-article only if
+ * this technical ceiling is exceeded.
  */
-const MAX_CHARS = 3500
+const WHATSAPP_MAX_CHARS = 65000
 
 export interface ArticleMessage {
   article: Article
@@ -32,18 +34,31 @@ function header(date: string): string {
   ].join('\n')
 }
 
+/** The name of an article's Word copy: `ms-216059.docx`, `ms-216059-en.docx`. */
+export function docxFilename(a: Pick<Article, 'id' | 'release_no' | 'language'>): string {
+  const suffix = a.language === 'mr' ? '' : `-${a.language}`
+  const id = a.release_no ?? String(a.id)
+  return `ms-${id}${suffix}.docx`
+}
+
+/**
+ * The inverse of docxFilename — how /dgipr/docs/[file] finds the article again.
+ * `key` is a release_no, or an id for the articles that have no release_no.
+ * Returns null for anything this builder would never have produced.
+ */
+export function parseDocxFilename(file: string): { key: string; language: Language } | null {
+  const m = /^ms-(.+?)(?:-(mr|hi|en))?\.docx$/i.exec(file)
+  if (!m) return null
+  return { key: m[1], language: (m[2]?.toLowerCase() as Language) ?? 'mr' }
+}
+
 /**
  * `ms-<release no>[-<lang>].docx` under /dgipr/docs is the link shape the desk
- * has been sending all along, and `app/dgipr/docs/[file]/route.ts` now serves
- * it — so this keeps emitting it, and old and new messages resolve the same
- * way. A release with no number yet has nothing to key that path on, so it
- * falls back to the row-id route rather than inventing a number.
+ * has been sending all along, and `app/dgipr/docs/[file]/route.ts` serves it,
+ * so old and new messages resolve the same way.
  */
 function docxUrl(a: Article, baseUrl: string): string {
-  const base = baseUrl.replace(/\/$/, '')
-  if (!a.release_no) return `${base}${releaseDocxHref(a.id)}`
-  const suffix = a.language === 'mr' ? '' : `-${a.language}`
-  return `${base}/dgipr/docs/ms-${a.release_no}${suffix}.docx`
+  return `${baseUrl.replace(/\/$/, '')}/dgipr/docs/${docxFilename(a)}`
 }
 
 function block({ article: a, summary }: ArticleMessage, baseUrl: string): string {
@@ -90,7 +105,7 @@ export function buildMessages(
   let current = head + '\n'
 
   for (const b of blocks) {
-    if (current.length + b.length > MAX_CHARS && current !== head + '\n') {
+    if (current.length + b.length > WHATSAPP_MAX_CHARS && current !== head + '\n') {
       messages.push(current.trimEnd())
       current = head + '\n'
     }

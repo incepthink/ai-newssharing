@@ -29,6 +29,7 @@ export const NEWS_LABEL_MR = 'बातम्या'
  *  select always has a value and the chip row has something to name. */
 export const MINISTERS = [
   { key: 'all', mr: 'सर्व मंत्री' },
+  { key: 'general', mr: 'शासकीय' },
   { key: 'cm', mr: 'मुख्यमंत्री' },
   { key: 'dcm', mr: 'उपमुख्यमंत्री' },
   { key: 'agriculture', mr: 'कृषी मंत्री' },
@@ -43,6 +44,7 @@ export const MINISTERS = [
 
 export const DEPARTMENTS = [
   { key: 'all', mr: 'सर्व विभाग' },
+  { key: 'general', mr: 'माहिती व जनसंपर्क / सामान्य प्रशासन' },
   { key: 'agriculture', mr: 'कृषी व शेतकरी कल्याण' },
   { key: 'industries', mr: 'उद्योग' },
   { key: 'health', mr: 'सार्वजनिक आरोग्य' },

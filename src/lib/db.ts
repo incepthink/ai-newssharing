@@ -96,13 +96,21 @@ CREATE TABLE IF NOT EXISTS articles (
   submitted_by  TEXT NOT NULL DEFAULT 'dlo',
   submitted_at  TEXT NOT NULL,
   approved_at   TEXT,
-  fold_date     TEXT NOT NULL
+  fold_date     TEXT NOT NULL,
+  poster_url    TEXT,
+  source_url    TEXT
 );
 
 CREATE TABLE IF NOT EXISTS folds (
   "date"        TEXT PRIMARY KEY,
   article_order TEXT NOT NULL DEFAULT '[]',
   finalized_at  TEXT
+);
+
+CREATE TABLE IF NOT EXISTS recipients (
+  email      TEXT PRIMARY KEY,
+  name       TEXT,
+  added_at   TEXT NOT NULL
 );
 `
 
@@ -111,16 +119,21 @@ CREATE TABLE IF NOT EXISTS folds (
  * so columns introduced after someone's database was created need this.
  */
 const MIGRATIONS = `
-ALTER TABLE articles ADD COLUMN IF NOT EXISTS byline   TEXT;
-ALTER TABLE articles ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'general';
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS byline       TEXT;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS category     TEXT NOT NULL DEFAULT 'general';
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_url    TEXT;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_credit TEXT;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS poster_url   TEXT;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS source_url   TEXT;
 `
 
 const INDEXES = `
-CREATE INDEX IF NOT EXISTS idx_articles_fold  ON articles(fold_date, status);
-CREATE INDEX IF NOT EXISTS idx_articles_dist  ON articles(district, status);
-CREATE INDEX IF NOT EXISTS idx_articles_cat   ON articles(category, fold_date);
+CREATE INDEX IF NOT EXISTS idx_articles_fold   ON articles(fold_date, status);
+CREATE INDEX IF NOT EXISTS idx_articles_dist   ON articles(district, status);
+CREATE INDEX IF NOT EXISTS idx_articles_cat    ON articles(category, fold_date);
+CREATE INDEX IF NOT EXISTS idx_articles_source ON articles(source_url);
+CREATE INDEX IF NOT EXISTS idx_articles_rel    ON articles(release_no, language);
+CREATE INDEX IF NOT EXISTS idx_recipients_added ON recipients(added_at);
 `
 
 /**
@@ -182,6 +195,8 @@ function toArticle(r: Row): Article {
     submitted_at: r.submitted_at as string,
     approved_at: (r.approved_at as string) ?? null,
     fold_date: r.fold_date as string,
+    poster_url: (r.poster_url as string) ?? null,
+    source_url: (r.source_url as string) ?? null,
   }
 }
 
@@ -205,7 +220,11 @@ export interface CreateArticleInput {
   image_credit?: string | null
   status?: Status
   submitted_by?: string
+  submitted_at?: string
+  approved_at?: string | null
   fold_date: string
+  poster_url?: string | null
+  source_url?: string | null
 }
 
 export async function createArticle(input: CreateArticleInput): Promise<Article> {
@@ -213,11 +232,11 @@ export async function createArticle(input: CreateArticleInput): Promise<Article>
     `INSERT INTO articles
       (category, raw_text, title, body, district, language, release_no, office, department,
        attribution, bullets, dateline, byline, image_url, image_credit, status, submitted_by,
-       submitted_at, fold_date)
+       submitted_at, approved_at, fold_date, poster_url, source_url)
      VALUES
       (@category, @raw_text, @title, @body, @district, @language, @release_no, @office, @department,
        @attribution, @bullets, @dateline, @byline, @image_url, @image_credit, @status, @submitted_by,
-       @submitted_at, @fold_date)
+       @submitted_at, @approved_at, @fold_date, @poster_url, @source_url)
      RETURNING *`,
     {
       category: input.category ?? 'general',
@@ -237,8 +256,11 @@ export async function createArticle(input: CreateArticleInput): Promise<Article>
       image_credit: input.image_credit ?? null,
       status: input.status ?? 'pending',
       submitted_by: input.submitted_by ?? 'dlo',
-      submitted_at: new Date().toISOString(),
+      submitted_at: input.submitted_at ?? new Date().toISOString(),
+      approved_at: input.approved_at ?? (input.status === 'approved' ? new Date().toISOString() : null),
       fold_date: input.fold_date,
+      poster_url: input.poster_url ?? null,
+      source_url: input.source_url ?? null,
     },
   )
   return toArticle(row!)
@@ -249,22 +271,30 @@ export async function getArticle(id: number): Promise<Article | null> {
   return r ? toArticle(r) : null
 }
 
+export async function getArticleBySourceUrl(sourceUrl: string): Promise<Article | null> {
+  const r = await one('SELECT * FROM articles WHERE source_url = @sourceUrl', { sourceUrl })
+  return r ? toArticle(r) : null
+}
+
 /**
  * Find a release by the number the desk prints on it, not by row id.
  *
  * Every DOCX link this app has ever put in a WhatsApp message is keyed by
  * `release_no` + language, so the handler that serves those links needs to go
- * that way round. `release_no` is not unique in the schema — nothing stops a
- * number being reused or entered twice — so ties resolve to the newest row,
- * which is the one the desk most recently stood behind.
+ * that way round. `release_no` is not unique — the Marathi and English versions
+ * of one release share it, and nothing stops a number being reused — so the
+ * language is part of the key and ties resolve to the newest row, which is the
+ * one the desk most recently stood behind.
  */
 export async function getArticleByReleaseNo(
   releaseNo: string,
   language: Language,
 ): Promise<Article | null> {
   const r = await one(
-    'SELECT * FROM articles WHERE release_no = @release_no AND language = @language ORDER BY id DESC LIMIT 1',
-    { release_no: releaseNo, language },
+    `SELECT * FROM articles
+      WHERE release_no = @releaseNo AND language = @language
+      ORDER BY id DESC LIMIT 1`,
+    { releaseNo, language },
   )
   return r ? toArticle(r) : null
 }
@@ -299,6 +329,7 @@ export async function listArticles(f: ListFilter = {}): Promise<Article[]> {
 const UPDATABLE = [
   'title', 'body', 'district', 'language', 'release_no', 'office', 'department',
   'attribution', 'dateline', 'byline', 'status', 'category', 'image_url', 'image_credit',
+  'poster_url', 'source_url',
 ] as const
 
 export async function updateArticle(id: number, patch: Partial<Article>): Promise<Article | null> {
@@ -398,4 +429,40 @@ export async function dailyCounts(from: string, to: string): Promise<{ date: str
     { from, to },
   )
   return rows.map((r) => ({ date: r.date as string, count: Number(r.count) }))
+}
+
+/* ------------------------------------------------------------- recipients */
+
+export interface Recipient {
+  email: string
+  name: string | null
+  added_at: string
+}
+
+/** The saved distribution list for the daily email. */
+export async function listRecipients(): Promise<Recipient[]> {
+  const rows = await all(
+    `SELECT email, name, added_at FROM recipients ORDER BY added_at`,
+  )
+  return rows.map((r) => ({
+    email: r.email as string,
+    name: (r.name as string | null) ?? null,
+    added_at: r.added_at as string,
+  }))
+}
+
+/** Idempotent: re-adding an address refreshes its name and keeps its place. */
+export async function addRecipient(email: string, name?: string | null): Promise<void> {
+  await run(
+    `INSERT INTO recipients (email, name, added_at)
+     VALUES (@email, @name, @added_at)
+     ON CONFLICT (email) DO UPDATE SET name = COALESCE(EXCLUDED.name, recipients.name)`,
+    { email: email.trim().toLowerCase(), name: name ?? null, added_at: new Date().toISOString() },
+  )
+}
+
+export async function removeRecipient(email: string): Promise<void> {
+  await run(`DELETE FROM recipients WHERE email = @email`, {
+    email: email.trim().toLowerCase(),
+  })
 }
