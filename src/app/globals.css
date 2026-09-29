@@ -50,7 +50,7 @@
   --ring: rgb(140 47 31 / 0.20);
 
   /* --- The public news page's two supporting hues. Saffron marks featured
-     content (the lead, InFocus); green marks places (district chips, the map).
+     content (the lead, InFocus); green marks places (district chips).
      Each is used as a soft wash with its dark ink, never as body text colour
      on its own. --- */
   --saffron: #e8871e;
@@ -584,6 +584,18 @@ body {
     to   { opacity: 1; transform: none; }
   }
 
+  /* The lead carousel's progress bar: one story's seven seconds. The bar's
+     end is what advances the carousel, so the bar and the rotation cannot
+     drift apart, and holding the carousel freezes the bar where it is. */
+  .lead-fill {
+    transform-origin: left center;
+    animation: lead-fill 4s linear forwards;
+  }
+  @keyframes lead-fill {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
   /* --- Misc ---------------------------------------------------------------- */
 
   .link {
@@ -617,6 +629,67 @@ body {
     background: var(--bleed, var(--surface-sunk));
     box-shadow: 0 0 0 100vmax var(--bleed, var(--surface-sunk));
     clip-path: inset(0 -100vmax);
+  }
+
+  /* The news page's ground: the house lattice, faded in below the masthead so
+     the headline and search sit on a plain field. Laid behind the page from a
+     full-window-wide decor layer — see `/news`. */
+  .news-pattern {
+    background-image: url('/news-pattern.svg');
+    background-size: 56px 56px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent 150px, #000 330px);
+    mask-image: linear-gradient(to bottom, transparent 0, transparent 150px, #000 330px);
+  }
+  @media (min-width: 1024px) {
+    .news-pattern {
+      background-size: 64px 64px;
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent 210px, #000 470px);
+      mask-image: linear-gradient(to bottom, transparent 0, transparent 210px, #000 470px);
+    }
+  }
+  html:has(.news-pattern) body { overflow-x: clip; }
+
+  /* Frosted panels over the lattice. `.glass` is the white card; the tinted
+     variants carry the maroon and the saffron as a wash; `.glass-sm` is the
+     lighter lift for cards nested in another panel. */
+  .glass {
+    background: linear-gradient(135deg, rgb(255 255 255 / 0.58), rgb(252 249 246 / 0.26));
+    border: 1px solid rgb(255 255 255 / 0.95);
+    box-shadow: 0 0 0 1px rgb(110 52 36 / 0.05), 0 18px 44px rgb(60 28 18 / 0.16), inset 0 1px 0 rgb(255 255 255 / 1), inset 0 -1px 0 rgb(110 52 36 / 0.08);
+    -webkit-backdrop-filter: blur(2px) saturate(170%);
+    backdrop-filter: blur(2px) saturate(170%);
+  }
+  .glass-sm {
+    box-shadow: 0 0 0 1px rgb(110 52 36 / 0.04), 0 10px 26px rgb(60 28 18 / 0.12), inset 0 1px 0 rgb(255 255 255 / 1), inset 0 -1px 0 rgb(110 52 36 / 0.06);
+  }
+  .glass-accent { background: linear-gradient(135deg, rgb(140 47 31 / 0.12), rgb(140 47 31 / 0.04)), rgb(255 255 255 / 0.38); }
+  .glass-saffron { background: linear-gradient(135deg, rgb(232 135 30 / 0.2), rgb(232 135 30 / 0.08)), rgb(255 255 255 / 0.38); }
+  /* A dashed "waiting" slot: frosted, but flat. */
+  .glass-quiet {
+    background: rgb(255 255 255 / 0.34);
+    -webkit-backdrop-filter: blur(2px) saturate(170%);
+    backdrop-filter: blur(2px) saturate(170%);
+  }
+  /* The utility strip and footer: a frosted band the full width of the
+     window, drawn from inside the page column like `.bleed`. */
+  .glass-band { position: relative; isolation: isolate; }
+  .glass-band::before {
+    content: '';
+    position: absolute;
+    inset: 0 calc(50% - 50vw);
+    z-index: -1;
+    background: rgb(250 248 245 / 0.46);
+    -webkit-backdrop-filter: blur(2px) saturate(170%);
+    backdrop-filter: blur(2px) saturate(170%);
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .news-pattern { display: none; }
+    .glass, .glass-quiet, .glass-band::before {
+      background: var(--surface) !important;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
   }
 
   /* Where a story's photograph would be. Hatched so it reads as an empty

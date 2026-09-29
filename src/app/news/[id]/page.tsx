@@ -285,13 +285,31 @@ function ReleaseReader({ release }: { release: Article }) {
           </div>
         </header>
 
-        {release.poster_url ? (
-          <figure className="hero-frame mt-5">
+        {/* The desk's own photograph first, as everywhere else — `poster_url`
+            is only the mahasamvad import's fallback. A video takes the frame
+            when there is one, with the photograph as its still. */}
+        {release.video_url ? (
+          <figure className="hero-frame mt-5 bg-black">
+            <video
+              src={release.video_url}
+              poster={(release.image_url ?? release.poster_url) || undefined}
+              controls
+              playsInline
+              preload="metadata"
+              aria-label={release.title}
+              className="h-full w-full object-contain"
+            />
+          </figure>
+        ) : release.image_url ?? release.poster_url ? (
+          /* The photograph at its own size and shape, never cropped: releases
+             carry maps, charts and posters as often as scenes, and a cropped
+             one loses what it was for. Wider than the column, it scales down. */
+          <figure className="hero-frame mt-5 aspect-auto">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={release.poster_url}
+              src={(release.image_url ?? release.poster_url)!}
               alt={release.title}
-              className="h-full w-full object-cover"
+              className="mx-auto block h-auto w-auto max-w-full"
               loading="lazy"
               decoding="async"
             />

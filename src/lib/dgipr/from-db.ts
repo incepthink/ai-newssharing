@@ -201,6 +201,7 @@ export function toRelease(article: Article): DgiprRelease {
        still shows the post's own photograph, credited as the backfill would. */
     posterUrl: article.image_url ?? article.poster_url ?? null,
     posterCreditMr: article.image_url ? article.image_credit : article.poster_url ? "महासंवाद" : null,
+    videoUrl: article.video_url ?? null,
     /* No PDF: this store holds text and builds its sheets on request. The DOCX
        endpoint is the one that exists, and the reader page stands where a PDF
        would on a curated mahasamvad row. */

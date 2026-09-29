@@ -2,18 +2,22 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { use, useEffect, useState } from 'react'
+import { use, useEffect, useState, type ReactNode } from 'react'
 import { DISTRICTS, districtName } from '@/lib/districts'
 import { datelineEn, datelineMr, toDevanagariDigits } from '@/lib/marathi'
+import { IMAGE_ACCEPT, MEDIA_LIMIT_BYTES, VIDEO_ACCEPT, uploadMedia, type MediaKind } from '@/lib/media'
 import type { Article } from '@/lib/types'
 import {
   IconAlert,
   IconArchive,
   IconArrowLeft,
+  IconCamera,
   IconCheck,
   IconCheckCircle,
   IconDownload,
+  IconPlay,
   IconSparkle,
+  IconTrash,
   LANG_LABEL,
   StatusBadge,
 } from '@/components/ui'
@@ -56,6 +60,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
    * it has to be made deliberately rather than inherited from the model.
    */
   const [categoryConfirmed, setCategoryConfirmed] = useState(false)
+
+  /** The file on its way up, if any. Saving waits for it: approving while a
+   *  video is half uploaded would publish the release without it. */
+  const [upload, setUpload] = useState<{ kind: MediaKind; progress: number } | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/articles/${id}`)
@@ -108,6 +117,35 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     byline: a.byline,
     bullets: a.bullets,
     category: a.category,
+    image_url: a.image_url,
+    image_credit: a.image_credit,
+    poster_url: a.poster_url,
+    video_url: a.video_url,
+  }
+
+  async function attach(kind: MediaKind, file: File | undefined) {
+    if (!file) return
+    setUploadError(null)
+    setUpload({ kind, progress: 0 })
+    try {
+      const url = await uploadMedia(file, kind, (progress) => setUpload({ kind, progress }))
+      set(kind === 'image' ? 'image_url' : 'video_url', url)
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'अपलोड अयशस्वी झाले.')
+    } finally {
+      setUpload(null)
+    }
+  }
+
+  function detach(kind: MediaKind) {
+    if (kind === 'video') {
+      set('video_url', null)
+      return
+    }
+    // A mahasamvad import's photograph is in `poster_url`, and the pages fall
+    // back to it — so removing the photo has to clear both.
+    set('image_url', null)
+    set('poster_url', null)
   }
 
   async function persist(patch: Partial<Article>) {
@@ -165,18 +203,22 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
           <span className="ml-auto flex items-center gap-2">
             <span className="text-xs" style={{ color: dirty ? 'var(--warn)' : 'var(--faint)' }}>
-              {saving ? 'जतन करत आहे…' : dirty ? 'जतन झालेले नाही' : savedOnce ? 'जतन झाले' : ''}
+              {saving ? 'जतन करत आहे…' : upload ? 'अपलोड होत आहे…' : dirty ? 'जतन झालेले नाही' : savedOnce ? 'जतन झाले' : ''}
             </span>
-            <button className="btn-quiet btn-sm" onClick={() => persist({ ...draft, status: 'parked' })} disabled={saving}>
+            <button
+              className="btn-quiet btn-sm"
+              onClick={() => persist({ ...draft, status: 'parked' })}
+              disabled={saving || !!upload}
+            >
               <IconArchive size={14} /> राखीव
             </button>
-            <button className="btn-ghost btn-sm" onClick={() => persist(draft)} disabled={saving || !dirty}>
+            <button className="btn-ghost btn-sm" onClick={() => persist(draft)} disabled={saving || !!upload || !dirty}>
               जतन करा
             </button>
             <button
               className="btn-primary btn-sm"
-              disabled={saving || !canApprove}
-              title={blocker?.fix}
+              disabled={saving || !!upload || !canApprove}
+              title={upload ? 'अपलोड पूर्ण होऊ द्या' : blocker?.fix}
               onClick={() => persist({ ...draft, status: 'approved' }).then(() => router.push('/desk'))}
             >
               <IconCheck size={14} /> मंजूर करा
@@ -245,6 +287,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               </span>
             </div>
           )}
+
+          <MediaCard
+            article={a}
+            upload={upload}
+            error={uploadError}
+            onAttach={attach}
+            onDetach={detach}
+            onCredit={(v) => set('image_credit', v)}
+          />
         </div>
 
         {/* --- The desk's decisions ---------------------------------------- */}
@@ -439,6 +490,190 @@ function Text({
         onChange={(e) => onChange(e.target.value || null)}
         placeholder={placeholder}
       />
+    </div>
+  )
+}
+
+type Upload = { kind: MediaKind; progress: number } | null
+
+/**
+ * The photograph and the video that go out with the release.
+ *
+ * They are for the public pages — the lead, the list, the reader page and the
+ * map panel — and never for the fold: the DOCX stays text only. Attaching one
+ * marks the article unsaved like any other edit, so nothing reaches the public
+ * pages until the desk saves or approves.
+ */
+function MediaCard({
+  article: a,
+  upload,
+  error,
+  onAttach,
+  onDetach,
+  onCredit,
+}: {
+  article: Article
+  upload: Upload
+  error: string | null
+  onAttach: (kind: MediaKind, file: File | undefined) => void
+  onDetach: (kind: MediaKind) => void
+  onCredit: (v: string | null) => void
+}) {
+  const photo = a.image_url ?? a.poster_url ?? null
+  const slot = { upload, onAttach, onDetach }
+
+  return (
+    <div className="card p-4 sm:p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 className="text-sm font-semibold">छायाचित्र व व्हिडिओ</h2>
+        <span className="text-xs" style={{ color: 'var(--faint)' }}>
+          बातम्या पान व नकाशावर दिसेल · फोल्डमध्ये नाही
+        </span>
+      </div>
+
+      <div className="mt-3 grid gap-4 sm:grid-cols-2">
+        <MediaSlot
+          {...slot}
+          kind="image"
+          label="छायाचित्र"
+          accept={IMAGE_ACCEPT}
+          prompt={<><IconCamera size={22} strokeWidth={1.5} /> छायाचित्र निवडा</>}
+          formats="JPG, PNG, WebP"
+          present={Boolean(photo)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {photo && <img src={photo} alt="" className="h-full w-full object-cover" />}
+        </MediaSlot>
+
+        <MediaSlot
+          {...slot}
+          kind="video"
+          label="व्हिडिओ"
+          accept={VIDEO_ACCEPT}
+          prompt={<><IconPlay size={22} strokeWidth={1.5} /> व्हिडिओ निवडा</>}
+          formats="MP4, WebM"
+          present={Boolean(a.video_url)}
+        >
+          {a.video_url && (
+            <video
+              src={a.video_url}
+              poster={photo ?? undefined}
+              controls
+              playsInline
+              preload="metadata"
+              className="h-full w-full object-contain"
+              style={{ background: '#000' }}
+            />
+          )}
+        </MediaSlot>
+      </div>
+
+      {photo && (
+        <div className="mt-4">
+          <Text
+            label="छायाचित्र श्रेय"
+            value={a.image_credit}
+            onChange={onCredit}
+            placeholder="उदा. जिल्हा माहिती कार्यालय, पुणे"
+          />
+        </div>
+      )}
+
+      {error && (
+        <div className="note note-alert mt-3">
+          <IconAlert size={15} className="mt-0.5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MediaSlot({
+  kind,
+  label,
+  accept,
+  prompt,
+  formats,
+  present,
+  upload,
+  onAttach,
+  onDetach,
+  children,
+}: {
+  kind: MediaKind
+  label: string
+  accept: string
+  prompt: ReactNode
+  formats: string
+  present: boolean
+  upload: Upload
+  onAttach: (kind: MediaKind, file: File | undefined) => void
+  onDetach: (kind: MediaKind) => void
+  children: ReactNode
+}) {
+  const busy = upload !== null
+  const mine = upload?.kind === kind
+  const limit = `${Math.round(MEDIA_LIMIT_BYTES[kind] / (1024 * 1024))} MB`
+
+  const picker = (
+    <input
+      type="file"
+      accept={accept}
+      className="sr-only"
+      disabled={busy}
+      onChange={(e) => {
+        onAttach(kind, e.target.files?.[0])
+        e.target.value = '' // so choosing the same file again still fires
+      }}
+    />
+  )
+
+  return (
+    <div>
+      <div className="flex min-h-8 items-center justify-between gap-2">
+        <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>{label}</span>
+        {present && !mine && (
+          <span className="flex gap-1">
+            <label className={`btn-quiet btn-sm ${busy ? 'pointer-events-none opacity-50' : 'cursor-pointer'}`}>
+              बदला {picker}
+            </label>
+            <button type="button" className="btn-quiet btn-sm" disabled={busy} onClick={() => onDetach(kind)}>
+              <IconTrash size={13} /> काढा
+            </button>
+          </span>
+        )}
+      </div>
+
+      <div
+        className="relative mt-1 aspect-video overflow-hidden rounded-lg border"
+        style={{ borderColor: 'var(--edge)', background: 'var(--surface-sunk)' }}
+      >
+        {mine ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-sm">
+            <span className="num">अपलोड होत आहे… {toDevanagariDigits(Math.round(upload.progress * 100))}%</span>
+            <span className="block h-1.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--edge)' }}>
+              <span
+                className="block h-full rounded-full transition-[width]"
+                style={{ width: `${upload.progress * 100}%`, background: 'var(--accent)' }}
+              />
+            </span>
+          </div>
+        ) : present ? (
+          children
+        ) : (
+          <label
+            className={`absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-sm font-semibold ${busy ? 'opacity-50' : 'cursor-pointer'}`}
+            style={{ color: 'var(--muted)' }}
+          >
+            {prompt}
+            <span className="text-xs font-normal" style={{ color: 'var(--faint)' }}>
+              {formats} · कमाल {limit}
+            </span>
+            {picker}
+          </label>
+        )}
+      </div>
     </div>
   )
 }

@@ -37,6 +37,9 @@ export interface Article {
   /** Who took or issued the photograph, printed beside it — e.g. महासंवाद.
    *  A photo without a credit is not shown as anyone's. */
   image_credit: string | null
+  /** A video the desk uploaded with the release — served from `/api/media/…`.
+   *  Shown on the news and map pages; the fold and DOCX stay text only. */
+  video_url: string | null
   status: Status
   submitted_by: string
   submitted_at: string

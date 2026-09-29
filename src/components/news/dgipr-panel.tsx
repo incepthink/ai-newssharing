@@ -226,7 +226,17 @@ export function DgiprPanel({ releases, openId, onOpen, onClose }: DgiprPanelProp
                       ) : null}
                     </div>
 
-                    {release.posterUrl ? (
+                    {release.videoUrl ? (
+                      <video
+                        className="dgipr-poster dgipr-video"
+                        src={release.videoUrl}
+                        poster={release.posterUrl ?? undefined}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        aria-label={release.titleMr}
+                      />
+                    ) : release.posterUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         className="dgipr-poster"
@@ -544,7 +554,17 @@ function ReleaseCard({
         </button>
       ) : null}
 
-      {release.posterUrl ? (
+      {release.videoUrl ? (
+        <video
+          className="dgipr-card-poster dgipr-video"
+          src={release.videoUrl}
+          poster={release.posterUrl ?? undefined}
+          controls
+          playsInline
+          preload="metadata"
+          aria-label={release.titleMr}
+        />
+      ) : release.posterUrl ? (
         /* The same two kinds of image the panel takes, and `next/image` suits
            neither of them for the same reasons. See the note on `.dgipr-poster`
            above. Cropped here rather than contained, because a grid of cards

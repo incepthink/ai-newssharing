@@ -285,6 +285,20 @@
   background: var(--color-surface-sunken);
 }
 
+/* A release's video. Letterboxed on black, as a player is, and never cropped:
+   the grid card's fixed height would otherwise cut the controls' frame. */
+.dgipr-video {
+  display: block;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #000;
+}
+
+.dgipr-card-poster.dgipr-video {
+  object-fit: contain;
+  background: #000;
+}
+
 /* The released text. Set at reading measure and reading leading — this is the
    one long-form block in the product, and the caption sizes the rest of the
    panels use are for lists. */

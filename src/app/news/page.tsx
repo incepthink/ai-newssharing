@@ -2,24 +2,27 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import type { ReactNode } from 'react'
-import { listArticles } from '@/lib/db'
+import { foldArticles, listArticles } from '@/lib/db'
 import { DISTRICTS, resolveDistrict } from '@/lib/districts'
 import { DGIPR_MR } from '@/lib/dgipr/marathi'
 import { buildNewsMap, loadCorpus, type Row } from '@/lib/dgipr/from-db'
 import { buildMapGeometry } from '@/lib/map/geometry'
-import { foldDateMr, toDevanagariDigits } from '@/lib/marathi'
+import { foldDateMr, todayIso, toDevanagariDigits } from '@/lib/marathi'
+import { toFoldItem } from '@/lib/news/fold-item'
 import { districtNameMr } from '@/lib/news/marathi'
 import type { Language } from '@/lib/types'
+import { FoldDownload } from '@/components/news/fold-download'
 import { LeadCarousel, type LeadSlide } from '@/components/news/lead-carousel'
 import { StoryPhoto } from '@/components/news/story-photo'
 import {
   IconArrowRight,
   IconDownload,
-  IconFacebook,
+  IconFacebookF,
+  IconInstagram,
   IconMap,
   IconSearch,
-  IconWhatsApp,
   IconX,
+  IconYouTube,
 } from '@/components/ui'
 
 /**
@@ -27,9 +30,9 @@ import {
  *
  * Built to the DGIPR landing-page brief (28 Sep 2026) and to the "DGIPR News
  * Homepage" design — its desktop and phone artboards. Three colours carry
- * meaning and nothing else does: the house maroon for the thing to press,
- * saffron for featured content (the lead, InFocus), green for places (district
- * chips, the map band).
+ * meaning and nothing else does: the house maroon for the thing to press and
+ * the map band, saffron for featured content (the lead, InFocus), green for
+ * places (district chips).
  *
  * ONE CORPUS. Every headline, count, photograph and shade here is a row in
  * `articles` with `status = 'approved'`, read through `loadCorpus` — the same
@@ -40,18 +43,24 @@ import {
  * PHOTOGRAPHS are the row's own `image_url`, credited from `image_credit`, and
  * nothing else: no stock picture ever stands in for one, because a picture on
  * a government release asserts a scene. A story without a photograph gets the
- * hatched plate.
+ * hatched plate. VIDEOS are the row's `video_url`, uploaded at the desk the
+ * same way: a play mark on every thumbnail, and a player in the media corner.
  *
- * NOTHING INVENTED. InFocus, explainers, advisories, video and popularity need
- * editorial inputs or analytics this store does not hold yet. Their slots are
- * designed and present, but each says what it is waiting for instead of
- * carrying filler. Social accounts likewise: a card links out only once its
- * destination has been confirmed with DGIPR (see `SOCIAL`).
+ * NOTHING INVENTED. InFocus carries a real release until an editorial pick
+ * exists. Explainers, advisories and popularity need editorial inputs or
+ * analytics this store does not hold yet. Their slots are designed and
+ * present, but each says what it is waiting for instead of carrying filler. Social cards link only to
+ * accounts confirmed with DGIPR (see `SOCIAL`).
  *
  * Search, filters and pagination are plain GET parameters handled here, so the
  * page works without JavaScript, every filtered view is a link that can be
  * saved or forwarded, and the reader's district and language survive every
- * link built by `buildHref`. The carousel is the one client island.
+ * link built by `buildHref`. The carousel and the fold download are the
+ * client islands.
+ *
+ * TODAY'S FOLD sits under the navigation: the desk's approved releases for
+ * the day, in the desk's order, downloadable as the one DOCX the desk itself
+ * sends out — `foldArticles`, the same call `/fold` and its download use.
  */
 
 export const dynamic = 'force-dynamic'
@@ -80,22 +89,26 @@ const PUBLIC_NAV = [
 ]
 
 /**
- * DGIPR's social channels.
+ * DGIPR's social channels — the four official accounts confirmed by DGIPR.
+ * No embeds: they need consent and fail quietly, so each card works as a
+ * designed card plus an outbound link.
  *
- * `url` stays null until the destination is confirmed with DGIPR — the brief
- * is explicit that a card must not present an unverified account as the
- * directorate's. Telegram is the one the brief cites as official, and it is
- * the channel that links out to the others; confirm the rest against it and
- * fill them in here. No embeds: they need consent and fail quietly, so each
- * card works as a designed card plus an outbound link.
+ * Each tile wears its platform's own colour and mark — the one place on the
+ * page outside the three-colour rule, because a reader looks for the logo they
+ * already know, not for our palette.
  */
-const SOCIAL: Array<{ id: string; name: string; glyph: ReactNode; blurb: string; url: string | null }> = [
-  { id: 'telegram', name: 'Telegram', glyph: 'T', blurb: 'सर्व प्रसिद्धीपत्रके थेट फोनवर', url: 'https://t.me/MahaDGIPR' },
-  { id: 'x', name: 'X', glyph: <IconX size={17} />, blurb: 'ताज्या घोषणा आणि थेट अपडेट्स', url: null },
-  { id: 'facebook', name: 'Facebook', glyph: <IconFacebook size={18} />, blurb: 'बातम्या, कार्यक्रम आणि छायाचित्रे', url: null },
-  { id: 'instagram', name: 'Instagram', glyph: 'I', blurb: 'माहितीचित्रे आणि छायाचित्र मालिका', url: null },
-  { id: 'youtube', name: 'YouTube', glyph: '▶', blurb: 'पत्रकार परिषदा आणि व्हिडिओ', url: null },
-  { id: 'whatsapp', name: 'WhatsApp चॅनेल', glyph: <IconWhatsApp size={18} />, blurb: 'या संकेतस्थळासाठी मंजुरीनंतर', url: null },
+const SOCIAL: Array<{ id: string; name: string; glyph: ReactNode; tile: string; blurb: string; url: string }> = [
+  { id: 'facebook', name: 'Facebook', glyph: <IconFacebookF size={22} />, tile: '#1877F2', blurb: 'बातम्या, कार्यक्रम आणि छायाचित्रे', url: 'https://www.facebook.com/MahaDGIPR' },
+  { id: 'x', name: 'X', glyph: <IconX size={18} />, tile: '#000000', blurb: 'ताज्या घोषणा आणि थेट अपडेट्स', url: 'https://x.com/MahaDGIPR' },
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    glyph: <IconInstagram size={22} />,
+    tile: 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%)',
+    blurb: 'माहितीचित्रे आणि छायाचित्र मालिका',
+    url: 'https://www.instagram.com/mahadgipr',
+  },
+  { id: 'youtube', name: 'YouTube', glyph: <IconYouTube size={22} />, tile: '#FF0000', blurb: 'पत्रकार परिषदा आणि व्हिडिओ', url: 'https://www.youtube.com/@MAHARASHTRADGIPR' },
 ]
 
 type Query = Record<string, string | string[] | undefined>
@@ -119,16 +132,18 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
   const query = await searchParams
   const filters = parseFilters(query)
   const now = Date.now()
+  const today = todayIso()
 
   /* `loadCorpus` is the source of truth. The second read only looks up two
      columns the release shape does not carry — language, and whether the row
      has a real approval time or only its fold date — keyed by the same ids, so
      it annotates the corpus rather than competing with it. */
-  const [corpus, geometry, approved, origin] = await Promise.all([
+  const [corpus, geometry, approved, origin, todayFold] = await Promise.all([
     loadCorpus(),
     buildMapGeometry(),
     listArticles({ status: 'approved' }),
     requestOrigin(),
+    foldArticles(today),
   ])
 
   const meta = new Map<string, Meta>(
@@ -143,17 +158,33 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
   const shown = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   /* No editor-picked lead exists in the schema yet. The carousel carries the
-     newest releases that have a photograph — topped up from the newest without
-     one if there are too few — and the list beside it is strictly newest first
-     over everything else, so a release without a picture is never pushed off
-     the top of the page, only out of the carousel. */
+     newest releases that have a photograph or a video — topped up from the
+     newest without if there are too few — and the list beside it is strictly
+     newest first over everything else, so a release without a picture is never
+     pushed off the top of the page, only out of the carousel. */
+  const hasMedia = (row: Row) => Boolean(row.release.posterUrl || row.release.videoUrl)
   const pictured = rows.filter((row) => row.release.posterUrl)
-  const leadRows = [...pictured, ...rows.filter((row) => !row.release.posterUrl)].slice(0, LEAD_COUNT)
+  const leadRows = [...rows.filter(hasMedia), ...rows.filter((row) => !hasMedia(row))].slice(0, LEAD_COUNT)
   const leadIds = new Set(leadRows.map((row) => row.release.id))
   const latest = rows.filter((row) => !leadIds.has(row.release.id)).slice(0, 5)
-  /* The gallery shows photographs the reader has not already passed above. */
   const shownAbove = new Set([...leadIds, ...latest.map((row) => row.release.id)])
-  const gallery = pictured.filter((row) => !shownAbove.has(row.release.id)).slice(0, 2)
+  /* InFocus has no editorial pick in the schema yet, so it carries a real
+     release the reader has not already passed: the newest CM / cabinet one
+     with a photograph, else the newest pictured, else the newest of either. */
+  const unseen = rows.filter((row) => !shownAbove.has(row.release.id))
+  const focus =
+    unseen.find((row) => row.release.featured && row.release.posterUrl) ??
+    unseen.find((row) => row.release.posterUrl) ??
+    unseen.find((row) => row.release.featured) ??
+    unseen[0] ??
+    rows[0]
+  /* The gallery shows photographs the reader has not already passed above. */
+  const gallery = pictured
+    .filter((row) => !shownAbove.has(row.release.id) && row !== focus)
+    .slice(0, 2)
+  /* The media corner's video is simply the newest one — a player is worth
+     showing even when the same release sits in the carousel above. */
+  const video = rows.find((row) => row.release.videoUrl)
 
   const slides: LeadSlide[] = leadRows.map((row) => ({
     id: row.release.id,
@@ -168,7 +199,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
     place: placeOf(row),
     when: whenOf(row, metaOf(row)),
     imageUrl: row.release.posterUrl,
-    imageCredit: row.release.posterCreditMr ?? null,
+    videoUrl: row.release.videoUrl ?? null,
   }))
 
   const cmRows = rows.filter((row) => row.release.featured)
@@ -189,7 +220,14 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
   const href: Href = (patch, hash = '') => buildHref(filters, patch, hash)
 
   return (
-    <div className="-mt-8 flex flex-col gap-7 sm:-mt-10 lg:gap-14">
+    <div className="relative isolate -mt-8 flex flex-col gap-7 sm:-mt-10 lg:gap-14">
+      {/* The ground: the lattice behind the whole page, the full width of the
+          window. It is decoration only, so a reader who asks for less
+          transparency gets the plain paper. */}
+      <div
+        aria-hidden
+        className="news-pattern pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-[#f7f5f1]"
+      />
       <a
         href="#releases"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2 focus:shadow-md"
@@ -199,7 +237,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
 
       {/* 1 ─ Utility strip + public masthead ------------------------------ */}
       <div className="flex flex-col gap-5 lg:gap-7">
-        <div className="bleed flex h-12 items-center justify-between gap-4 text-[0.8125rem]">
+        <div className="glass-band flex h-12 items-center justify-between gap-4 text-[0.8125rem] before:border-b before:border-white/70">
           <div className="flex min-w-0 items-center gap-2.5">
             <Image src="/emblem.png" alt="" width={512} height={512} className="h-7 w-7 shrink-0" />
             <span className="font-bold">महासंवाद</span>
@@ -258,7 +296,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               action="/news#releases"
               method="get"
               role="search"
-              className="flex gap-1.5 rounded-full bg-surface p-1.5 shadow-card"
+              className="glass flex gap-1.5 rounded-full p-1.5"
             >
               <label className="flex min-w-0 grow items-center gap-2 pl-3.5">
                 <IconSearch size={18} className="hidden shrink-0 text-muted sm:block" />
@@ -306,6 +344,8 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               </a>
             ))}
           </nav>
+
+          <FoldDownload today={today} items={todayFold.map(toFoldItem)} />
         </header>
       </div>
 
@@ -315,7 +355,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] lg:gap-6">
             <LeadCarousel slides={slides} />
 
-            <aside aria-labelledby="latest-h" className="lg:rounded-[20px] lg:bg-surface lg:p-[22px] lg:shadow-card">
+            <aside aria-labelledby="latest-h" className="lg:glass lg:rounded-[20px] lg:p-[22px]">
               <div className="flex items-baseline justify-between">
                 <h2 id="latest-h" className="text-lg font-bold lg:text-[1.0625rem]">
                   ताज्या बातम्या
@@ -327,11 +367,11 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
                   <li key={row.release.id} className="lg:border-b lg:border-sunk">
                     <Link
                       href={readHref(row)}
-                      className="group grid grid-cols-[96px_minmax(0,1fr)] gap-3 rounded-2xl bg-surface p-2.5 lg:grid-cols-[72px_minmax(0,1fr)] lg:rounded-none lg:bg-transparent lg:px-0 lg:py-[11px]"
+                      className="group grid grid-cols-[96px_minmax(0,1fr)] gap-3 rounded-2xl p-2.5 max-lg:glass max-lg:glass-sm lg:grid-cols-[72px_minmax(0,1fr)] lg:rounded-none lg:px-0 lg:py-[11px]"
                     >
                       <StoryPhoto
                         src={row.release.posterUrl}
-                        credit={row.release.posterCreditMr}
+                        video={row.release.videoUrl}
                         className="h-[72px] rounded-xl lg:h-[60px] lg:rounded-[10px]"
                       />
                       <span className="min-w-0">
@@ -356,7 +396,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
             </aside>
           </div>
         ) : (
-          <div className="rounded-[20px] bg-surface p-8 text-center shadow-card">
+          <div className="glass rounded-[20px] p-8 text-center">
             <p className="display text-xl">अद्याप एकही प्रसिद्धीपत्रक मंजूर झालेले नाही.</p>
             <p className="mt-2 text-sm text-muted">वृत्त विभागाने मंजूर केलेली बातमी येथे लगेच दिसेल.</p>
           </div>
@@ -368,26 +408,51 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
         aria-label="विशेष लक्ष आणि मुख्यमंत्री व मंत्रिमंडळ"
         className="grid gap-7 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] lg:gap-6"
       >
-        <div className="grid gap-3 rounded-[20px] bg-saffron-soft p-3.5 sm:grid-cols-[minmax(0,300px)_minmax(0,1fr)] sm:gap-6 sm:p-5">
-          <div className="photo-plate flex min-h-[150px] items-center justify-center rounded-[14px] text-xs sm:min-h-[220px]">
-            मोहिमेचे चित्र
-          </div>
-          <div className="flex flex-col px-1 pb-1 sm:py-2 sm:pr-2">
+        {focus ? (
+          <Link
+            href={readHref(focus)}
+            className="glass glass-saffron group grid gap-3 rounded-[20px] p-3.5 sm:grid-cols-[minmax(0,300px)_minmax(0,1fr)] sm:gap-6 sm:p-5"
+          >
+            <StoryPhoto
+              src={focus.release.posterUrl}
+              video={focus.release.videoUrl}
+              size="md"
+              className="min-h-[150px] rounded-[14px] sm:min-h-[220px]"
+            />
+            <div className="flex flex-col px-1 pb-1 sm:py-2 sm:pr-2">
+              <p className="text-[0.8125rem] font-bold text-saffron-ink">
+                विशेष लक्ष
+                <span className="font-semibold text-secondary">
+                  {' '}
+                  · {focus.release.featured ? 'मुख्यमंत्री व मंत्रिमंडळ' : (deptLabel(focus.release.departmentMr) ?? placeOf(focus))}
+                </span>
+              </p>
+              <h2 className="display mt-1 line-clamp-3 text-lg font-bold leading-[1.4] group-hover:text-accent sm:mt-1.5 sm:text-2xl">
+                {focus.release.titleMr}
+              </h2>
+              {(focus.release.summary60Mr ?? focus.release.summaryMr) && (
+                <p className="mt-2 line-clamp-3 text-sm leading-[1.7] text-secondary">
+                  {focus.release.summary60Mr ?? focus.release.summaryMr}
+                </p>
+              )}
+              <span className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted sm:mt-auto sm:pt-3">
+                <span>
+                  <b className="font-semibold text-place">{placeOf(focus)}</b> · {whenOf(focus, metaOf(focus))}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1.5 font-bold text-accent">
+                  पूर्ण बातमी वाचा <IconArrowRight size={13} />
+                </span>
+              </span>
+            </div>
+          </Link>
+        ) : (
+          <div className="glass glass-saffron rounded-[20px] p-5 text-sm text-muted">
             <p className="text-[0.8125rem] font-bold text-saffron-ink">विशेष लक्ष</p>
-            <h2 className="display mt-1 text-lg font-bold leading-[1.4] sm:mt-1.5 sm:text-2xl">
-              या आठवड्यातील महत्त्वाचे धोरण, कार्यक्रम किंवा मोहीम
-            </h2>
-            <p className="mt-2 text-sm leading-[1.7] text-secondary">
-              संपादक एक विषय निवडतात — शीर्षक, कालावधी, संबंधित प्रसिद्धीपत्रके आणि ३–५ मोहीम दुवे. मुदत संपल्यावर हा भाग
-              आपोआप बदलतो.
-            </p>
-            <span className="mt-3 self-start rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-muted sm:mt-auto">
-              संपादकीय निवड झाल्यावर येथे दिसेल
-            </span>
+            <p className="mt-1.5">मंजूर प्रसिद्धीपत्रक आल्यावर येथे दिसेल.</p>
           </div>
-        </div>
+        )}
 
-        <div className="rounded-[20px] bg-surface p-[22px] shadow-card">
+        <div className="glass rounded-[20px] p-[22px]">
           <h2 className="text-[1.0625rem] font-bold">मुख्यमंत्री व मंत्रिमंडळ</h2>
           <div className="mt-3 flex flex-col">
             <Link
@@ -445,7 +510,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
             <ActiveFilters filters={filters} href={href} />
 
             {shown.length === 0 ? (
-              <div className="rounded-[20px] bg-surface p-8 text-center shadow-card">
+              <div className="glass rounded-[20px] p-8 text-center">
                 <p className="font-semibold">या निकषात एकही बातमी नाही</p>
                 <p className="mt-1 text-sm text-muted">शोधशब्द बदलून पहा किंवा एखादा फिल्टर काढा.</p>
                 <Link href="/news#releases" className="btn-ghost btn-sm mt-4">
@@ -453,7 +518,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
                 </Link>
               </div>
             ) : (
-              <ol className="rounded-[20px] bg-surface px-4 py-2 shadow-card sm:px-6">
+              <ol className="glass rounded-[20px] px-4 py-2 sm:px-6">
                 {shown.map((row) => (
                   <ReleaseItem key={row.release.id} row={row} meta={metaOf(row)} origin={origin} />
                 ))}
@@ -489,7 +554,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               id="search"
               action="/news#releases"
               method="get"
-              className="flex scroll-mt-24 flex-col gap-3 rounded-[20px] bg-surface p-5 shadow-card"
+              className="glass flex scroll-mt-24 flex-col gap-3 rounded-[20px] p-5"
             >
               <p className="text-base font-bold">प्रगत शोध</p>
               <AsideField label="शब्द किंवा वृत्त क्र.">
@@ -532,7 +597,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               </button>
             </form>
 
-            <div id="archive" className="scroll-mt-24 rounded-[20px] bg-surface p-5 shadow-card">
+            <div id="archive" className="glass scroll-mt-24 rounded-[20px] p-5">
               <p className="text-base font-bold">तारखेनुसार संग्रह</p>
               <ul className="mt-2 flex flex-col gap-1">
                 {months.slice(0, 8).map((m) => (
@@ -550,7 +615,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               </ul>
             </div>
 
-            <div className="rounded-[20px] border border-dashed border-edge-strong p-5">
+            <div className="glass-quiet rounded-[20px] border border-dashed border-edge-strong p-5">
               <p className="text-base font-bold">लोकप्रिय बातम्या</p>
               <p className="mt-1.5 text-[0.8125rem] leading-relaxed text-secondary">
                 वाचक आकडेवारी जोडल्यानंतर, मोजणीच्या कालावधीसह — संपादकीय महत्त्वापासून वेगळी यादी.
@@ -564,10 +629,10 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
       <section
         id="districts"
         aria-labelledby="districts-h"
-        className="grid scroll-mt-24 gap-3.5 rounded-3xl bg-place-soft p-[18px] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-8 lg:rounded-[28px] lg:p-8"
+        className="glass glass-accent grid scroll-mt-24 gap-3.5 rounded-3xl p-[18px] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-8 lg:rounded-[28px] lg:p-8"
       >
         <figure className="m-0 flex flex-col gap-2.5">
-          <p className="text-[0.8125rem] font-bold text-place">जिल्ह्यानुसार बातम्या</p>
+          <p className="text-[0.8125rem] font-bold text-accent">जिल्ह्यानुसार बातम्या</p>
           <h2 id="districts-h" className="display -mt-2 text-[1.375rem] font-bold lg:text-[1.875rem]">
             महाराष्ट्राचा बातम्या नकाशा
           </h2>
@@ -580,7 +645,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               for a phone. */}
           <svg
             viewBox={geometry.viewBox}
-            className="mt-2 block h-auto max-h-[250px] w-full lg:max-h-[420px]"
+            className="mt-2 block h-auto max-h-[280px] w-full rounded-2xl bg-surface p-3 shadow-[inset_0_0_0_1px_var(--accent-edge)] lg:max-h-[460px] lg:p-5"
             role="group"
             aria-label={`महाराष्ट्राचे ३६ जिल्हे — मागील ${map.window.labelMr} मधील प्रसिद्धीपत्रकांनुसार छटा`}
           >
@@ -594,9 +659,11 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
                   <path
                     d={shape.d}
                     fill={shade(count, ceiling)}
-                    stroke={picked ? 'var(--ink)' : 'var(--surface)'}
-                    strokeWidth={picked ? 3 : 1.2}
-                    className="transition-[stroke] group-hover:stroke-[var(--ink)] group-focus-visible:stroke-[var(--accent)] group-focus-visible:[stroke-width:4]"
+                    stroke={picked ? 'var(--ink)' : '#b8aba2'}
+                    strokeWidth={picked ? 2.5 : 1}
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                    className="transition-[stroke] group-hover:stroke-[var(--ink)] group-focus-visible:stroke-[var(--ink)] group-focus-visible:[stroke-width:4]"
                   />
                 </a>
               )
@@ -631,13 +698,13 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               />
             </label>
             {filters.lang && <input type="hidden" name="lang" value={filters.lang} />}
-            <button type="submit" className="h-11 shrink-0 rounded-full bg-place px-4 font-bold text-white lg:px-5">
+            <button type="submit" className="h-11 shrink-0 rounded-full bg-accent px-4 font-bold text-white lg:px-5">
               पहा
             </button>
           </form>
 
           {focusDistrict && (
-            <div className="rounded-2xl bg-surface p-3.5 lg:rounded-[20px] lg:p-5">
+            <div className="glass glass-sm rounded-2xl p-3.5 lg:rounded-[20px] lg:p-5">
               <div className="flex items-baseline justify-between gap-2">
                 <h3 className="text-[1.0625rem] font-bold lg:text-xl">{districtNameMr(focusDistrict)}</h3>
                 <span className="text-xs text-muted lg:text-[0.8125rem]">
@@ -649,7 +716,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
                   <li key={row.release.id} className="grid grid-cols-[56px_minmax(0,1fr)] gap-3">
                     <StoryPhoto
                       src={row.release.posterUrl}
-                      credit={row.release.posterCreditMr}
+                      video={row.release.videoUrl}
                       className="h-12 rounded-[10px]"
                     />
                     <div>
@@ -664,7 +731,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               </ul>
               <Link
                 href={href({ district: focusDistrict }, '#releases')}
-                className="mt-3.5 flex h-11 items-center justify-center gap-1.5 rounded-full bg-place-soft px-4 text-sm font-bold text-place lg:inline-flex lg:h-10"
+                className="mt-3.5 flex h-11 items-center justify-center gap-1.5 rounded-full bg-accent-soft px-4 text-sm font-bold text-accent lg:inline-flex lg:h-10"
               >
                 जिल्ह्यातील सर्व बातम्या <IconArrowRight size={13} />
               </Link>
@@ -680,11 +747,11 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
                     href={href({ district: d.districtId }, '#districts')}
                     aria-current={d.districtId === filters.district ? 'true' : undefined}
                     className={`inline-block rounded-full px-3 py-1.5 text-[0.8125rem] ${
-                      d.districtId === filters.district ? 'bg-place text-white hover:text-white' : 'bg-surface'
+                      d.districtId === filters.district ? 'bg-accent text-white hover:text-white' : 'bg-surface'
                     }`}
                   >
                     {districtNameMr(d.districtId)}{' '}
-                    <b className={d.districtId === filters.district ? '' : 'text-place'}>{mr(d.count)}</b>
+                    <b className={d.districtId === filters.district ? '' : 'text-accent'}>{mr(d.count)}</b>
                   </Link>
                 </li>
               ))}
@@ -693,7 +760,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
 
           <Link
             href={focusDistrict ? `/map?district=${focusDistrict}` : '/map'}
-            className="flex h-11 items-center justify-center gap-1.5 rounded-full bg-place px-[18px] text-sm font-bold text-white hover:text-white lg:self-start"
+            className="flex h-11 items-center justify-center gap-1.5 rounded-full bg-accent px-[18px] text-sm font-bold text-white hover:text-white lg:self-start"
           >
             <IconMap size={15} /> पूर्ण नकाशा पहा
           </Link>
@@ -709,7 +776,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           </h2>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="flex flex-col rounded-[20px] bg-accent-soft p-6 sm:col-span-2">
+          <div className="glass glass-accent flex flex-col rounded-[20px] p-6 sm:col-span-2">
             <p className="text-[0.8125rem] font-bold text-accent">समजून घ्या</p>
             <p className="display mt-1.5 text-[1.375rem] font-bold leading-[1.4]">
               एक सार्वजनिक प्रश्न, सोप्या मराठीत उत्तर
@@ -724,7 +791,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
             <Link
               key={d.key}
               href={href({ dept: d.key }, '#releases')}
-              className="flex min-h-[170px] flex-col justify-between gap-4 rounded-[20px] bg-surface p-[22px] shadow-card"
+              className="glass flex min-h-[170px] flex-col justify-between gap-4 rounded-[20px] p-[22px]"
             >
               <span
                 className={`grid h-11 w-11 place-items-center rounded-xl ${i === 0 ? 'bg-saffron-soft text-saffron-ink' : 'bg-accent-soft text-accent'}`}
@@ -784,16 +851,20 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           ) : (
             <MediaWaiting label="छायाचित्रे" className="h-[190px]" />
           )}
-          <MediaWaiting label="व्हिडिओ व माहितीचित्रे" className="h-[190px]" />
+          {video ? (
+            <VideoTile row={video} className="h-[190px]" />
+          ) : (
+            <MediaWaiting label="व्हिडिओ व माहितीचित्रे" className="h-[190px]" />
+          )}
 
-          <div className="flex flex-col rounded-[20px] bg-saffron-soft p-[18px]">
+          <div className="glass glass-saffron flex flex-col rounded-[20px] p-[18px]">
             <p className="text-[0.8125rem] font-bold text-saffron-ink">माध्यम सूचना व निमंत्रणे</p>
             <p className="mt-2.5 text-sm font-semibold">सध्या कोणतीही आगामी सूचना नाही</p>
             <p className="mt-1 text-xs text-secondary">कार्यक्रमाची तारीख, वेळ आणि ठिकाण ठळकपणे दिसेल.</p>
             <span className="mt-auto pt-3 text-xs text-muted">होऊन गेलेले कार्यक्रम आपोआप संग्रहात</span>
           </div>
 
-          <div className="rounded-[20px] bg-surface p-[18px] shadow-card">
+          <div className="glass rounded-[20px] p-[18px]">
             <p className="text-[0.9375rem] font-bold">पत्रकारांसाठी</p>
             <ul className="mt-2 flex flex-col gap-1.5 text-[0.8125rem]">
               <li className="flex gap-2">
@@ -822,42 +893,43 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
       {/* 9 ─ Social engagements -------------------------------------------- */}
       <section aria-labelledby="social-h" className="flex flex-col gap-2.5 lg:gap-5">
         <div>
-          <p className="text-[0.8125rem] font-bold text-muted">सामाजिक माध्यमे</p>
-          <h2 id="social-h" className="display mt-0.5 text-[1.375rem] font-bold lg:text-[1.875rem]">
+          <h2 id="social-h" className="display text-[1.375rem] font-bold lg:text-[1.875rem]">
             सोशल मीडियावर महासंवाद
           </h2>
           <p className="hidden text-[0.8125rem] text-muted sm:block">माहिती व जनसंपर्क महासंचालनालयाची अधिकृत खाती</p>
         </div>
-        <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
+        <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
           {SOCIAL.map((s) => (
-            <li key={s.id} className="flex flex-col gap-3.5 rounded-[18px] bg-surface p-3.5 shadow-card lg:rounded-[20px] lg:p-5">
-              <div className="flex items-center gap-3">
-                <span
-                  aria-hidden
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-ink text-[1.0625rem] font-bold text-white"
-                >
-                  {s.glyph}
-                </span>
-                <div className="min-w-0 grow">
-                  <p className="font-bold">{s.name}</p>
-                  <p className="text-xs text-secondary">महासंवाद · DGIPR महाराष्ट्र</p>
+            <li key={s.id}>
+              <a
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${s.name} वर महासंवाद`}
+                className="glass flex h-full flex-col gap-3.5 rounded-[18px] p-3.5 transition hover:-translate-y-0.5 hover:shadow-lg lg:rounded-[20px] lg:p-5"
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    aria-hidden
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white ring-1 ring-inset ring-white/10"
+                    style={{ background: s.tile }}
+                  >
+                    {s.glyph}
+                  </span>
+                  <div className="min-w-0 grow">
+                    <p className="font-bold">{s.name}</p>
+                    <p className="text-xs text-secondary">महासंवाद · DGIPR महाराष्ट्र</p>
+                  </div>
                 </div>
-                <SocialAction url={s.url} name={s.name} className="lg:hidden" />
-              </div>
-              <div className="hidden items-center justify-between gap-2 lg:flex">
-                <span className="text-[0.8125rem] text-secondary">{s.blurb}</span>
-                <SocialAction url={s.url} name={s.name} />
-              </div>
+                <span className="hidden text-[0.8125rem] text-secondary lg:block">{s.blurb}</span>
+              </a>
             </li>
           ))}
         </ul>
-        <p className="text-xs text-muted">
-          समाजमाध्यमांवरील सूचना आणि या संकेतस्थळावरील प्रसिद्धीपत्रके वेगळी आहेत — अधिकृत मजकुरासाठी मूळ प्रसिद्धीपत्रक पाहा.
-        </p>
       </section>
 
       {/* 10 ─ Institutional footer ----------------------------------------- */}
-      <footer id="help" aria-label="संस्थात्मक माहिती" className="bleed mt-2 scroll-mt-24 py-6 lg:mt-2 lg:py-10">
+      <footer id="help" aria-label="संस्थात्मक माहिती" className="glass-band mt-2 scroll-mt-24 py-6 before:border-t before:border-white/70 lg:mt-2 lg:py-10">
         <div className="grid gap-6 text-sm sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           <div>
             <p className="font-bold">जारी करणारे प्राधिकरण</p>
@@ -945,10 +1017,8 @@ function ReleaseItem({ row, meta, origin }: { row: Row; meta: Meta; origin: stri
     <li className="grid grid-cols-[96px_minmax(0,1fr)] gap-3 border-b border-sunk py-4 sm:grid-cols-[200px_minmax(0,1fr)] sm:gap-[22px] sm:py-5">
       <StoryPhoto
         src={r.posterUrl}
-        credit={r.posterCreditMr}
+        video={r.videoUrl}
         size="md"
-        chip
-        chipClassName="hidden sm:block"
         className="h-[72px] rounded-xl sm:h-[134px] sm:rounded-[14px]"
       />
       <div className="min-w-0">
@@ -1002,20 +1072,19 @@ function ReleaseItem({ row, meta, origin }: { row: Row; meta: Meta; origin: stri
   )
 }
 
-/** A published photograph from a release, captioned with its date and credit
- *  and linking to the release it came with. */
+/** A published photograph from a release, captioned with its date and
+ *  linking to the release it came with. */
 function GalleryTile({ row, large, className }: { row: Row; large?: boolean; className: string }) {
   const r = row.release
   return (
     <Link href={readHref(row)} className={`group relative block overflow-hidden rounded-[20px] ${className}`}>
-      <StoryPhoto src={r.posterUrl} credit={r.posterCreditMr} size="md" fill />
+      <StoryPhoto src={r.posterUrl} video={r.videoUrl} size="md" fill />
       <span
         className={`absolute bottom-3 left-3 right-3 rounded-xl px-3 py-2 ${large ? 'lg:bottom-4 lg:left-4 lg:right-4 lg:rounded-[14px] lg:px-3.5 lg:py-3' : ''}`}
         style={{ background: 'rgb(255 255 255 / 0.92)' }}
       >
         <span className="block text-xs text-muted">
           छायाचित्र · {foldDateMr(r.date)}
-          {r.posterCreditMr && <> · {r.posterCreditMr}</>}
         </span>
         <span
           className={`line-clamp-2 font-bold leading-snug group-hover:text-accent ${large ? 'text-[0.9375rem]' : 'text-[0.8125rem]'}`}
@@ -1024,6 +1093,32 @@ function GalleryTile({ row, large, className }: { row: Row; large?: boolean; cla
         </span>
       </span>
     </Link>
+  )
+}
+
+/** A release's video, playable where it sits, with a line back to the release. */
+function VideoTile({ row, className }: { row: Row; className: string }) {
+  const r = row.release
+  return (
+    <div className={`relative overflow-hidden rounded-[20px] bg-black ${className}`}>
+      <video
+        src={r.videoUrl!}
+        poster={r.posterUrl ?? undefined}
+        controls
+        playsInline
+        preload="metadata"
+        aria-label={r.titleMr}
+        className="absolute inset-0 h-full w-full object-contain"
+      />
+      <Link
+        href={readHref(row)}
+        className="absolute left-3 right-3 top-3 rounded-xl px-3 py-2 hover:text-accent"
+        style={{ background: 'rgb(255 255 255 / 0.92)' }}
+      >
+        <span className="block text-xs text-muted">व्हिडिओ · {foldDateMr(r.date)}</span>
+        <span className="line-clamp-1 text-[0.8125rem] font-bold leading-snug">{r.titleMr}</span>
+      </Link>
+    </div>
   )
 }
 
@@ -1037,25 +1132,6 @@ function MediaWaiting({ label, className }: { label: string; className: string }
         <b className="text-ink">{label}</b> · अद्याप प्रकाशित नाही
       </span>
     </div>
-  )
-}
-
-function SocialAction({ url, name, className = '' }: { url: string | null; name: string; className?: string }) {
-  return url ? (
-    <a
-      href={url}
-      rel="noopener"
-      aria-label={`${name} वर फॉलो करा`}
-      className={`inline-flex h-10 shrink-0 items-center gap-1 rounded-full border border-edge bg-surface px-4 text-[0.8125rem] font-bold hover:text-accent ${className}`}
-    >
-      फॉलो करा <IconArrowRight size={13} />
-    </a>
-  ) : (
-    <span
-      className={`shrink-0 rounded-full border border-dashed border-edge-strong px-2.5 py-1 text-[0.6875rem] font-bold text-muted ${className}`}
-    >
-      पडताळणी प्रलंबित
-    </span>
   )
 }
 
@@ -1243,11 +1319,13 @@ function shortWhen(row: Row, meta: Meta): string {
   }).format(at)
 }
 
-/** Five steps of the places green, relative to the week's busiest district. */
+/** Five steps of the house maroon, relative to the week's busiest district. */
+/* Opaque steps of the maroon, so the tinted glass behind the map cannot wash
+   the districts out the way a translucent fill does. */
 function shade(count: number, ceiling: number): string {
-  if (count <= 0) return 'var(--empty)'
+  if (count <= 0) return '#ece8e2'
   const step = Math.min(4, Math.floor((count / ceiling) * 4.999))
-  return `rgb(31 107 74 / ${[0.18, 0.34, 0.52, 0.72, 0.9][step]})`
+  return ['#f1d6cf', '#e0aa9d', '#c77866', '#a94d39', '#8c2f1f'][step]
 }
 
 function mr(n: number | string): string {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { IconCamera } from '@/components/ui'
+import { IconCamera, IconPlay } from '@/components/ui'
 
 /**
  * A story's photograph, or the frame where one would be.
@@ -13,26 +13,25 @@ import { IconCamera } from '@/components/ui'
  * government page reads as the page being broken.
  *
  * The wrapper takes its size from `className`; the image covers it.
+ *
+ * A story with a video gets a play mark over its frame, so a reader scanning
+ * the list can tell which ones have footage. Where there is a video and no
+ * photograph, the video's own opening frame stands in as the still — it is
+ * the story's own picture, not a stand-in.
  */
 export function StoryPhoto({
   src,
-  credit,
+  video,
   size = 'sm',
-  chip = false,
-  chipClassName = '',
   eager = false,
   fill = false,
   className = '',
 }: {
   src: string | null | undefined
-  credit?: string | null
+  video?: string | null
   /** `lg` says in words that there is no photograph; smaller frames only
    *  draw the camera. */
   size?: 'lg' | 'md' | 'sm'
-  /** Print the credit on the photo. Off for thumbnails too small to carry
-   *  it legibly, where it goes in the tooltip instead. */
-  chip?: boolean
-  chipClassName?: string
   eager?: boolean
   /** Cover the positioned parent instead of taking a size from `className`. */
   fill?: boolean
@@ -50,18 +49,38 @@ export function StoryPhoto({
   }, [src])
 
   const shown = Boolean(src) && !failed
-  const creditLine = credit ? `छायाचित्र: ${credit}` : undefined
+  const still = !shown && Boolean(video)
+  const badge = size === 'lg' ? 'h-14 w-14' : size === 'md' ? 'h-10 w-10' : 'h-7 w-7'
 
   return (
-    <div className={`${fill ? 'absolute inset-0' : 'relative'} overflow-hidden ${shown ? 'bg-sunk' : 'photo-plate'} ${className}`}>
-      {shown ? (
+    <div
+      className={`${fill ? 'absolute inset-0' : 'relative'} overflow-hidden ${shown ? 'bg-sunk' : still ? 'bg-black' : 'photo-plate'} ${className}`}
+    >
+      {video && (
+        <span className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center" aria-hidden>
+          <span className={`flex items-center justify-center rounded-full text-white ${badge}`} style={{ background: 'rgb(0 0 0 / 0.55)' }}>
+            <IconPlay size={size === 'lg' ? 22 : size === 'md' ? 16 : 12} />
+          </span>
+        </span>
+      )}
+      {still ? (
+        /* `#t=0.1` asks for a frame just past the start: some browsers paint
+           nothing for frame zero until playback begins. */
+        <video
+          src={`${video}#t=0.1`}
+          preload="metadata"
+          muted
+          playsInline
+          tabIndex={-1}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : shown ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             ref={img}
             src={src!}
             alt=""
-            title={chip ? undefined : creditLine}
             loading={eager ? 'eager' : 'lazy'}
             fetchPriority={eager ? 'high' : undefined}
             decoding="async"
@@ -69,14 +88,6 @@ export function StoryPhoto({
             onError={() => setFailed(true)}
             className="absolute inset-0 h-full w-full object-cover"
           />
-          {chip && creditLine && (
-            <span
-              className={`absolute bottom-3 left-3 max-w-[calc(100%-1.5rem)] truncate rounded-full px-2.5 py-0.5 text-[0.6875rem] text-secondary ${chipClassName}`}
-              style={{ background: 'rgb(255 255 255 / 0.88)' }}
-            >
-              {creditLine}
-            </span>
-          )}
         </>
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5" aria-hidden>

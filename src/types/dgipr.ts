@@ -65,6 +65,9 @@ export type DgiprRelease = {
   /** Who the photograph is credited to, printed beside it. Optional because
    *  the curated rows' posters are this app's own drawings. */
   posterCreditMr?: string | null;
+  /** A video the desk uploaded with the release. `posterUrl`, when there is
+   *  one, is its still. Optional because the curated rows never carry one. */
+  videoUrl?: string | null;
   /**
    * The release as a printable sheet, under this app's own `public/dgipr/`.
    *
