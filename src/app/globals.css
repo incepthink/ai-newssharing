@@ -1055,3 +1055,101 @@ body {
      desk, so it runs a touch larger than the panel version. */
   .prose-article p { font-size: 1.0625rem; }
 }
+
+/* ============================================================================
+   The public news page — `/news`, the "नवी रचना" redesign.
+
+   A cream ground, one crimson for the thing to press and the dark bands, its
+   deep shade for the bands and footer, saffron for the special coverage, green
+   for places. Scoped under `.nr` so none of it leaks into the desk's screens,
+   which keep the maroon above. `--nr-deep` is the crimson × 0.62, the shade
+   the design derives for every dark band.
+   ========================================================================= */
+
+.nr {
+  --nr-ground: #fff8ee;
+  --nr-primary: #a8172c;
+  --nr-primary-soft: #f6e8ea;
+  --nr-deep: #680e1b;
+  --nr-accent: #e8871e;
+  --nr-accent-soft: #fbe6cf;
+  --nr-accent-ink: #804a10;
+  --nr-place: #1f6b4a;
+  --nr-place-soft: #e4eee9;
+  --nr-chip: #ffd978;
+  --nr-chip-ink: #7a1020;
+  --nr-text: #2b1a1c;
+  --nr-text2: #5c4344;
+  --nr-muted: #7a5f60;
+  --nr-line: #f0dcc8;
+  --nr-line2: #ebcfb8;
+  --nr-peach: #fdf1e6;
+  --nr-blush: #fde8e2;
+  --nr-night: #2b1a1c;
+
+  background: var(--nr-ground);
+  color: var(--nr-text);
+  font-family: var(--font-mukta), 'Noto Sans Devanagari', 'Nirmala UI', system-ui, sans-serif;
+}
+
+/* The page's own focus ring: saffron, which shows on the crimson bands, the
+   photographs and the cream alike. */
+.nr :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--nr-accent);
+  outline-offset: 2px;
+}
+
+/* Devanagari headings need the room for their vowel signs. */
+.nr .nr-h {
+  font-family: var(--font-poppins), 'Noto Sans Devanagari', 'Nirmala UI', sans-serif;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+
+/* Text on a photograph or a dark band underlines on hover rather than
+   changing colour: there is no second colour that reads on every photo. */
+.nr-link:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+
+/* A photograph that leans in a little under the pointer. */
+.nr-zoom { transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1); }
+a:hover .nr-zoom, .group:hover .nr-zoom { transform: scale(1.04); }
+
+/* The hero's slow push-in on the slide that is showing. */
+.nr-kenburns { transition: transform 4.5s linear; }
+
+/* The "live" dot beside ताज्या बातम्या. */
+@keyframes nr-pulse {
+  0%   { box-shadow: 0 0 0 0 rgb(200 51 30 / 0.5); }
+  70%  { box-shadow: 0 0 0 8px rgb(200 51 30 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(200 51 30 / 0); }
+}
+.nr-live { animation: nr-pulse 2s infinite; }
+
+/* The hero's dash indicator: the fill's end is what advances the carousel,
+   so the bar the reader watches is exactly the time left. It keeps running
+   under reduced motion — it is a progress bar, not decoration, and the
+   carousel autoplays for everyone (the pause button stays). */
+.nr-fill {
+  transform-origin: left center;
+  animation: nr-fill 4.5s linear forwards;
+}
+@keyframes nr-fill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* Rows of chips that scroll sideways on a phone, without a scrollbar. */
+.nr-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.nr-scroll::-webkit-scrollbar { display: none; }
+
+/* The reader drawer and the assistant slide in; the palette fades. */
+@keyframes nr-drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes nr-rise { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.nr-drawer-in { animation: nr-drawer-in 180ms cubic-bezier(0.2, 0, 0.2, 1) both; }
+.nr-rise { animation: nr-rise 180ms cubic-bezier(0.2, 0, 0.2, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nr-live, .nr-drawer-in, .nr-rise { animation: none; }
+  .nr-zoom, .nr-kenburns { transition: none; }
+  a:hover .nr-zoom, .group:hover .nr-zoom { transform: none; }
+}

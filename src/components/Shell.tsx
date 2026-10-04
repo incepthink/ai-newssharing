@@ -47,6 +47,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
    */
   const bare = pathname === '/map' || pathname.startsWith('/map/')
 
+  /**
+   * The public front door is not one of the desk's screens.
+   *
+   * `/news` carries its own utility strip, masthead, footer and bottom bar —
+   * the reader's identity, not the staff tool's — and its hero and bands run
+   * the full width of the window. So the staff header and the credit line do
+   * not print, and `<main>` gives up its column but, unlike the map, keeps the
+   * document scroll: the masthead is `position: sticky`, and an overflow clip
+   * here would turn that into a scroll container that never scrolls.
+   * A release page under `/news/` is still a desk-shell document.
+   */
+  if (pathname === '/news') {
+    return <main className="w-full max-w-none grow p-0">{children}</main>
+  }
+
   return (
     <>
       <header

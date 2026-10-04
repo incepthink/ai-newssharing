@@ -1,66 +1,64 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import type { ReactNode } from 'react'
-import { foldArticles, listArticles } from '@/lib/db'
+import { FACT_CHECK_TEAM_LIVE, MAIN_NAV, SPECIAL_COVERAGE, SUBSCRIBE, TRENDING } from '@/data/news-editorial'
+import { foldArticles } from '@/lib/db'
 import { DISTRICTS, resolveDistrict } from '@/lib/districts'
 import { DGIPR_MR } from '@/lib/dgipr/marathi'
-import { buildNewsMap, loadCorpus, type Row } from '@/lib/dgipr/from-db'
+import { buildNewsMap } from '@/lib/dgipr/from-db'
 import { buildMapGeometry } from '@/lib/map/geometry'
-import { foldDateMr, todayIso, toDevanagariDigits } from '@/lib/marathi'
+import { foldDateMr, todayIso } from '@/lib/marathi'
 import { toFoldItem } from '@/lib/news/fold-item'
+import { deptLabel, loadNewsCorpus } from '@/lib/news/items'
 import { districtNameMr } from '@/lib/news/marathi'
+import { isTopic, mrDigits, searchItems, TOPICS, topicLabel, type NewsItem, type TopicId } from '@/lib/news/public'
 import type { Language } from '@/lib/types'
-import { FoldDownload } from '@/components/news/fold-download'
-import { LeadCarousel, type LeadSlide } from '@/components/news/lead-carousel'
 import { StoryPhoto } from '@/components/news/story-photo'
+import { FactCheck } from '@/components/news/redesign/fact-check'
+import { HeroCarousel, type HeroSlide } from '@/components/news/redesign/hero'
+import { MainNav } from '@/components/news/redesign/main-nav'
+import { IDownload, IPlay, ISearch, IShare, ISitemap } from '@/components/news/redesign/icons'
 import {
-  IconArrowRight,
-  IconDownload,
-  IconFacebookF,
-  IconInstagram,
-  IconMap,
-  IconSearch,
-  IconX,
-  IconYouTube,
-} from '@/components/ui'
+  BottomNav,
+  ByNumberForm,
+  CopyButton,
+  DistrictPicker,
+  FoldButton,
+  LanguageSelect,
+  ListenButton,
+  ReadLink,
+  SearchButton,
+  SearchChip,
+  TextSizeCycle,
+} from '@/components/news/redesign/triggers'
+import { NewsUiProvider, TextSizeGroup } from '@/components/news/redesign/ui'
+import { IconFacebookF, IconInstagram, IconX, IconYouTube } from '@/components/ui'
 
 /**
- * News — the public front door.
- *
- * Built to the DGIPR landing-page brief (28 Sep 2026) and to the "DGIPR News
- * Homepage" design — its desktop and phone artboards. Three colours carry
- * meaning and nothing else does: the house maroon for the thing to press and
- * the map band, saffron for featured content (the lead, InFocus), green for
- * places (district chips).
+ * News — the public front door, to the "नवी रचना — प्रस्ताव" redesign
+ * (`docs/design/news-redesign`): a cream ground, a crimson utility bar, the
+ * Mahasamvad logo beside the emblem, a red-tinted full-bleed hero, and a floating pill
+ * bar at the bottom.
  *
  * ONE CORPUS. Every headline, count, photograph and shade here is a row in
  * `articles` with `status = 'approved'`, read through `loadCorpus` — the same
- * call `/map` makes — so a release approved at the desk appears in the lead,
- * the list, search and its district on the map at once, all pointing at the
- * same `/news/[id]`.
+ * call `/map` makes — so a release approved at the desk appears in the hero,
+ * the list, search, the assistant, the fact check and its district at once,
+ * all pointing at the same `/news/[id]`. Photographs are the row's own
+ * `image_url`, credited from `image_credit`; a release without one gets the
+ * hatched plate, never a stand-in.
  *
- * PHOTOGRAPHS are the row's own `image_url`, credited from `image_credit`, and
- * nothing else: no stock picture ever stands in for one, because a picture on
- * a government release asserts a scene. A story without a photograph gets the
- * hatched plate. VIDEOS are the row's `video_url`, uploaded at the desk the
- * same way: a play mark on every thumbnail, and a player in the media corner.
+ * NOTHING INVENTED. What the table does not hold is either derived from the
+ * text in the open (topics, विशेष लेख — see `lib/news/items.ts`), taken from
+ * the editorial config with its source named (`data/news-editorial.ts`), or a
+ * slot that says what it is waiting for. Social cards link only to accounts
+ * confirmed with DGIPR, and their previews are labelled as samples.
  *
- * NOTHING INVENTED. InFocus carries a real release until an editorial pick
- * exists. Explainers, advisories and popularity need editorial inputs or
- * analytics this store does not hold yet. Their slots are designed and
- * present, but each says what it is waiting for instead of carrying filler. Social cards link only to
- * accounts confirmed with DGIPR (see `SOCIAL`).
- *
- * Search, filters and pagination are plain GET parameters handled here, so the
- * page works without JavaScript, every filtered view is a link that can be
- * saved or forwarded, and the reader's district and language survive every
- * link built by `buildHref`. The carousel and the fold download are the
- * client islands.
- *
- * TODAY'S FOLD sits under the navigation: the desk's approved releases for
- * the day, in the desk's order, downloadable as the one DOCX the desk itself
- * sends out — `foldArticles`, the same call `/fold` and its download use.
+ * Filters, topic, district, search and pages are plain GET parameters handled
+ * here, so the page works without JavaScript and every view is a link. The
+ * hero, the reading panel, the search palette, the assistant, the fold dialog,
+ * listening and copying are the client islands (`components/news/redesign`).
  */
 
 export const dynamic = 'force-dynamic'
@@ -71,45 +69,34 @@ export const metadata = {
     'महाराष्ट्र शासनाच्या अधिकृत बातम्या — ताज्या, विषयानुसार आणि तुमच्या जिल्ह्यातील. माहिती व जनसंपर्क महासंचालनालयाची मंजूर प्रसिद्धीपत्रके.',
 }
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 8
 const LEAD_COUNT = 5
 const STATEWIDE = 'statewide'
 const LANG_MR: Record<Language, string> = { mr: 'मराठी', hi: 'हिंदी', en: 'English' }
 
-/** The reader's navigation. The staff screens are not in it — they sit behind
- *  one "कर्मचारी प्रवेश" link in the utility strip. */
-const PUBLIC_NAV = [
-  { target: '#latest', label: 'मुख्य' },
-  { target: '#releases', label: 'प्रसिद्धीपत्रके' },
-  { target: '#districts', label: 'जिल्हे' },
-  { target: '#topics', label: 'विषय' },
-  { target: '#media', label: 'फोटो व व्हिडिओ' },
-  { target: '#search', label: 'प्रगत शोध' },
-  { target: '#archive', label: 'संग्रह' },
-]
+/** The content column: 1280px, with a gutter that keeps it off the window's
+ *  edge below that. */
+const WRAP = 'mx-auto w-full max-w-[1328px] px-4 sm:px-6'
+/** Anchored sections clear the sticky masthead. */
+const ANCHOR = 'scroll-mt-[126px] lg:scroll-mt-[170px]'
 
 /**
  * DGIPR's social channels — the four official accounts confirmed by DGIPR.
- * No embeds: they need consent and fail quietly, so each card works as a
- * designed card plus an outbound link.
- *
- * Each tile wears its platform's own colour and mark — the one place on the
- * page outside the three-colour rule, because a reader looks for the logo they
- * already know, not for our palette.
+ * Each tile wears its platform's own colour and mark, the one place on the
+ * page outside the palette, because a reader looks for the logo they know.
  */
-const SOCIAL: Array<{ id: string; name: string; glyph: ReactNode; tile: string; blurb: string; url: string }> = [
-  { id: 'facebook', name: 'Facebook', glyph: <IconFacebookF size={22} />, tile: '#1877F2', blurb: 'बातम्या, कार्यक्रम आणि छायाचित्रे', url: 'https://www.facebook.com/MahaDGIPR' },
-  { id: 'x', name: 'X', glyph: <IconX size={18} />, tile: '#000000', blurb: 'ताज्या घोषणा आणि थेट अपडेट्स', url: 'https://x.com/MahaDGIPR' },
+const SOCIAL = [
+  { id: 'facebook', name: 'Facebook', glyph: <IconFacebookF size={20} />, tile: '#1877F2', url: 'https://www.facebook.com/MahaDGIPR' },
+  { id: 'x', name: 'X', glyph: <IconX size={16} />, tile: '#000000', url: 'https://x.com/MahaDGIPR' },
   {
     id: 'instagram',
     name: 'Instagram',
-    glyph: <IconInstagram size={22} />,
-    tile: 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%)',
-    blurb: 'माहितीचित्रे आणि छायाचित्र मालिका',
+    glyph: <IconInstagram size={20} />,
+    tile: 'linear-gradient(45deg, #F58529, #DD2A7B 50%, #8134AF)',
     url: 'https://www.instagram.com/mahadgipr',
   },
-  { id: 'youtube', name: 'YouTube', glyph: <IconYouTube size={22} />, tile: '#FF0000', blurb: 'पत्रकार परिषदा आणि व्हिडिओ', url: 'https://www.youtube.com/@MAHARASHTRADGIPR' },
-]
+  { id: 'youtube', name: 'YouTube', glyph: <IconYouTube size={20} />, tile: '#FF0000', url: 'https://www.youtube.com/@MAHARASHTRADGIPR' },
+] as const
 
 type Query = Record<string, string | string[] | undefined>
 
@@ -121,10 +108,12 @@ type Filters = {
   from: string
   to: string
   cm: boolean
+  topic: TopicId | ''
   page: number
+  /** माझा जिल्हा — the district section's focus, separate from the list's
+   *  district filter. */
+  d: string
 }
-
-type Meta = { language: Language; timed: boolean }
 
 type Href = (patch: Partial<Filters>, hash?: string) => string
 
@@ -134,866 +123,868 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
   const now = Date.now()
   const today = todayIso()
 
-  /* `loadCorpus` is the source of truth. The second read only looks up two
-     columns the release shape does not carry — language, and whether the row
-     has a real approval time or only its fold date — keyed by the same ids, so
-     it annotates the corpus rather than competing with it. */
-  const [corpus, geometry, approved, origin, todayFold] = await Promise.all([
-    loadCorpus(),
+  const [{ corpus, items }, geometry, origin, todayFold, jar] = await Promise.all([
+    loadNewsCorpus(),
     buildMapGeometry(),
-    listArticles({ status: 'approved' }),
     requestOrigin(),
     foldArticles(today),
+    cookies(),
   ])
-
-  const meta = new Map<string, Meta>(
-    approved.map((a) => [String(a.id), { language: a.language, timed: Boolean(a.approved_at) }]),
-  )
-  const metaOf = (row: Row): Meta => meta.get(row.release.id) ?? { language: 'mr', timed: false }
-  const rows = corpus.rows
-
-  const filtered = rows.filter((row) => matches(row, filters, metaOf(row)))
-  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const page = Math.min(filters.page, pages)
-  const shown = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-
-  /* No editor-picked lead exists in the schema yet. The carousel carries the
-     newest releases that have a photograph or a video — topped up from the
-     newest without if there are too few — and the list beside it is strictly
-     newest first over everything else, so a release without a picture is never
-     pushed off the top of the page, only out of the carousel. */
-  const hasMedia = (row: Row) => Boolean(row.release.posterUrl || row.release.videoUrl)
-  const pictured = rows.filter((row) => row.release.posterUrl)
-  const leadRows = [...rows.filter(hasMedia), ...rows.filter((row) => !hasMedia(row))].slice(0, LEAD_COUNT)
-  const leadIds = new Set(leadRows.map((row) => row.release.id))
-  const latest = rows.filter((row) => !leadIds.has(row.release.id)).slice(0, 5)
-  const shownAbove = new Set([...leadIds, ...latest.map((row) => row.release.id)])
-  /* InFocus has no editorial pick in the schema yet, so it carries a real
-     release the reader has not already passed: the newest CM / cabinet one
-     with a photograph, else the newest pictured, else the newest of either. */
-  const unseen = rows.filter((row) => !shownAbove.has(row.release.id))
-  const focus =
-    unseen.find((row) => row.release.featured && row.release.posterUrl) ??
-    unseen.find((row) => row.release.posterUrl) ??
-    unseen.find((row) => row.release.featured) ??
-    unseen[0] ??
-    rows[0]
-  /* The gallery shows photographs the reader has not already passed above. */
-  const gallery = pictured
-    .filter((row) => !shownAbove.has(row.release.id) && row !== focus)
-    .slice(0, 2)
-  /* The media corner's video is simply the newest one — a player is worth
-     showing even when the same release sits in the carousel above. */
-  const video = rows.find((row) => row.release.videoUrl)
-
-  const slides: LeadSlide[] = leadRows.map((row) => ({
-    id: row.release.id,
-    href: readHref(row),
-    title: row.release.titleMr,
-    summary: row.release.summary60Mr ?? null,
-    kicker: row.release.featured
-      ? 'मुख्यमंत्री व मंत्रिमंडळ'
-      : row === rows[0]
-        ? 'ताजे'
-        : (deptLabel(row.release.departmentMr) ?? 'प्रसिद्धीपत्रक'),
-    place: placeOf(row),
-    when: whenOf(row, metaOf(row)),
-    imageUrl: row.release.posterUrl,
-    videoUrl: row.release.videoUrl ?? null,
-  }))
-
-  const cmRows = rows.filter((row) => row.release.featured)
-  const departments = tally(rows.map((row) => row.release.departmentMr).filter(Boolean) as string[])
-  const months = tally(rows.map((row) => row.release.date.slice(0, 7))).sort((a, b) => b.key.localeCompare(a.key))
-  const englishCount = rows.filter((row) => metaOf(row).language === 'en').length
-
-  /* The map band reads a week and says so. `buildNewsMap` widens only when
-     fewer than three districts filed, and the note under the heading says
-     when it did. */
-  const map = buildNewsMap(corpus, '7d', null, now)
-  const activeDistricts = Object.values(map.districts).sort((a, b) => b.count - a.count)
-  const focusDistrict =
-    filters.district && filters.district !== STATEWIDE ? filters.district : activeDistricts[0]?.districtId ?? null
-  const focusRows = focusDistrict ? rows.filter((row) => row.release.districtId === focusDistrict).slice(0, 3) : []
-  const ceiling = Math.max(1, map.ceiling)
 
   const href: Href = (patch, hash = '') => buildHref(filters, patch, hash)
 
+  /* --- the release list ------------------------------------------------- */
+  const filtered = filterItems(items, filters)
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const page = Math.min(filters.page, pages)
+  const shown = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const topicCounts = new Map<TopicId, number>()
+  for (const i of items) if (i.topic) topicCounts.set(i.topic, (topicCounts.get(i.topic) ?? 0) + 1)
+  const months = tally(items.map((i) => i.date.slice(0, 7))).sort((a, b) => b.key.localeCompare(a.key))
+
+  /* --- the hero --------------------------------------------------------- */
+  /* No editor-picked lead exists in the schema yet. The hero carries the
+     newest releases with a photograph or a video, topped up from the newest
+     without, and ताज्या बातम्या is strictly newest-first over the rest — so a
+     release without a picture is only ever kept out of the hero. */
+  const hasMedia = (i: NewsItem) => Boolean(i.img || i.video)
+  const lead = [...items.filter(hasMedia), ...items.filter((i) => !hasMedia(i))].slice(0, LEAD_COUNT)
+  const leadIds = new Set(lead.map((i) => i.id))
+  const latest = items.filter((i) => !leadIds.has(i.id)).slice(0, 5)
+  const slides: HeroSlide[] = lead.map((item) => ({ item, kicker: kickerOf(item), short: shortTitle(item.title) }))
+
+  const trending = TRENDING.filter((t) => searchItems(items, t.query).length > 0)
+
+  /* --- special coverage ------------------------------------------------- */
+  const coverage = SPECIAL_COVERAGE
+  const coverageRows = items.filter((i) => i.topic === coverage.topic)
+  const coverageStories = [...coverageRows.filter(hasMedia), ...coverageRows.filter((i) => !hasMedia(i))].slice(0, 4)
+  const decisions = coverage.decisions.filter((d) => searchItems(items, d.query).length > 0)
+  const figureSources = [...new Set(coverage.figures.map((f) => f.source))].map((no) => ({
+    no,
+    item: items.find((i) => i.no === no) ?? null,
+  }))
+
+  /* --- districts -------------------------------------------------------- */
+  /* The map reads a week and says so. `buildNewsMap` widens only when fewer
+     than three districts filed, and the count line names the window it
+     settled on. */
+  const map = buildNewsMap(corpus, '7d', null, now)
+  const active = Object.values(map.districts).sort((a, b) => b.count - a.count)
+  const remembered = resolveDistrict(jar.get('nr_district')?.value ?? null)
+  const focusD =
+    filters.d || remembered || active[0]?.districtId || items.find((i) => i.districtId)?.districtId || DISTRICTS[0].key
+  const focusItems = items.filter((i) => i.districtId === focusD).slice(0, 4)
+  const focusCount = map.districts[focusD]?.count ?? 0
+  const chips = active.slice(0, 10).map((d) => ({ key: d.districtId, count: d.count }))
+  if (!chips.some((c) => c.key === focusD)) chips.unshift({ key: focusD, count: focusCount })
+  const ceiling = Math.max(1, map.ceiling)
+  const districtOptions = [...DISTRICTS]
+    .sort((a, b) => a.mr.localeCompare(b.mr, 'mr'))
+    .map((d) => ({ key: d.key, name: d.mr }))
+  const baseQuery = queryOf(filters, { d: '' })
+
+  /* --- the rest --------------------------------------------------------- */
+  const features = items.filter((i) => i.feature).slice(0, 3)
+  const episodes = items.filter((i) => /जय महाराष्ट्र|दिलखुलास/.test(i.title))
+  const pictured = items.filter((i) => i.img)
+  const ytItem = episodes[0] ?? items.find((i) => i.video) ?? null
+
+  const languages = (['mr', 'en', 'hi'] as Language[]).map((l) => {
+    const n = l === 'mr' ? 1 : items.filter((i) => i.language === l).length
+    return {
+      value: l === 'mr' ? '' : l,
+      label: l === 'mr' ? LANG_MR.mr : n ? `${LANG_MR[l]} (${mrDigits(n)})` : `${LANG_MR[l]} — लवकरच`,
+      href: href({ lang: l === 'mr' ? '' : l }, '#releases'),
+      disabled: !n,
+    }
+  })
+
+  /* The fact check's two samples: a forwarded copy of a real approved
+     release, and a message no release says. */
+  const sampleSource = items.find((i) => i.cm && i.summary) ?? items[0]
+  const factSamples = [
+    ...(sampleSource
+      ? [{ label: 'उदाहरण: फॉरवर्ड केलेली खरी बातमी', text: `*आनंदाची बातमी* ${sampleSource.title}. सर्वांना पाठवा!` }]
+      : []),
+    { label: 'उदाहरण: संशयास्पद संदेश', text: 'सर्व शेतकऱ्यांच्या खात्यात थेट ५०,००० रुपये जमा होणार — आजच लिंकवर नोंदणी करा!' },
+  ]
+
+  const feedStatus = filters.topic
+    ? `“${topicLabel(filters.topic)}” — ${mrDigits(filtered.length)} प्रसिद्धीपत्रके`
+    : isNarrowed(filters)
+      ? `${mrDigits(items.length)} पैकी ${mrDigits(filtered.length)} — निवडलेल्या निकषांनुसार`
+      : 'नवीन प्रथम · वृत्त विभागाने मंजूर केलेली'
+
   return (
-    <div className="relative isolate -mt-8 flex flex-col gap-7 sm:-mt-10 lg:gap-14">
-      {/* The ground: the lattice behind the whole page, the full width of the
-          window. It is decoration only, so a reader who asks for less
-          transparency gets the plain paper. */}
-      <div
-        aria-hidden
-        className="news-pattern pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-[#f7f5f1]"
-      />
-      <a
-        href="#releases"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2 focus:shadow-md"
-      >
-        मुख्य मजकुराकडे जा
-      </a>
+    <NewsUiProvider
+      today={today}
+      foldItems={todayFold.map(toFoldItem)}
+      recent={items.slice(0, 4)}
+      suggestions={trending.slice(0, 5)}
+      origin={origin}
+    >
+      <div className="nr flex min-h-screen flex-col pb-24 sm:pb-28">
+        <a
+          href="#releases"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg"
+        >
+          मुख्य मजकुराकडे जा
+        </a>
+        <h1 className="sr-only">महासंवाद — महाराष्ट्र शासनाच्या अधिकृत बातम्या</h1>
 
-      {/* 1 ─ Utility strip + public masthead ------------------------------ */}
-      <div className="flex flex-col gap-5 lg:gap-7">
-        <div className="glass-band flex h-12 items-center justify-between gap-4 text-[0.8125rem] before:border-b before:border-white/70">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <Image src="/emblem.png" alt="" width={512} height={512} className="h-7 w-7 shrink-0" />
-            <span className="font-bold">महासंवाद</span>
-            <span className="hidden truncate text-secondary md:inline">माहिती व जनसंपर्क महासंचालनालय, महाराष्ट्र शासन</span>
-          </div>
-
-          <nav aria-label="भाषा, सुलभता व कर्मचारी" className="flex shrink-0 items-center gap-1.5">
-            <Link
-              href={href({ lang: '' })}
-              aria-current={filters.lang === '' ? 'true' : undefined}
-              className={`rounded-full px-2.5 py-1 ${filters.lang === '' ? 'bg-surface font-bold text-accent' : 'text-secondary hover:text-ink'}`}
-            >
-              मराठी
-            </Link>
-            {/* The switch leads to real English-language releases or says there
-                are none — it never implies a translation that does not exist. */}
-            {englishCount > 0 ? (
-              <Link
-                href={href({ lang: 'en' }, '#releases')}
-                aria-current={filters.lang === 'en' ? 'true' : undefined}
-                className={`rounded-full px-2.5 py-1 ${filters.lang === 'en' ? 'bg-surface font-bold text-accent' : 'text-secondary hover:text-ink'}`}
-                lang="en"
-              >
-                <span className="sm:hidden">EN</span>
-                <span className="hidden sm:inline">English releases ({englishCount})</span>
-              </Link>
-            ) : (
-              <span className="hidden px-2.5 text-faint sm:inline" lang="en">
-                English — not yet available
-              </span>
-            )}
-            <span aria-hidden className="hidden text-[var(--edge-strong)] lg:inline">
-              |
+        {/* 1 ─ Utility strip ------------------------------------------- */}
+        <div className="bg-nr-primary text-white">
+          <div className={`${WRAP} flex h-11 items-center justify-between gap-2 text-[0.8125rem] lg:h-[46px] lg:text-sm`}>
+            <span className="mr-auto truncate text-white/[0.92]">
+              <span className="max-lg:hidden">महाराष्ट्र शासन · माहिती व जनसंपर्क महासंचालनालय · </span>शासनाच्या अधिकृत बातम्या
             </span>
-            <a href="#help" className="hidden px-2.5 py-1 text-secondary hover:text-ink lg:inline">
-              सुलभता व मदत
-            </a>
-            <Link href="/desk" className="hidden px-2.5 py-1 text-muted hover:text-ink lg:inline">
-              कर्मचारी प्रवेश
-            </Link>
-          </nav>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <SearchButton
+                label="शोधा"
+                className="grid h-[34px] w-9 place-items-center rounded-[18px] border border-white/[0.28] bg-white/[0.08] max-lg:hidden"
+              >
+                <ISearch size={16} strokeWidth={2.2} />
+              </SearchButton>
+              <TextSizeGroup tone="dark" className="max-lg:hidden" />
+              <TextSizeCycle className="grid h-8 w-[34px] place-items-center rounded-[18px] border border-white/30 bg-white/[0.08] text-[0.9375rem] font-bold text-white lg:hidden" />
+              <a
+                href="#footer"
+                aria-label="साइटमॅप"
+                className="grid h-[34px] w-9 place-items-center rounded-[18px] border border-white/[0.28] bg-white/[0.08] text-white max-lg:hidden"
+              >
+                <ISitemap size={16} strokeWidth={2} />
+              </a>
+              <span aria-hidden className="mx-1.5 h-6 w-px bg-white/30 max-lg:hidden" />
+              <LanguageSelect
+                value={filters.lang}
+                options={languages}
+                className="h-8 rounded-[18px] border-0 bg-white px-2 text-[0.8125rem] font-bold text-nr-text lg:h-[34px] lg:px-2.5 lg:text-sm"
+              />
+            </div>
+          </div>
         </div>
 
-        <header className="flex flex-col gap-3.5 lg:gap-[18px]">
-          <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1fr)_540px] lg:items-center lg:gap-8">
-            <div>
-              <h1 className="display text-[1.625rem] font-bold leading-[1.35] lg:text-[2.375rem] lg:leading-[1.3]">
-                महाराष्ट्र शासनाच्या अधिकृत बातम्या
-              </h1>
-              <p className="mt-1.5 hidden text-base text-secondary sm:block">
-                ताज्या, विषयानुसार आणि तुमच्या जिल्ह्यातील — वृत्त विभागाने मंजूर केलेली प्रसिद्धीपत्रके.
-              </p>
-            </div>
-
-            <form
-              action="/news#releases"
-              method="get"
-              role="search"
-              className="glass flex gap-1.5 rounded-full p-1.5"
-            >
-              <label className="flex min-w-0 grow items-center gap-2 pl-3.5">
-                <IconSearch size={18} className="hidden shrink-0 text-muted sm:block" />
-                <span className="sr-only">बातम्या शोधा</span>
-                <input
-                  type="search"
-                  name="q"
-                  defaultValue={filters.q}
-                  placeholder="शीर्षक, विषय किंवा वृत्त क्रमांक"
-                  className="h-11 w-full min-w-0 border-0 bg-transparent text-[0.9375rem] outline-none"
-                />
-              </label>
-              <label className="hidden w-40 shrink-0 sm:block">
-                <span className="sr-only">जिल्हा</span>
-                <DistrictSelect
-                  value={filters.district}
-                  className="h-11 w-full border-0 border-l border-edge bg-surface px-2.5 text-sm text-secondary outline-none"
-                />
-              </label>
-              {filters.lang && <input type="hidden" name="lang" value={filters.lang} />}
-              <button
-                type="submit"
-                className="h-11 shrink-0 rounded-full bg-accent px-[18px] text-[0.9375rem] font-bold text-white hover:bg-[var(--accent-hover)] sm:px-6"
-              >
-                शोधा
-              </button>
-            </form>
-          </div>
-
-          <nav
-            aria-label="वाचकांसाठी नेव्हिगेशन"
-            className="flex flex-wrap gap-1.5 lg:flex-nowrap lg:border-b lg:border-edge lg:pb-3.5"
-          >
-            {PUBLIC_NAV.map(({ target, label }, i) => (
-              <a
-                key={target}
-                href={target}
-                className={`rounded-full px-3.5 py-[9px] text-sm lg:px-4 ${
-                  i === 0
-                    ? 'bg-accent font-bold text-white hover:text-white'
-                    : 'bg-surface font-semibold text-secondary hover:text-accent lg:bg-transparent'
-                }`}
-              >
-                {label}
+        {/* 2 ─ Masthead (sticky) --------------------------------------- */}
+        <header className="sticky top-0 z-30 border-b border-nr-line bg-[rgba(255,248,238,0.97)]">
+          <div className={`${WRAP} flex h-[68px] items-center justify-between gap-2 lg:h-[104px] lg:gap-6`}>
+            <div className="flex min-w-0 items-center gap-3 lg:gap-4">
+              <Image src="/emblem.png" alt="महाराष्ट्र शासन" width={512} height={512} className="h-[42px] w-[42px] shrink-0 object-contain lg:h-[66px] lg:w-[66px]" />
+              <a href="#top" aria-label="महासंवाद — मुखपृष्ठ" className="shrink-0">
+                <Image src="/mahasamvad-logo.png" alt="महासंवाद" width={292} height={100} priority className="h-[40px] w-auto lg:h-[66px]" />
               </a>
-            ))}
-          </nav>
-
-          <FoldDownload today={today} items={todayFold.map(toFoldItem)} />
+            </div>
+            <div className="flex shrink-0 items-center gap-2.5">
+              <DistrictPicker
+                value={focusD}
+                options={districtOptions}
+                base={baseQuery}
+                className="flex h-12 items-center gap-1.5 rounded-full border-[1.5px] border-nr-line2 bg-white pl-3.5 pr-1.5 max-lg:hidden"
+                selectClassName="h-10 max-w-[12rem] border-0 bg-transparent text-[0.9375rem] font-bold text-nr-text"
+              />
+              <FoldButton className="flex h-12 items-center gap-2.5 rounded-full bg-nr-primary pl-[18px] pr-2 text-[0.9375rem] font-bold text-white shadow-[0_10px_22px_-12px_var(--nr-primary)] max-lg:hidden">
+                आजचा फोल्ड
+                <span className="grid h-[34px] w-[34px] place-items-center rounded-full bg-white text-nr-primary">
+                  <IDownload size={16} strokeWidth={2.4} />
+                </span>
+              </FoldButton>
+              <FoldButton label="आजचा फोल्ड डाउनलोड करा" className="grid h-11 w-11 place-items-center rounded-full bg-nr-primary text-white lg:hidden">
+                <IDownload size={18} strokeWidth={2.2} />
+              </FoldButton>
+            </div>
+          </div>
+          <MainNav items={MAIN_NAV} />
         </header>
-      </div>
 
-      {/* 2 ─ Lead carousel + latest --------------------------------------- */}
-      <section id="latest" aria-label="प्रमुख व ताज्या बातम्या" className="scroll-mt-24">
+        {/* 3 ─ Hero carousel + ताज्या बातम्या -------------------------- */}
         {slides.length ? (
-          <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] lg:gap-6">
-            <LeadCarousel slides={slides} />
-
-            <aside aria-labelledby="latest-h" className="lg:glass lg:rounded-[20px] lg:p-[22px]">
-              <div className="flex items-baseline justify-between">
-                <h2 id="latest-h" className="text-lg font-bold lg:text-[1.0625rem]">
-                  ताज्या बातम्या
-                </h2>
-                <span className="text-xs text-muted">नवीन प्रथम</span>
-              </div>
-              <ol className="mt-2.5 flex flex-col gap-1 lg:gap-0">
-                {latest.map((row) => (
-                  <li key={row.release.id} className="lg:border-b lg:border-sunk">
-                    <Link
-                      href={readHref(row)}
-                      className="group grid grid-cols-[96px_minmax(0,1fr)] gap-3 rounded-2xl p-2.5 max-lg:glass max-lg:glass-sm lg:grid-cols-[72px_minmax(0,1fr)] lg:rounded-none lg:px-0 lg:py-[11px]"
-                    >
-                      <StoryPhoto
-                        src={row.release.posterUrl}
-                        video={row.release.videoUrl}
-                        className="h-[72px] rounded-xl lg:h-[60px] lg:rounded-[10px]"
-                      />
-                      <span className="min-w-0">
-                        <span className="block text-xs text-muted">
-                          <b className="font-semibold text-place">{placeOf(row)}</b> · {shortWhen(row, metaOf(row))}
-                        </span>
-                        <span className="mt-0.5 line-clamp-3 text-sm font-semibold leading-normal group-hover:text-accent">
-                          {row.release.titleMr}
-                        </span>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-                {latest.length === 0 && <li className="py-3 text-sm text-muted">अद्याप इतर बातम्या नाहीत.</li>}
-              </ol>
-              <a
-                href="#releases"
-                className="mt-2 flex h-12 items-center justify-center gap-1.5 rounded-full bg-accent-soft text-sm font-bold text-accent lg:mt-3.5 lg:h-11"
+          <HeroCarousel
+            slides={slides}
+            aside={
+              <aside
+                aria-labelledby="latest-h"
+                className="absolute bottom-12 right-[max(1.5rem,calc((100vw-1280px)/2))] top-12 hidden w-[400px] flex-col rounded-[22px] bg-[rgba(255,248,238,0.95)] px-[22px] pb-[18px] pt-[22px] shadow-[0_30px_60px_-24px_rgba(40,6,10,0.55)] xl:flex"
               >
-                सर्व बातम्या ({mr(rows.length)}) <IconArrowRight size={14} />
-              </a>
-            </aside>
-          </div>
+                <LatestHead id="latest-h" />
+                <ol className="m-0 mt-2.5 min-h-0 grow list-none overflow-hidden p-0">
+                  {latest.map((l) => (
+                    <li key={l.id} className="grid grid-cols-[76px_minmax(0,1fr)] gap-3 border-b border-nr-line py-2.5">
+                      <ReadLink item={l} hidden className="block overflow-hidden rounded-xl bg-white">
+                        <StoryPhoto src={l.img} video={l.video} className="h-[60px]" />
+                      </ReadLink>
+                      <div className="min-w-0">
+                        <span className="text-xs text-nr-muted">
+                          <b className="text-nr-place">{l.place}</b> · {l.time ?? l.dateLabel}
+                        </span>
+                        <ReadLink item={l} className="nr-link line-clamp-2 text-[0.90625rem] font-bold leading-normal text-nr-text">
+                          {l.title}
+                        </ReadLink>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                <a
+                  href="#releases"
+                  className="mt-3 flex h-11 shrink-0 items-center justify-center rounded-full bg-nr-primary text-[0.9375rem] font-extrabold text-white"
+                >
+                  सर्व प्रसिद्धीपत्रके →
+                </a>
+              </aside>
+            }
+          />
         ) : (
-          <div className="glass rounded-[20px] p-8 text-center">
-            <p className="display text-xl">अद्याप एकही प्रसिद्धीपत्रक मंजूर झालेले नाही.</p>
-            <p className="mt-2 text-sm text-muted">वृत्त विभागाने मंजूर केलेली बातमी येथे लगेच दिसेल.</p>
-          </div>
+          <section id="top" className="bg-nr-deep px-4 py-20 text-center text-white">
+            <p className="nr-h m-0 text-2xl font-bold">अद्याप एकही प्रसिद्धीपत्रक मंजूर झालेले नाही.</p>
+            <p className="mt-2 text-white/80">वृत्त विभागाने मंजूर केलेली बातमी येथे लगेच दिसेल.</p>
+          </section>
         )}
-      </section>
 
-      {/* 3 ─ InFocus + CM gateway ------------------------------------------ */}
-      <section
-        aria-label="विशेष लक्ष आणि मुख्यमंत्री व मंत्रिमंडळ"
-        className="grid gap-7 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] lg:gap-6"
-      >
-        {focus ? (
-          <Link
-            href={readHref(focus)}
-            className="glass glass-saffron group grid gap-3 rounded-[20px] p-3.5 sm:grid-cols-[minmax(0,300px)_minmax(0,1fr)] sm:gap-6 sm:p-5"
-          >
-            <StoryPhoto
-              src={focus.release.posterUrl}
-              video={focus.release.videoUrl}
-              size="md"
-              className="min-h-[150px] rounded-[14px] sm:min-h-[220px]"
-            />
-            <div className="flex flex-col px-1 pb-1 sm:py-2 sm:pr-2">
-              <p className="text-[0.8125rem] font-bold text-saffron-ink">
-                विशेष लक्ष
-                <span className="font-semibold text-secondary">
-                  {' '}
-                  · {focus.release.featured ? 'मुख्यमंत्री व मंत्रिमंडळ' : (deptLabel(focus.release.departmentMr) ?? placeOf(focus))}
-                </span>
-              </p>
-              <h2 className="display mt-1 line-clamp-3 text-lg font-bold leading-[1.4] group-hover:text-accent sm:mt-1.5 sm:text-2xl">
-                {focus.release.titleMr}
-              </h2>
-              {(focus.release.summary60Mr ?? focus.release.summaryMr) && (
-                <p className="mt-2 line-clamp-3 text-sm leading-[1.7] text-secondary">
-                  {focus.release.summary60Mr ?? focus.release.summaryMr}
-                </p>
-              )}
-              <span className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted sm:mt-auto sm:pt-3">
-                <span>
-                  <b className="font-semibold text-place">{placeOf(focus)}</b> · {whenOf(focus, metaOf(focus))}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1.5 font-bold text-accent">
-                  पूर्ण बातमी वाचा <IconArrowRight size={13} />
-                </span>
-              </span>
+        {/* Phone: माझा जिल्हा sits under the hero. */}
+        <div className="px-4 pt-4 sm:px-6 lg:hidden">
+          <DistrictPicker
+            value={focusD}
+            options={districtOptions}
+            base={baseQuery}
+            className="flex h-[50px] items-center gap-2 rounded-full border-[1.5px] border-nr-line2 bg-white pl-3.5 pr-2"
+            selectClassName="h-10 min-w-0 grow border-0 bg-transparent text-[0.9375rem] font-bold text-nr-text"
+          />
+        </div>
+
+        {/* 4 ─ सध्या चर्चेत --------------------------------------------- */}
+        {trending.length > 0 && (
+          <div className="lg:border-b lg:border-nr-line lg:bg-white">
+            <div className={`${WRAP} nr-scroll flex items-center gap-1.5 overflow-x-auto pt-3 text-sm lg:gap-2 lg:py-3.5`}>
+              <b className="mr-1 shrink-0 text-[0.8125rem] text-nr-primary lg:text-sm">सध्या चर्चेत</b>
+              {trending.map((t) => (
+                <SearchChip
+                  key={t.label}
+                  query={t.query}
+                  className="flex h-9 shrink-0 items-center whitespace-nowrap rounded-full border border-nr-line2 bg-white px-3 text-[0.84375rem] text-[#4A2E30] lg:bg-nr-ground lg:px-3.5 lg:text-sm"
+                >
+                  {t.label}
+                </SearchChip>
+              ))}
             </div>
-          </Link>
-        ) : (
-          <div className="glass glass-saffron rounded-[20px] p-5 text-sm text-muted">
-            <p className="text-[0.8125rem] font-bold text-saffron-ink">विशेष लक्ष</p>
-            <p className="mt-1.5">मंजूर प्रसिद्धीपत्रक आल्यावर येथे दिसेल.</p>
           </div>
         )}
 
-        <div className="glass rounded-[20px] p-[22px]">
-          <h2 className="text-[1.0625rem] font-bold">मुख्यमंत्री व मंत्रिमंडळ</h2>
-          <div className="mt-3 flex flex-col">
-            <Link
-              href={href({ cm: true }, '#releases')}
-              className="flex items-center justify-between rounded-xl bg-accent-soft px-3.5 py-3 text-[0.9375rem] font-bold text-accent"
+        {/* Below the widest screens, ताज्या बातम्या is a list under the hero. */}
+        {latest.length > 0 && (
+          <section aria-labelledby="latest-h-m" className={`${WRAP} pt-[18px] xl:hidden`}>
+            <div className="flex items-baseline justify-between border-b border-nr-line pb-2">
+              <LatestHead id="latest-h-m" />
+            </div>
+            <ol className="m-0 list-none p-0 sm:grid sm:grid-cols-2 sm:gap-x-8">
+              {latest.map((l) => (
+                <li key={l.id} className="grid grid-cols-[minmax(0,1fr)_96px] gap-3 border-b border-nr-line py-3">
+                  <div className="flex flex-col gap-[3px]">
+                    <span className="text-xs text-nr-muted">
+                      <b className="text-nr-place">{l.place}</b> · {l.dateLabel}
+                      {l.time ? `, ${l.time}` : ''}
+                    </span>
+                    <ReadLink item={l} className="nr-link line-clamp-3 font-marathi text-[0.90625rem] font-bold leading-[1.6] text-nr-text">
+                      {l.title}
+                    </ReadLink>
+                  </div>
+                  <ReadLink item={l} hidden className="block overflow-hidden rounded-xl bg-white">
+                    <StoryPhoto src={l.img} video={l.video} className="h-[70px]" />
+                  </ReadLink>
+                </li>
+              ))}
+            </ol>
+            <a
+              href="#releases"
+              className="mt-3 flex h-[46px] items-center justify-center rounded-full border-[1.5px] border-nr-primary text-[0.9375rem] font-extrabold text-nr-primary"
             >
-              प्रसिद्धीपत्रके
-              <span className="flex items-center gap-1">
-                {mr(cmRows.length)} <IconArrowRight size={14} />
-              </span>
-            </Link>
-            {['मंत्रिमंडळ निर्णय', 'भाषणे', 'फोटो', 'व्हिडिओ'].map((label, i, all) => (
-              <div
-                key={label}
-                className={`flex items-center justify-between px-3.5 py-3 text-[0.9375rem] text-secondary ${i < all.length - 1 ? 'border-b border-sunk' : ''}`}
-              >
-                {label} <span className="text-xs text-muted">लवकरच</span>
+              सर्व प्रसिद्धीपत्रके →
+            </a>
+          </section>
+        )}
+
+        {/* 5 ─ Special coverage: दुष्काळ २०२६ --------------------------- */}
+        {coverageRows.length > 0 && (
+          <section id={coverage.anchor} aria-labelledby="drought-h" className={`mt-8 bg-nr-deep text-white lg:mt-16 ${ANCHOR}`}>
+            <div className={`${WRAP} flex flex-col gap-[18px] py-[30px] lg:gap-9 lg:py-14`}>
+              <div className="grid gap-[18px] lg:grid-cols-[minmax(0,1fr)_640px] lg:items-end lg:gap-14">
+                <div>
+                  <div className="inline-flex rounded bg-nr-accent px-2.5 py-[3px] text-[0.78rem] font-extrabold text-nr-text lg:px-3 lg:py-1 lg:text-[0.8125rem]">
+                    {coverage.kicker}
+                  </div>
+                  <h2 id="drought-h" className="nr-h m-0 mt-3 text-[1.75rem] font-extrabold leading-[1.45] lg:mt-3.5 lg:text-[2.875rem] lg:leading-[1.4]">
+                    {coverage.title}
+                  </h2>
+                </div>
+                <div>
+                  <dl className="m-0 grid grid-cols-3 gap-2 lg:gap-3">
+                    {coverage.figures.map((f) => (
+                      <div key={f.label} className="flex flex-col-reverse rounded-[18px] bg-white/[0.08] px-2.5 py-3 lg:p-[18px]">
+                        <dt className="mt-0.5 text-[0.78rem] leading-[1.45] text-white/90 lg:mt-1 lg:text-sm lg:leading-[1.55]">{f.label}</dt>
+                        <dd className="nr-h m-0 text-[1.625rem] font-extrabold leading-[1.3] text-nr-accent lg:text-[2.5rem]">{f.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <p className="m-0 mt-2 text-xs text-white/70">
+                    आकडे:{' '}
+                    {figureSources.map((s, k) => (
+                      <span key={s.no}>
+                        {k > 0 && ', '}
+                        {s.item ? (
+                          <ReadLink item={s.item} className="text-white/90 underline underline-offset-2">
+                            वृत्त क्र. {s.no}
+                          </ReadLink>
+                        ) : (
+                          <>वृत्त क्र. {s.no}</>
+                        )}
+                      </span>
+                    ))}
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* 4 ─ Latest press releases — the page's main utility --------------- */}
-      <section id="releases" aria-labelledby="releases-h" className="flex scroll-mt-24 flex-col gap-5">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-[0.8125rem] font-bold text-accent">प्रसिद्धीपत्रके</p>
-            <h2 id="releases-h" className="display mt-0.5 text-[1.375rem] font-bold lg:text-[1.875rem]">
-              सर्व मंजूर प्रसिद्धीपत्रके
-            </h2>
-            {isNarrowed(filters) && (
-              <p className="mt-0.5 text-xs text-muted">
-                {mr(rows.length)} पैकी {mr(filtered.length)} — निवडलेल्या निकषांनुसार
-              </p>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-1.5 text-[0.8125rem]">
-            <FilterPill href="/news#releases" on={!isNarrowed(filters)}>
-              सर्व {mr(rows.length)}
-            </FilterPill>
-            {departments.slice(0, 2).map((d) => (
-              <FilterPill key={d.key} href={href({ dept: d.key }, '#releases')} on={filters.dept === d.key}>
-                {deptLabel(d.key)}
-              </FilterPill>
-            ))}
-            <FilterPill href={href({ district: STATEWIDE }, '#releases')} on={filters.district === STATEWIDE}>
-              {DGIPR_MR.statewide}
-            </FilterPill>
-          </div>
-        </div>
+              <div className="nr-scroll -mx-4 flex gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:px-0">
+                {coverageStories.map((d) => (
+                  <article key={d.id} className="flex w-60 shrink-0 flex-col gap-2 lg:w-auto lg:gap-2.5">
+                    <ReadLink item={d} hidden className="block overflow-hidden rounded-[14px]">
+                      <StoryPhoto src={d.img} video={d.video} size="md" className="nr-zoom h-[140px] lg:h-[170px]" />
+                    </ReadLink>
+                    <span className="text-xs font-bold text-nr-accent lg:text-[0.8125rem]">
+                      {d.place} · {d.dateLabel}
+                    </span>
+                    <h3 className="m-0 font-marathi text-[0.9375rem] font-bold leading-[1.6] lg:text-base">
+                      <ReadLink item={d} className="nr-link text-white">
+                        {d.title}
+                      </ReadLink>
+                    </h3>
+                  </article>
+                ))}
+              </div>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="min-w-0 space-y-4">
-            <ActiveFilters filters={filters} href={href} />
-
-            {shown.length === 0 ? (
-              <div className="glass rounded-[20px] p-8 text-center">
-                <p className="font-semibold">या निकषात एकही बातमी नाही</p>
-                <p className="mt-1 text-sm text-muted">शोधशब्द बदलून पहा किंवा एखादा फिल्टर काढा.</p>
-                <Link href="/news#releases" className="btn-ghost btn-sm mt-4">
-                  सर्व फिल्टर काढा
+              <div className="flex flex-col gap-4 border-t border-white/[0.18] pt-6 lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:gap-6">
+                {decisions.length > 0 && (
+                  <>
+                    <b className="text-[0.9375rem]">महत्त्वाचे निर्णय</b>
+                    <ul className="m-0 flex list-none flex-col gap-2.5 p-0 text-[0.9375rem] lg:flex-row lg:flex-wrap lg:gap-x-7">
+                      {decisions.map((d) => (
+                        <li key={d.label}>
+                          <SearchChip query={d.query} className="nr-link text-white">
+                            {d.label}
+                          </SearchChip>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                <Link
+                  href={href({ topic: coverage.topic }, '#releases')}
+                  className="flex h-12 items-center justify-center rounded-full bg-white px-5 text-[0.9375rem] font-extrabold text-nr-deep lg:col-start-3 lg:h-[46px]"
+                >
+                  {coverage.allLabel} →
                 </Link>
               </div>
-            ) : (
-              <ol className="glass rounded-[20px] px-4 py-2 sm:px-6">
-                {shown.map((row) => (
-                  <ReleaseItem key={row.release.id} row={row} meta={metaOf(row)} origin={origin} />
-                ))}
-                {pages > 1 && (
-                  <li className="flex items-center justify-between gap-3 pb-2.5 pt-4 text-sm">
-                    <nav aria-label="पाने" className="contents">
-                      {page > 1 ? (
-                        <Link href={href({ page: page - 1 }, '#releases')} className="font-bold text-accent">
-                          ← मागील
-                        </Link>
-                      ) : (
-                        <span className="text-faint">← मागील</span>
-                      )}
-                      <span className="text-secondary">
-                        पान {mr(page)} / {mr(pages)}
-                      </span>
-                      {page < pages ? (
-                        <Link href={href({ page: page + 1 }, '#releases')} className="font-bold text-accent">
-                          पुढील →
-                        </Link>
-                      ) : (
-                        <span className="text-faint">पुढील →</span>
-                      )}
-                    </nav>
-                  </li>
-                )}
-              </ol>
-            )}
-          </div>
-
-          <aside className="flex flex-col gap-4" aria-label="प्रगत शोध व संग्रह">
-            <form
-              id="search"
-              action="/news#releases"
-              method="get"
-              className="glass flex scroll-mt-24 flex-col gap-3 rounded-[20px] p-5"
-            >
-              <p className="text-base font-bold">प्रगत शोध</p>
-              <AsideField label="शब्द किंवा वृत्त क्र.">
-                <input type="search" name="q" defaultValue={filters.q} className="field h-[42px] rounded-[10px]" />
-              </AsideField>
-              <AsideField label="जिल्हा">
-                <DistrictSelect value={filters.district} className="field h-[42px] rounded-[10px]" />
-              </AsideField>
-              <AsideField label="विभाग">
-                <select name="dept" defaultValue={filters.dept} className="field h-[42px] rounded-[10px]">
-                  <option value="">सर्व विभाग</option>
-                  {departments.map((d) => (
-                    <option key={d.key} value={d.key}>
-                      {deptLabel(d.key)}
-                    </option>
-                  ))}
-                </select>
-              </AsideField>
-              <AsideField label="भाषा">
-                <select name="lang" defaultValue={filters.lang} className="field h-[42px] rounded-[10px]">
-                  <option value="">सर्व भाषा</option>
-                  {(Object.keys(LANG_MR) as Language[]).map((l) => (
-                    <option key={l} value={l}>
-                      {LANG_MR[l]}
-                    </option>
-                  ))}
-                </select>
-              </AsideField>
-              <div className="grid grid-cols-2 gap-2">
-                <AsideField label="पासून">
-                  <input type="date" name="from" defaultValue={filters.from} className="field h-[42px] rounded-[10px] px-1.5 text-xs" />
-                </AsideField>
-                <AsideField label="पर्यंत">
-                  <input type="date" name="to" defaultValue={filters.to} className="field h-[42px] rounded-[10px] px-1.5 text-xs" />
-                </AsideField>
-              </div>
-              {filters.cm && <input type="hidden" name="cat" value="cm" />}
-              <button type="submit" className="h-11 rounded-full bg-accent font-bold text-white hover:bg-[var(--accent-hover)]">
-                शोधा
-              </button>
-            </form>
-
-            <div id="archive" className="glass scroll-mt-24 rounded-[20px] p-5">
-              <p className="text-base font-bold">तारखेनुसार संग्रह</p>
-              <ul className="mt-2 flex flex-col gap-1">
-                {months.slice(0, 8).map((m) => (
-                  <li key={m.key}>
-                    <Link
-                      href={href({ from: `${m.key}-01`, to: `${m.key}-31` }, '#releases')}
-                      className="flex justify-between rounded-[10px] bg-paper px-2.5 py-2 text-sm hover:text-accent"
-                    >
-                      <span>{monthMr(m.key)}</span>
-                      <span className="num text-muted">{mr(m.count)}</span>
-                    </Link>
-                  </li>
-                ))}
-                {months.length === 0 && <li className="px-2 text-sm text-muted">संग्रह रिकामा आहे.</li>}
-              </ul>
             </div>
+          </section>
+        )}
 
-            <div className="glass-quiet rounded-[20px] border border-dashed border-edge-strong p-5">
-              <p className="text-base font-bold">लोकप्रिय बातम्या</p>
-              <p className="mt-1.5 text-[0.8125rem] leading-relaxed text-secondary">
-                वाचक आकडेवारी जोडल्यानंतर, मोजणीच्या कालावधीसह — संपादकीय महत्त्वापासून वेगळी यादी.
-              </p>
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      {/* 5 ─ Map feature — one band, not the frame ------------------------- */}
-      <section
-        id="districts"
-        aria-labelledby="districts-h"
-        className="glass glass-accent grid scroll-mt-24 gap-3.5 rounded-3xl p-[18px] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-8 lg:rounded-[28px] lg:p-8"
-      >
-        <figure className="m-0 flex flex-col gap-2.5">
-          <p className="text-[0.8125rem] font-bold text-accent">जिल्ह्यानुसार बातम्या</p>
-          <h2 id="districts-h" className="display -mt-2 text-[1.375rem] font-bold lg:text-[1.875rem]">
-            महाराष्ट्राचा बातम्या नकाशा
-          </h2>
-          <p className="-mt-1 text-xs text-muted lg:text-[0.8125rem]">
-            मागील {map.window.labelMr}
-            {map.widened ? ' — कमी जिल्ह्यांतून बातम्या आल्याने कालावधी वाढवला' : ''}
-          </p>
-          {/* Each district is a real link, so the map works by keyboard and
-              screen reader; the picker and list beside it do the same job
-              for a phone. */}
-          <svg
-            viewBox={geometry.viewBox}
-            className="mt-2 block h-auto max-h-[280px] w-full rounded-2xl bg-surface p-3 shadow-[inset_0_0_0_1px_var(--accent-edge)] lg:max-h-[460px] lg:p-5"
-            role="group"
-            aria-label={`महाराष्ट्राचे ३६ जिल्हे — मागील ${map.window.labelMr} मधील प्रसिद्धीपत्रकांनुसार छटा`}
-          >
-            {geometry.districts.map((shape) => {
-              const count = map.districts[shape.id]?.count ?? 0
-              const picked = shape.id === filters.district
-              const label = `${shape.nameMr} — ${count ? `${mr(count)} प्रसिद्धीपत्रके` : 'या कालावधीत बातमी नाही'}`
-              return (
-                <a key={shape.id} href={href({ district: shape.id }, '#districts')} aria-label={label} className="group outline-none">
-                  <title>{label}</title>
-                  <path
-                    d={shape.d}
-                    fill={shade(count, ceiling)}
-                    stroke={picked ? 'var(--ink)' : '#b8aba2'}
-                    strokeWidth={picked ? 2.5 : 1}
-                    strokeLinejoin="round"
-                    vectorEffect="non-scaling-stroke"
-                    className="transition-[stroke] group-hover:stroke-[var(--ink)] group-focus-visible:stroke-[var(--ink)] group-focus-visible:[stroke-width:4]"
-                  />
-                </a>
-              )
-            })}
-          </svg>
-          <figcaption className="flex flex-wrap items-center justify-between gap-2 text-xs text-secondary">
-            <span className="flex items-center gap-1.5">
-              कमी
-              {[0.2, 0.4, 0.6, 0.8, 1].map((t) => (
-                <span
-                  key={t}
-                  aria-hidden
-                  className="inline-block h-2.5 w-[22px] rounded-[3px]"
-                  style={{ background: shade(t * ceiling, ceiling) }}
-                />
-              ))}
-              जास्त
-            </span>
-            <Link href={href({ district: STATEWIDE }, '#releases')} className="hover:text-ink">
-              {DGIPR_MR.statewide}: {mr(map.totals.statewide)} — नकाशावर छटा नाही
-            </Link>
-          </figcaption>
-        </figure>
-
-        <div className="flex flex-col gap-3.5 lg:gap-4">
-          <form action="/news#districts" method="get" className="flex gap-1 rounded-full bg-surface p-[5px] lg:gap-2 lg:p-1.5">
-            <label className="min-w-0 grow">
-              <span className="sr-only">जिल्हा निवडा</span>
-              <DistrictSelect
-                value={filters.district}
-                className="h-11 w-full border-0 bg-surface px-3 text-[0.9375rem] outline-none lg:px-3.5"
-              />
-            </label>
-            {filters.lang && <input type="hidden" name="lang" value={filters.lang} />}
-            <button type="submit" className="h-11 shrink-0 rounded-full bg-accent px-4 font-bold text-white lg:px-5">
-              पहा
-            </button>
-          </form>
-
-          {focusDistrict && (
-            <div className="glass glass-sm rounded-2xl p-3.5 lg:rounded-[20px] lg:p-5">
-              <div className="flex items-baseline justify-between gap-2">
-                <h3 className="text-[1.0625rem] font-bold lg:text-xl">{districtNameMr(focusDistrict)}</h3>
-                <span className="text-xs text-muted lg:text-[0.8125rem]">
-                  {mr(map.districts[focusDistrict]?.count ?? 0)} प्रसिद्धीपत्रके · मागील {map.window.labelMr}
+        <main id="main" className={`${WRAP} flex flex-col gap-9 pt-8 lg:gap-20 lg:pt-[72px]`}>
+          {/* 6 ─ जिल्हा वार्ता ------------------------------------------ */}
+          <section id="districts" aria-labelledby="dist-h" className={`grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_440px] lg:gap-12 ${ANCHOR}`}>
+            <div className="flex min-w-0 flex-col gap-3.5 lg:gap-5">
+              <div className="flex flex-col border-b border-nr-line pb-2 lg:flex-row lg:items-end lg:justify-between lg:gap-5 lg:pb-3.5">
+                <div>
+                  <div className="text-[0.8125rem] font-extrabold text-nr-place lg:text-sm">जिल्हा वार्ता · माझा जिल्हा</div>
+                  <h2 id="dist-h" className="nr-h m-0 text-[2rem] font-extrabold lg:mt-0.5 lg:text-[2.75rem] lg:leading-[1.35]">
+                    {districtNameMr(focusD)}
+                  </h2>
+                </div>
+                <span className="text-[0.84375rem] text-nr-text2 lg:text-[0.9375rem]">
+                  {focusCount
+                    ? `मागील ${map.window.labelMr} मध्ये ${mrDigits(focusCount)} प्रसिद्धीपत्रके`
+                    : `मागील ${map.window.labelMr} मध्ये प्रसिद्धीपत्रक नाही`}
                 </span>
               </div>
-              <ul className="mt-3 flex flex-col gap-3">
-                {focusRows.map((row) => (
-                  <li key={row.release.id} className="grid grid-cols-[56px_minmax(0,1fr)] gap-3">
-                    <StoryPhoto
-                      src={row.release.posterUrl}
-                      video={row.release.videoUrl}
-                      className="h-12 rounded-[10px]"
-                    />
-                    <div>
-                      <Link href={readHref(row)} className="line-clamp-2 text-sm font-semibold leading-normal hover:text-accent">
-                        {row.release.titleMr}
+
+              <div role="group" aria-label="जिल्हा निवडा" className="nr-scroll -mx-4 flex gap-1.5 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-wrap lg:gap-2 lg:px-0">
+                {chips.map((c) => {
+                  const on = c.key === focusD
+                  return (
+                    <Link
+                      key={c.key}
+                      href={href({ d: c.key }, '#districts')}
+                      aria-current={on ? 'true' : undefined}
+                      className={`flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border-[1.5px] px-3 text-sm font-semibold lg:px-3.5 lg:text-[0.9375rem] ${
+                        on ? 'border-nr-primary bg-nr-primary text-white' : 'border-nr-line2 bg-white text-[#2A221D]'
+                      }`}
+                    >
+                      {districtNameMr(c.key)} <b>{mrDigits(c.count)}</b>
+                    </Link>
+                  )
+                })}
+              </div>
+
+              {focusItems.length ? (
+                <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-x-7 lg:gap-y-6">
+                  {focusItems.map((d) => (
+                    <article
+                      key={d.id}
+                      className="grid grid-cols-[104px_minmax(0,1fr)] items-start gap-3 border-b border-nr-line py-3 lg:grid-cols-[150px_minmax(0,1fr)] lg:gap-4 lg:border-0 lg:py-0"
+                    >
+                      <ReadLink item={d} hidden className="block overflow-hidden rounded-[14px] bg-white">
+                        <StoryPhoto src={d.img} video={d.video} className="nr-zoom h-[74px] lg:h-[100px]" />
+                      </ReadLink>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs text-nr-muted lg:text-[0.8125rem]">
+                          {d.dateLabel}
+                          {d.time ? `, ${d.time}` : ''}
+                        </span>
+                        <h3 className="m-0 font-marathi text-[0.90625rem] font-bold leading-[1.6] lg:text-base">
+                          <ReadLink item={d} className="nr-link text-nr-text">
+                            {d.title}
+                          </ReadLink>
+                        </h3>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-[18px] border-[1.5px] border-dashed border-[#CFC4B4] p-4 text-[0.9375rem] leading-[1.6] text-nr-text2 lg:p-6 lg:text-base">
+                  {districtNameMr(focusD)} जिल्ह्यातून अद्याप प्रसिद्धीपत्रक आलेले नाही. वरील यादीतून दुसरा जिल्हा निवडा.
+                </div>
+              )}
+              {focusItems.length > 0 && (
+                <Link href={href({ district: focusD }, '#releases')} className="self-start text-[0.9375rem] font-extrabold text-nr-primary">
+                  {districtNameMr(focusD)} — सर्व प्रसिद्धीपत्रके →
+                </Link>
+              )}
+            </div>
+
+            <figure className="m-0 flex flex-col gap-3 rounded-[18px] bg-white p-[18px] shadow-[0_1px_0_#F0DCC8,0_20px_40px_-28px_rgba(120,30,30,0.35)] lg:p-[22px]">
+              <div className="flex items-baseline justify-between gap-2">
+                <b className="text-[1.0625rem]">महाराष्ट्राचा बातम्या नकाशा</b>
+                <span className="text-[0.8125rem] text-nr-muted">
+                  मागील {map.window.labelMr}
+                  {map.widened ? ' (वाढवलेला)' : ''}
+                </span>
+              </div>
+              {/* Each district is a real link, so the map works by keyboard and
+                  screen reader; the chips beside it do the same job on a phone. */}
+              <svg
+                viewBox={geometry.viewBox}
+                className="block h-auto max-h-[300px] w-full lg:max-h-[340px]"
+                role="group"
+                aria-label={`महाराष्ट्राचे ३६ जिल्हे — मागील ${map.window.labelMr} मधील प्रसिद्धीपत्रकांनुसार छटा`}
+              >
+                {geometry.districts.map((shape) => {
+                  const count = map.districts[shape.id]?.count ?? 0
+                  const picked = shape.id === focusD
+                  const label = `${shape.nameMr} — ${count ? `${mrDigits(count)} प्रसिद्धीपत्रके` : 'या कालावधीत बातमी नाही'}`
+                  return (
+                    <a key={shape.id} href={href({ d: shape.id }, '#districts')} aria-label={label} className="group outline-none">
+                      <title>{label}</title>
+                      <path
+                        d={shape.d}
+                        fill={shade(count, ceiling)}
+                        stroke={picked ? 'var(--nr-text)' : '#ffffff'}
+                        strokeWidth={picked ? 2.5 : 0.8}
+                        strokeLinejoin="round"
+                        vectorEffect="non-scaling-stroke"
+                        className="transition-[stroke] group-hover:stroke-[var(--nr-text)] group-focus-visible:stroke-[var(--nr-accent)] group-focus-visible:[stroke-width:4]"
+                      />
+                    </a>
+                  )
+                })}
+              </svg>
+              <figcaption className="flex flex-wrap items-center justify-between gap-2 text-[0.8125rem] text-nr-text2">
+                <span className="flex items-center gap-[5px]">
+                  कमी
+                  {[0.25, 0.5, 0.75, 1].map((t) => (
+                    <span key={t} aria-hidden className="inline-block h-[9px] w-5 rounded-[2px]" style={{ background: shade(t * ceiling, ceiling) }} />
+                  ))}
+                  जास्त
+                </span>
+                <Link href={`/map?district=${focusD}`} className="font-extrabold text-nr-primary">
+                  पूर्ण नकाशा →
+                </Link>
+              </figcaption>
+            </figure>
+          </section>
+
+          {/* 7 ─ सर्व मंजूर प्रसिद्धीपत्रके -------------------------------- */}
+          <section id="releases" aria-labelledby="rel-h" className={`flex flex-col gap-3 lg:gap-5 ${ANCHOR}`}>
+            <SectionHead
+              eyebrow="वृत्त विशेष"
+              id="rel-h"
+              title="सर्व मंजूर प्रसिद्धीपत्रके"
+              right={<p className="m-0 text-[0.9375rem] text-nr-text2 max-lg:hidden">प्रत्येक बातमी माहिती व जनसंपर्क महासंचालनालयाने मंजूर केलेली</p>}
+            />
+            <div role="group" aria-label="विषयानुसार निवडा" className="nr-scroll -mx-4 flex gap-1.5 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-wrap lg:gap-2 lg:px-0">
+              <TopicChip href={href({ topic: '' }, '#releases')} on={!filters.topic}>
+                सर्व
+              </TopicChip>
+              {TOPICS.filter((t) => topicCounts.get(t.id)).map((t) => (
+                <TopicChip key={t.id} href={href({ topic: t.id }, '#releases')} on={filters.topic === t.id}>
+                  {t.label}
+                </TopicChip>
+              ))}
+            </div>
+
+            <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
+              <div className="min-w-0">
+                <p role="status" className="m-0 text-[0.8125rem] text-nr-text2 lg:text-sm">
+                  {feedStatus}
+                </p>
+                <ActiveFilters filters={filters} href={href} />
+
+                {shown.length === 0 ? (
+                  <div className="mt-4 rounded-[18px] border-[1.5px] border-dashed border-[#CFC4B4] p-8 text-center">
+                    <p className="m-0 font-semibold">या निकषात एकही बातमी नाही</p>
+                    <p className="m-0 mt-1 text-sm text-nr-muted">शोधशब्द बदलून पहा किंवा एखादा फिल्टर काढा.</p>
+                    <Link href="/news#releases" className="mt-4 inline-flex h-11 items-center rounded-full bg-nr-primary-soft px-5 font-bold text-nr-primary">
+                      सर्व फिल्टर काढा
+                    </Link>
+                  </div>
+                ) : (
+                  <ol className="m-0 list-none p-0">
+                    {shown.map((r) => (
+                      <ReleaseRow key={r.id} item={r} origin={origin} />
+                    ))}
+                  </ol>
+                )}
+
+                {pages > 1 && (
+                  <nav aria-label="पाने" className="flex items-center justify-between pt-5 text-[0.9375rem]">
+                    {page > 1 ? (
+                      <Link href={href({ page: page - 1 }, '#releases')} className="flex min-h-11 items-center font-extrabold text-nr-primary">
+                        ← मागील पान
                       </Link>
-                      <div className="text-xs text-muted">{foldDateMr(row.release.date)}</div>
+                    ) : (
+                      <span className="text-[#8F857B]">← मागील पान</span>
+                    )}
+                    <span className="text-[#4A2E30]">
+                      पान {mrDigits(page)} / {mrDigits(pages)}
+                    </span>
+                    {page < pages ? (
+                      <Link href={href({ page: page + 1 }, '#releases')} className="flex min-h-11 items-center font-extrabold text-nr-primary">
+                        पुढील पान →
+                      </Link>
+                    ) : (
+                      <span className="text-[#8F857B]">पुढील पान →</span>
+                    )}
+                  </nav>
+                )}
+              </div>
+
+              <aside aria-label="पत्रकारांसाठी, सदस्यता व संग्रह" className="flex flex-col gap-5">
+                <div className="flex flex-col gap-2.5 rounded-[18px] border-t-4 border-nr-accent bg-white p-[18px] shadow-[0_20px_40px_-30px_rgba(120,30,30,0.4)] lg:gap-3.5 lg:p-6">
+                  <div className="text-[0.8125rem] font-extrabold text-nr-accent-ink lg:text-sm">पत्रकारांसाठी</div>
+                  <h2 className="nr-h m-0 text-xl font-bold leading-normal lg:text-[1.375rem]">आजचा फोल्ड — एकाच DOCX मध्ये</h2>
+                  <p className="m-0 text-[0.9375rem] leading-[1.65] text-nr-text2">
+                    आज मंजूर झालेले <b className="text-nr-text">{mrDigits(todayFold.length)}</b> लेख, वृत्त विभागाच्या क्रमाने. हवे ते निवडा, क्रम बदला आणि
+                    डाउनलोड करा.
+                  </p>
+                  <FoldButton className="flex h-12 items-center justify-center gap-2 rounded-full bg-nr-primary text-base font-bold text-white lg:h-[50px]">
+                    <IDownload size={18} strokeWidth={2.2} /> फोल्ड उघडा
+                  </FoldButton>
+                  <ByNumberForm />
+                </div>
+
+                <div id="subscribe" className="flex flex-col gap-1 rounded-[18px] bg-white p-6 shadow-[0_20px_40px_-30px_rgba(120,30,30,0.4)]">
+                  <h2 className="m-0 mb-1.5 text-lg font-extrabold">बातम्या थेट तुमच्याकडे</h2>
+                  {SUBSCRIBE.map((s) => (
+                    <div key={s.name} className="flex items-center justify-between gap-2 border-t border-[#F5E6D6] py-2.5">
+                      <span>
+                        <b className="block text-[0.9375rem]">{s.name}</b>
+                        <span className="text-[0.8125rem] text-nr-muted">{s.blurb}</span>
+                      </span>
+                      {s.url ? (
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex h-11 shrink-0 items-center rounded-full bg-nr-primary-soft px-3.5 text-sm font-bold text-nr-primary"
+                        >
+                          फॉलो करा
+                        </a>
+                      ) : (
+                        <span className="shrink-0 rounded-full bg-[#F2ECE3] px-2.5 py-1 text-xs font-bold text-nr-text2">{s.status}</span>
+                      )}
                     </div>
+                  ))}
+                </div>
+
+                <div id="archive" className={`rounded-[18px] bg-white p-6 shadow-[0_20px_40px_-30px_rgba(120,30,30,0.4)] ${ANCHOR}`}>
+                  <h2 className="m-0 text-lg font-extrabold">तारखेनुसार संग्रह</h2>
+                  <div className="mt-2.5 flex flex-col gap-1.5">
+                    {months.slice(0, 6).map((m) => (
+                      <Link
+                        key={m.key}
+                        href={href({ from: `${m.key}-01`, to: `${m.key}-31` }, '#releases')}
+                        className="flex min-h-11 items-center justify-between rounded-[18px] bg-nr-ground px-3.5 text-[0.9375rem] hover:bg-nr-peach"
+                      >
+                        <span>{monthMr(m.key)}</span>
+                        <span className="text-nr-muted">{mrDigits(m.count)} →</span>
+                      </Link>
+                    ))}
+                    {months.length === 0 && <p className="m-0 text-sm text-nr-muted">संग्रह रिकामा आहे.</p>}
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          {/* 8 ─ विशेष लेख ---------------------------------------------- */}
+          <section id="features" aria-labelledby="feat-h" className={`flex flex-col gap-3.5 lg:gap-6 ${ANCHOR}`}>
+            <SectionHead eyebrow="विशेष लेख" id="feat-h" title="सविस्तर वाचा" />
+            {features.length ? (
+              <div className="nr-scroll -mx-4 flex gap-3.5 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-8 lg:overflow-visible lg:px-0">
+                {features.map((f) => (
+                  <article key={f.id} className="flex w-[270px] shrink-0 flex-col gap-2 lg:w-auto lg:gap-3">
+                    <ReadLink item={f} hidden className="block overflow-hidden rounded-[14px]">
+                      <StoryPhoto src={f.img} video={f.video} size="md" className="nr-zoom h-40 lg:h-60" />
+                    </ReadLink>
+                    <span className="text-xs font-extrabold text-nr-primary lg:text-[0.8125rem]">विशेष लेख · {f.place}</span>
+                    <h3 className="nr-h m-0 text-[1.0625rem] font-bold leading-[1.55] lg:text-[1.375rem]">
+                      <ReadLink item={f} className="nr-link text-nr-text">
+                        {f.title}
+                      </ReadLink>
+                    </h3>
+                    {f.summary && <p className="m-0 line-clamp-3 text-base leading-[1.7] text-[#4A2E30] max-lg:hidden">{f.summary}</p>}
+                    <span className="text-[0.8125rem] text-nr-muted">{f.dateLabel}</span>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="m-0 rounded-[18px] border-[1.5px] border-dashed border-[#CFC4B4] p-6 text-[0.9375rem] text-nr-text2">
+                विशेष लेख मंजूर झाल्यावर इथे दिसतील.
+              </p>
+            )}
+          </section>
+        </main>
+
+        {/* 9 ─ Media band: जय महाराष्ट्र · दिलखुलास · लोकराज्य ------------ */}
+        <section id="media" aria-labelledby="media-h" className={`mt-9 bg-nr-night text-white lg:mt-20 ${ANCHOR}`}>
+          <div className={`${WRAP} grid items-start gap-6 py-7 lg:grid-cols-[minmax(0,1fr)_340px_260px] lg:gap-10 lg:py-14`}>
+            <div className="flex flex-col gap-3.5 lg:gap-4">
+              <div>
+                <div className="text-[0.8125rem] font-extrabold text-nr-accent lg:text-sm">जय महाराष्ट्र · दिलखुलास</div>
+                <h2 id="media-h" className="nr-h m-0 text-[1.625rem] font-extrabold lg:mt-0.5 lg:text-4xl">
+                  पाहा आणि ऐका
+                </h2>
+              </div>
+              {episodes[0] ? (
+                <>
+                  <ReadLink item={episodes[0]} hidden className="relative block overflow-hidden rounded-[18px]">
+                    <StoryPhoto src={episodes[0].img} video={episodes[0].video} size="lg" className="nr-zoom h-[200px] lg:h-[330px]" />
+                    <span className="absolute inset-0 z-[2] bg-[linear-gradient(180deg,rgba(0,0,0,0)_45%,rgba(0,0,0,0.75)_100%)]" />
+                    <span className="absolute left-3.5 top-3.5 z-[2] grid h-[52px] w-[52px] place-items-center rounded-full bg-nr-accent text-nr-text lg:left-6 lg:top-6 lg:h-16 lg:w-16">
+                      <IPlay size={24} />
+                    </span>
+                  </ReadLink>
+                  <ReadLink item={episodes[0]} className="nr-link font-marathi text-base font-bold leading-[1.6] text-white lg:text-[1.1875rem]">
+                    {episodes[0].title}
+                  </ReadLink>
+                </>
+              ) : (
+                <div className="rounded-[18px] border-[1.5px] border-dashed border-white/30 p-6 text-[0.9375rem] text-white/80">
+                  ‘जय महाराष्ट्र’ व ‘दिलखुलास’ चे भाग मंजूर झाल्यावर इथे दिसतील.
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col">
+              <h3 className="m-0 border-b border-white/20 pb-2.5 text-[0.9375rem] font-extrabold">मागील भाग</h3>
+              {episodes.slice(1, 4).map((e) => (
+                <ReadLink key={e.id} item={e} className="flex flex-col gap-1 border-b border-white/[0.14] py-3.5 text-white">
+                  <span className="nr-link text-[0.9375rem] font-semibold leading-[1.55]">{e.title}</span>
+                  <span className="text-[0.8125rem] text-white/70">{e.dateLabel}</span>
+                </ReadLink>
+              ))}
+              {episodes.length < 2 && <p className="m-0 py-3.5 text-sm text-white/70">आधीचे भाग अद्याप मंजूर नाहीत.</p>}
+              <a
+                href={SOCIAL[3].url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3.5 flex min-h-11 items-center text-[0.9375rem] font-extrabold text-nr-accent"
+              >
+                सर्व भाग YouTube वर →
+              </a>
+            </div>
+
+            {/* लोकराज्य: the issue's cover and link wait on DGIPR — a designed
+                card that says so, not a link to an unconfirmed address. */}
+            <div className="grid grid-cols-[74px_minmax(0,1fr)] items-center gap-3 rounded-[18px] bg-white/[0.08] p-3 lg:flex lg:flex-col lg:items-stretch lg:gap-3.5 lg:bg-transparent lg:p-0">
+              <span
+                aria-hidden
+                className="flex h-24 flex-col justify-between rounded bg-nr-accent p-2 text-nr-text shadow-[0_30px_50px_-24px_rgba(0,0,0,0.7)] lg:h-[330px] lg:rounded-[14px] lg:p-[22px]"
+              >
+                <span className="nr-h text-sm font-extrabold leading-[1.3] lg:text-[2.75rem]">लोकराज्य</span>
+                <span className="text-[0.625rem] font-bold lg:text-sm">[अंकाचे मुखपृष्ठ]</span>
+              </span>
+              <span>
+                <b className="block text-[0.9375rem]">लोकराज्य मासिक</b>
+                <span className="text-[0.8125rem] text-white/70">नव्या अंकाचा दुवा महासंचालनालयाकडून आल्यावर</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <div className={`${WRAP} flex flex-col gap-8 pt-8 lg:gap-20 lg:pt-20`}>
+          {/* 10 ─ फॅक्ट चेक -------------------------------------------- */}
+          <section
+            id="factcheck"
+            aria-labelledby="fc-h"
+            className={`grid items-start gap-8 rounded-[20px] border border-[#E7E0D5] bg-white p-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:gap-12 lg:rounded-[28px] lg:p-11 ${ANCHOR}`}
+          >
+            <FactCheck samples={factSamples} teamLive={FACT_CHECK_TEAM_LIVE} />
+            <div className="flex flex-col gap-3">
+              <h3 className="m-0 text-[1.0625rem] font-bold lg:text-xl">अलीकडील फॅक्ट चेक</h3>
+              <p className="m-0 text-sm text-[#4A403A]">व्हायरल दाव्यांची पडताळणी — महासंचालनालयाच्या फॅक्ट-चेक टीमकडून</p>
+              <ul className="m-0 flex list-none flex-wrap gap-2 p-0" aria-label="निष्कर्षांचे प्रकार">
+                {[
+                  ['खोटे', 'bg-[#8E2A1E] text-white'],
+                  ['दिशाभूल करणारे', 'bg-[#F3C77A] text-[#1D1714]'],
+                  ['खरे', 'bg-[#1F6B4A] text-white'],
+                ].map(([label, tone]) => (
+                  <li key={label} className={`rounded-full px-3 py-[3px] text-[0.8125rem] font-extrabold ${tone}`}>
+                    {label}
                   </li>
                 ))}
-                {focusRows.length === 0 && <li className="text-sm text-muted">या जिल्ह्यातून अद्याप प्रसिद्धीपत्रक नाही.</li>}
               </ul>
-              <Link
-                href={href({ district: focusDistrict }, '#releases')}
-                className="mt-3.5 flex h-11 items-center justify-center gap-1.5 rounded-full bg-accent-soft px-4 text-sm font-bold text-accent lg:inline-flex lg:h-10"
-              >
-                जिल्ह्यातील सर्व बातम्या <IconArrowRight size={13} />
-              </Link>
+              <p className="m-0 rounded-2xl border-[1.5px] border-dashed border-[#CFC4B4] bg-[#F6F1EA] p-4 text-[0.9375rem] leading-[1.6] text-[#4A403A]">
+                टीमचे निष्कर्ष — दावा, दिनांक आणि पडताळणीचा अधिकृत स्रोत —{' '}
+                {FACT_CHECK_TEAM_LIVE ? 'प्रसिद्ध झाल्यावर इथे दिसतील.' : 'अधिकृत फॅक्ट-चेक कार्याच्या पुष्टीनंतर इथे प्रसिद्ध होतील.'}
+              </p>
             </div>
-          )}
+          </section>
 
-          <div>
-            <h3 className="sr-only">सर्वाधिक बातम्या असलेले जिल्हे</h3>
-            <ul className="flex flex-wrap gap-1.5">
-              {activeDistricts.slice(0, 10).map((d) => (
-                <li key={d.districtId}>
-                  <Link
-                    href={href({ district: d.districtId }, '#districts')}
-                    aria-current={d.districtId === filters.district ? 'true' : undefined}
-                    className={`inline-block rounded-full px-3 py-1.5 text-[0.8125rem] ${
-                      d.districtId === filters.district ? 'bg-accent text-white hover:text-white' : 'bg-surface'
-                    }`}
-                  >
-                    {districtNameMr(d.districtId)}{' '}
-                    <b className={d.districtId === filters.district ? '' : 'text-accent'}>{mr(d.count)}</b>
-                  </Link>
+          {/* 11 ─ Social ------------------------------------------------- */}
+          <section aria-labelledby="social-h" className="flex flex-col gap-3 lg:gap-6">
+            <SectionHead
+              eyebrow="सामाजिक माध्यमे"
+              id="social-h"
+              title="सोशल मीडियावर महासंवाद"
+              right={<span className="text-sm text-nr-muted max-lg:hidden">पूर्वावलोकन नमुना · मंजूर प्रसिद्धीपत्रकांतून · अधिकृत खाती</span>}
+            />
+            <ul className="m-0 grid list-none grid-cols-2 gap-2.5 p-0 lg:grid-cols-4 lg:gap-5">
+              {SOCIAL.map((s) => (
+                <li key={s.id}>
+                  <article className="flex h-full flex-col overflow-hidden rounded-[18px] bg-white shadow-[0_1px_0_#F0DCC8,0_20px_40px_-30px_rgba(120,30,30,0.4)]">
+                    <div className="h-1 max-lg:hidden" style={{ background: s.tile }} />
+                    <div className="flex items-center gap-2.5 p-3 lg:gap-3 lg:px-[18px] lg:pb-3 lg:pt-4">
+                      <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-[18px] text-white lg:h-10 lg:w-10" style={{ background: s.tile }}>
+                        {s.glyph}
+                      </span>
+                      <span className="min-w-0 grow">
+                        <b className="block text-[0.9375rem] lg:text-base">{s.name}</b>
+                        <span className="text-xs text-nr-muted max-lg:hidden">महासंवाद · DGIPR महाराष्ट्र</span>
+                      </span>
+                    </div>
+                    <div className="grow px-[18px] max-lg:hidden">
+                      <SocialPreview id={s.id} pictured={pictured} latest={items} yt={ytItem} />
+                    </div>
+                    <div className="px-3 pb-3 lg:px-[18px] lg:pb-[18px] lg:pt-3.5">
+                      <a
+                        href={s.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${s.name} वर महासंवाद फॉलो करा`}
+                        className="flex h-11 items-center justify-center rounded-full border-[1.5px] border-nr-line2 text-sm font-bold"
+                      >
+                        <span className="max-lg:hidden">{s.name} वर&nbsp;</span>फॉलो करा
+                      </a>
+                    </div>
+                  </article>
                 </li>
               ))}
             </ul>
-          </div>
+          </section>
+        </div>
 
-          <Link
-            href={focusDistrict ? `/map?district=${focusDistrict}` : '/map'}
-            className="flex h-11 items-center justify-center gap-1.5 rounded-full bg-accent px-[18px] text-sm font-bold text-white hover:text-white lg:self-start"
+        {/* 12 ─ Footer ----------------------------------------------------- */}
+        <footer id="footer" className="mt-8 bg-nr-deep text-white lg:mt-24">
+          <div
+            className={`${WRAP} grid gap-6 pb-6 pt-[26px] text-sm sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] lg:gap-10 lg:pb-9 lg:pt-[52px] lg:text-[0.9375rem]`}
           >
-            <IconMap size={15} /> पूर्ण नकाशा पहा
-          </Link>
-        </div>
-      </section>
-
-      {/* 6 ─ Explainers + topic collections -------------------------------- */}
-      <section id="topics" aria-labelledby="topics-h" className="flex scroll-mt-24 flex-col gap-5">
-        <div>
-          <p className="text-[0.8125rem] font-bold text-accent">विषय</p>
-          <h2 id="topics-h" className="display mt-0.5 text-[1.375rem] font-bold lg:text-[1.875rem]">
-            समजून घ्या आणि विषयानुसार वाचा
-          </h2>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="glass glass-accent flex flex-col rounded-[20px] p-6 sm:col-span-2">
-            <p className="text-[0.8125rem] font-bold text-accent">समजून घ्या</p>
-            <p className="display mt-1.5 text-[1.375rem] font-bold leading-[1.4]">
-              एक सार्वजनिक प्रश्न, सोप्या मराठीत उत्तर
-            </p>
-            <p className="mt-2 text-sm leading-[1.7] text-secondary">
-              प्रत्येक स्पष्टीकरण एका प्रश्नाने सुरू होते — “ही योजना कोणासाठी?” — आणि पात्रता, अर्जाची पद्धत व संबंधित
-              प्रसिद्धीपत्रके यांसह संपते.
-            </p>
-            <span className="mt-auto pt-3 text-xs text-muted">पहिले स्पष्टीकरण प्रकाशित झाल्यावर</span>
-          </div>
-          {departments.slice(0, 2).map((d, i) => (
-            <Link
-              key={d.key}
-              href={href({ dept: d.key }, '#releases')}
-              className="glass flex min-h-[170px] flex-col justify-between gap-4 rounded-[20px] p-[22px]"
-            >
-              <span
-                className={`grid h-11 w-11 place-items-center rounded-xl ${i === 0 ? 'bg-saffron-soft text-saffron-ink' : 'bg-accent-soft text-accent'}`}
-              >
-                <IconBuilding />
+            <div className="flex flex-col gap-3">
+              <span className="self-start rounded-[18px] bg-white px-3.5 py-2.5">
+                <Image src="/mahasamvad-logo.png" alt="महासंवाद" width={292} height={100} className="h-9 w-auto lg:h-[46px]" />
               </span>
-              <span>
-                <b className="block text-[1.0625rem] leading-snug">{deptLabel(d.key)}</b>
-                <span className="text-[0.8125rem] text-muted">{mr(d.count)} प्रसिद्धीपत्रके →</span>
-              </span>
-            </Link>
-          ))}
-          {departments.length === 0 && (
-            <p className="text-sm text-muted sm:col-span-2">विभाग नमूद केलेली प्रसिद्धीपत्रके अद्याप नाहीत.</p>
-          )}
-        </div>
-        {departments.length > 2 && (
-          <div className="flex flex-wrap items-center gap-2 text-[0.8125rem]">
-            <span className="text-muted">इतर विभाग:</span>
-            {departments.slice(2, 10).map((d) => (
-              <Link
-                key={d.key}
-                href={href({ dept: d.key }, '#releases')}
-                className="rounded-full border border-edge bg-surface px-3 py-1.5 font-medium"
-              >
-                {deptLabel(d.key)} <span className="num text-muted">{mr(d.count)}</span>
-              </Link>
-            ))}
-          </div>
-        )}
-        <div className="flex flex-wrap items-center gap-2 text-[0.8125rem] text-muted">
-          संपादित विषय-संग्रह, वर्गीकरण सुरू झाल्यावर:
-          {['योजना', 'आरोग्य', 'कृषी', 'पायाभूत सुविधा'].map((t) => (
-            <span key={t} className="rounded-full border border-dashed border-edge-strong px-3 py-1.5">
-              {t}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* 7 + 8 ─ Media corner and gallery ---------------------------------- */}
-      <section id="media" aria-labelledby="media-h" className="flex scroll-mt-24 flex-col gap-5">
-        <div>
-          <p className="text-[0.8125rem] font-bold text-saffron-ink">माध्यमे</p>
-          <h2 id="media-h" className="display mt-0.5 text-[1.375rem] font-bold lg:text-[1.875rem]">
-            फोटो, व्हिडिओ आणि माध्यमांसाठी
-          </h2>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-[190px_190px]">
-          {gallery[0] ? (
-            <GalleryTile row={gallery[0]} className="h-[260px] sm:col-span-2 lg:col-span-1 lg:row-span-2 lg:h-auto" large />
-          ) : (
-            <MediaWaiting label="छायाचित्रे" className="h-[190px] sm:col-span-2 lg:col-span-1 lg:row-span-2 lg:h-auto" />
-          )}
-          {gallery[1] ? (
-            <GalleryTile row={gallery[1]} className="h-[190px]" />
-          ) : (
-            <MediaWaiting label="छायाचित्रे" className="h-[190px]" />
-          )}
-          {video ? (
-            <VideoTile row={video} className="h-[190px]" />
-          ) : (
-            <MediaWaiting label="व्हिडिओ व माहितीचित्रे" className="h-[190px]" />
-          )}
-
-          <div className="glass glass-saffron flex flex-col rounded-[20px] p-[18px]">
-            <p className="text-[0.8125rem] font-bold text-saffron-ink">माध्यम सूचना व निमंत्रणे</p>
-            <p className="mt-2.5 text-sm font-semibold">सध्या कोणतीही आगामी सूचना नाही</p>
-            <p className="mt-1 text-xs text-secondary">कार्यक्रमाची तारीख, वेळ आणि ठिकाण ठळकपणे दिसेल.</p>
-            <span className="mt-auto pt-3 text-xs text-muted">होऊन गेलेले कार्यक्रम आपोआप संग्रहात</span>
-          </div>
-
-          <div className="glass rounded-[20px] p-[18px]">
-            <p className="text-[0.9375rem] font-bold">पत्रकारांसाठी</p>
-            <ul className="mt-2 flex flex-col gap-1.5 text-[0.8125rem]">
-              <li className="flex gap-2">
-                <IconDownload size={15} className="mt-0.5 shrink-0 text-accent" />
-                प्रत्येक प्रसिद्धीपत्रकाची वर्ड (DOCX) प्रत — बातमीसोबतच्या दुव्यावर
-              </li>
-              <li>
-                <a href="#search" className="underline underline-offset-2 hover:text-accent">
-                  वृत्त क्रमांकाने शोधा
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://dgipr.maharashtra.gov.in/about"
-                  rel="noopener"
-                  className="underline underline-offset-2 hover:text-accent"
-                >
-                  अधिस्वीकृती व माध्यम सुविधा
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* 9 ─ Social engagements -------------------------------------------- */}
-      <section aria-labelledby="social-h" className="flex flex-col gap-2.5 lg:gap-5">
-        <div>
-          <h2 id="social-h" className="display text-[1.375rem] font-bold lg:text-[1.875rem]">
-            सोशल मीडियावर महासंवाद
-          </h2>
-          <p className="hidden text-[0.8125rem] text-muted sm:block">माहिती व जनसंपर्क महासंचालनालयाची अधिकृत खाती</p>
-        </div>
-        <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
-          {SOCIAL.map((s) => (
-            <li key={s.id}>
-              <a
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`${s.name} वर महासंवाद`}
-                className="glass flex h-full flex-col gap-3.5 rounded-[18px] p-3.5 transition hover:-translate-y-0.5 hover:shadow-lg lg:rounded-[20px] lg:p-5"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    aria-hidden
-                    className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white ring-1 ring-inset ring-white/10"
-                    style={{ background: s.tile }}
-                  >
-                    {s.glyph}
-                  </span>
-                  <div className="min-w-0 grow">
-                    <p className="font-bold">{s.name}</p>
-                    <p className="text-xs text-secondary">महासंवाद · DGIPR महाराष्ट्र</p>
-                  </div>
-                </div>
-                <span className="hidden text-[0.8125rem] text-secondary lg:block">{s.blurb}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {/* 10 ─ Institutional footer ----------------------------------------- */}
-      <footer id="help" aria-label="संस्थात्मक माहिती" className="glass-band mt-2 scroll-mt-24 py-6 before:border-t before:border-white/70 lg:mt-2 lg:py-10">
-        <div className="grid gap-6 text-sm sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-          <div>
-            <p className="font-bold">जारी करणारे प्राधिकरण</p>
-            <p className="mt-2 text-secondary">माहिती व जनसंपर्क महासंचालनालय, महाराष्ट्र शासन</p>
-            <p className="mt-2 text-[0.8125rem] text-muted">
-              प्रत्येक बातमी वृत्त विभागाने मंजूर केलेले प्रसिद्धीपत्रक आहे; छायाचित्रे श्रेयासह.
-            </p>
-          </div>
-          <FooterList
-            title="संग्रह व सदस्यता"
-            items={[
-              <a key="all" href="#releases">
-                सर्व प्रसिद्धीपत्रके
-              </a>,
-              <a key="archive" href="#archive">
-                तारखेनुसार संग्रह
-              </a>,
-              <Link key="map" href="/map">
-                बातम्या नकाशा
-              </Link>,
-              'RSS / ईमेल सदस्यता — लवकरच',
-            ]}
-          />
-          <FooterList
-            title="शासकीय दुवे"
-            items={[
-              <a key="gom" href="https://www.maharashtra.gov.in" rel="noopener">
+              <p className="m-0 leading-[1.65] text-white/[0.84]">
+                माहिती व जनसंपर्क महासंचालनालय, महाराष्ट्र शासन. इथली प्रत्येक बातमी वृत्त विभागाने मंजूर केलेले प्रसिद्धीपत्रक आहे.
+              </p>
+            </div>
+            <FooterList title="बातम्या">
+              <a href="#releases">वृत्त विशेष</a>
+              <a href="#districts">जिल्हा वार्ता</a>
+              <a href="#features">विशेष लेख</a>
+              <a href="#archive">संग्रह</a>
+              <Link href="/map">बातम्या नकाशा</Link>
+            </FooterList>
+            <FooterList title="शासकीय दुवे">
+              <a href="https://www.maharashtra.gov.in" rel="noopener">
                 महाराष्ट्र शासन
-              </a>,
-              <a key="dgipr" href="https://dgipr.maharashtra.gov.in/about" rel="noopener">
+              </a>
+              <a href="https://dgipr.maharashtra.gov.in/about" rel="noopener">
                 माहिती व जनसंपर्क महासंचालनालय
-              </a>,
-              <a key="india" href="https://www.india.gov.in" rel="noopener">
-                राष्ट्रीय पोर्टल
-              </a>,
-            ]}
-          />
-          <FooterList
-            title="मदत व धोरणे"
-            items={[
-              'संपर्क · माहितीचा अधिकार · सुलभता · गोपनीयता — पाने तयार होत आहेत',
-              'संपूर्ण पान कीबोर्डने वापरता येते; २००% झूमवर वाचनीय.',
-            ]}
-          />
-          <p className="rounded-[14px] bg-surface px-4 py-3 text-[0.8125rem] text-secondary sm:col-span-2 lg:col-span-4">
-            <b className="text-saffron-ink">स्थिती:</b> हे पान प्रस्ताव नमुना (pitch prototype) आहे; महासंचालनालयाने अधिकृत
-            संकेतस्थळ म्हणून अद्याप स्वीकारलेले नाही.
-            {corpus.approvedAt && <> · शेवटची मंजुरी: {stampMr(corpus.approvedAt)}</>}
-          </p>
-        </div>
-      </footer>
-    </div>
+              </a>
+              <a href="https://aaplesarkar.mahaonline.gov.in" rel="noopener">
+                आपले सरकार
+              </a>
+            </FooterList>
+            <FooterList title="मदत व धोरणे">
+              <span className="text-white/70">संपर्क · माहितीचा अधिकार · सुलभता · गोपनीयता — पाने तयार होत आहेत</span>
+              <span className="text-white/70">संपूर्ण पान कीबोर्डने वापरता येते; २००% झूमवर वाचनीय.</span>
+              <Link href="/desk">कर्मचारी प्रवेश</Link>
+            </FooterList>
+            <p className="m-0 border-t border-white/[0.18] pt-5 text-xs text-white/[0.78] sm:col-span-2 lg:col-span-4 lg:text-[0.8125rem]">
+              स्थिती: हे पान प्रस्ताव नमुना (pitch prototype) आहे; महासंचालनालयाने अधिकृत संकेतस्थळ म्हणून अद्याप स्वीकारलेले नाही.
+              {corpus.approvedAt && <> · शेवटची मंजुरी: {stampMr(corpus.approvedAt)}</>}
+            </p>
+          </div>
+        </footer>
+
+        {/* 13 ─ Floating bar + text size ------------------------------------ */}
+        <BottomNav />
+        <TextSizeCycle className="fixed bottom-[100px] right-7 z-[45] grid h-14 w-14 place-items-center rounded-full border border-nr-line bg-white text-2xl font-extrabold text-nr-primary shadow-[0_12px_28px_-12px_rgba(40,6,10,0.45)] max-lg:hidden" />
+      </div>
+    </NewsUiProvider>
   )
 }
 
 /* ------------------------------------------------------------------ pieces */
 
-function FilterPill({ href, on, children }: { href: string; on: boolean; children: ReactNode }) {
+function LatestHead({ id }: { id: string }) {
+  return (
+    <div className="flex w-full items-center justify-between">
+      <h2 id={id} className="nr-h m-0 flex items-center gap-2 text-[1.3125rem] font-extrabold leading-normal text-nr-text xl:text-xl">
+        <span aria-hidden className="nr-live h-[9px] w-[9px] rounded-full bg-nr-primary" />
+        ताज्या बातम्या
+      </h2>
+      <span className="text-[0.78rem] text-nr-muted">नवीन प्रथम</span>
+    </div>
+  )
+}
+
+function SectionHead({ eyebrow, id, title, right }: { eyebrow: string; id: string; title: string; right?: ReactNode }) {
+  return (
+    <div className="flex items-end justify-between gap-6 border-b border-nr-line pb-2 lg:pb-3.5">
+      <div>
+        <div className="text-[0.8125rem] font-extrabold text-nr-primary lg:text-sm">{eyebrow}</div>
+        <h2 id={id} className="nr-h m-0 text-[1.75rem] font-extrabold lg:mt-0.5 lg:text-[2.5rem] lg:leading-[1.35]">
+          {title}
+        </h2>
+      </div>
+      {right}
+    </div>
+  )
+}
+
+function TopicChip({ href, on, children }: { href: string; on: boolean; children: ReactNode }) {
   return (
     <Link
       href={href}
       aria-current={on ? 'true' : undefined}
-      className={`rounded-full px-3.5 py-[7px] font-semibold ${
-        on ? 'bg-accent font-bold text-white hover:text-white' : 'border border-edge bg-surface hover:text-accent'
+      className={`flex h-[42px] shrink-0 items-center whitespace-nowrap rounded-full border-[1.5px] px-3.5 text-[0.90625rem] font-semibold lg:px-[18px] lg:text-[0.9375rem] ${
+        on ? 'border-nr-primary bg-nr-primary text-white' : 'border-[#DDD3C5] bg-white text-[#2A221D] hover:border-nr-primary'
       }`}
     >
       {children}
@@ -1001,174 +992,117 @@ function FilterPill({ href, on, children }: { href: string; on: boolean; childre
   )
 }
 
-function AsideField({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
-      {label}
-      {children}
-    </label>
-  )
-}
+const ACTION = 'inline-flex h-11 items-center gap-1.5 rounded-full border px-[13px] text-sm font-semibold text-[#2A221D]'
 
-function ReleaseItem({ row, meta, origin }: { row: Row; meta: Meta; origin: string }) {
-  const r = row.release
-  const share = `https://wa.me/?text=${encodeURIComponent(`${r.titleMr}\n${origin}${readHref(row)}`)}`
+function ReleaseRow({ item: r, origin }: { item: NewsItem; origin: string }) {
+  const share = `https://wa.me/?text=${encodeURIComponent(`${r.title}\n${origin}${r.href}\n— महासंवाद, माहिती व जनसंपर्क महासंचालनालय`)}`
   return (
-    <li className="grid grid-cols-[96px_minmax(0,1fr)] gap-3 border-b border-sunk py-4 sm:grid-cols-[200px_minmax(0,1fr)] sm:gap-[22px] sm:py-5">
-      <StoryPhoto
-        src={r.posterUrl}
-        video={r.videoUrl}
-        size="md"
-        className="h-[72px] rounded-xl sm:h-[134px] sm:rounded-[14px]"
-      />
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-          <span className="rounded-full bg-place-soft px-2.5 py-0.5 font-semibold text-place">{placeOf(row)}</span>
-          {r.departmentMr && <span className="font-semibold text-secondary">{deptLabel(r.departmentMr)}</span>}
-          <Stamp row={row} timed={meta.timed} />
+    <li className="flex flex-col gap-2 border-b border-nr-line py-4 sm:grid sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-[26px] sm:py-6">
+      <ReadLink item={r} hidden className="block overflow-hidden rounded-[14px] bg-white">
+        <StoryPhoto src={r.img} video={r.video} size="md" className="nr-zoom h-[190px] sm:h-[146px]" />
+      </ReadLink>
+      <div className="flex min-w-0 flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.78rem] lg:text-[0.8125rem]">
+          <span className="rounded bg-nr-place-soft px-2 py-px font-bold text-nr-place lg:px-2.5 lg:py-0.5">{r.place}</span>
+          <b className="font-extrabold text-nr-primary">{r.topicLabel}</b>
+          <time dateTime={r.date} className="text-nr-muted">
+            · {r.dateLabel}
+            {r.time ? `, ${r.time}` : ''}
+          </time>
         </div>
-        <h3 className="mt-2 text-[0.9375rem] font-bold leading-normal sm:text-lg">
-          <Link href={readHref(row)} className="hover:text-accent">
-            {r.titleMr}
-          </Link>
+        <h3 className="m-0 font-marathi text-[1.3125rem] font-bold leading-[1.6] sm:text-2xl">
+          <ReadLink item={r} className="nr-link text-nr-text">
+            {r.title}
+          </ReadLink>
         </h3>
-        {r.summary60Mr && (
-          <p className="mt-1 hidden text-sm leading-[1.7] text-secondary sm:line-clamp-2">{r.summary60Mr}</p>
-        )}
-        <div className="mt-2.5 flex flex-wrap items-center gap-x-3.5 gap-y-2 text-xs text-muted">
-          {r.releaseNo && (
-            <span>
-              {DGIPR_MR.releaseNo} <b className="font-semibold text-ink">{mr(r.releaseNo)}</b>
+        {r.summary && <p className="m-0 line-clamp-2 text-base leading-[1.7] text-[#4A2E30] max-sm:hidden">{r.summary}</p>}
+        <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+          <ListenButton item={r} className={ACTION} />
+          <CopyButton item={r} className={`${ACTION} border-nr-line2 bg-white`} />
+          {r.docx && (
+            <a href={r.docx} className={`${ACTION} border-nr-line2 bg-white max-sm:hidden`} aria-label={`DOCX — ${r.title}`}>
+              <IDownload size={15} strokeWidth={2} /> DOCX
+            </a>
+          )}
+          <a href={share} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp वर शेअर करा — ${r.title}`} className={`${ACTION} border-nr-line2 bg-white`}>
+            <IShare size={15} /> शेअर
+          </a>
+          {r.no && (
+            <span className="ml-auto text-[0.8125rem] text-nr-muted max-sm:hidden">
+              वृत्त क्र. <b className="font-semibold text-nr-text">{r.no}</b>
             </span>
           )}
-          <span>{LANG_MR[meta.language]}</span>
-          <span className="flex flex-wrap gap-1 text-[0.8125rem] sm:ml-auto">
-            <Link href={readHref(row)} className="rounded-full bg-accent-soft px-3 py-[7px] font-bold text-accent">
-              वाचा
-            </Link>
-            {r.docxUrl && (
-              <a href={r.docxUrl} className="rounded-full px-3 py-[7px] font-semibold text-secondary hover:bg-sunk">
-                DOCX
-              </a>
-            )}
-            <a
-              href={share}
-              rel="noopener"
-              target="_blank"
-              className="rounded-full px-3 py-[7px] font-semibold text-secondary hover:bg-sunk"
-            >
-              शेअर
-            </a>
-            <Link
-              href={r.districtId ? `/map?district=${r.districtId}` : '/map'}
-              className="hidden rounded-full px-3 py-[7px] font-semibold text-secondary hover:bg-sunk sm:inline"
-            >
-              नकाशावर
-            </Link>
-          </span>
         </div>
       </div>
     </li>
   )
 }
 
-/** A published photograph from a release, captioned with its date and
- *  linking to the release it came with. */
-function GalleryTile({ row, large, className }: { row: Row; large?: boolean; className: string }) {
-  const r = row.release
-  return (
-    <Link href={readHref(row)} className={`group relative block overflow-hidden rounded-[20px] ${className}`}>
-      <StoryPhoto src={r.posterUrl} video={r.videoUrl} size="md" fill />
-      <span
-        className={`absolute bottom-3 left-3 right-3 rounded-xl px-3 py-2 ${large ? 'lg:bottom-4 lg:left-4 lg:right-4 lg:rounded-[14px] lg:px-3.5 lg:py-3' : ''}`}
-        style={{ background: 'rgb(255 255 255 / 0.92)' }}
-      >
-        <span className="block text-xs text-muted">
-          छायाचित्र · {foldDateMr(r.date)}
-        </span>
-        <span
-          className={`line-clamp-2 font-bold leading-snug group-hover:text-accent ${large ? 'text-[0.9375rem]' : 'text-[0.8125rem]'}`}
-        >
-          {r.titleMr}
-        </span>
-      </span>
-    </Link>
-  )
-}
-
-/** A release's video, playable where it sits, with a line back to the release. */
-function VideoTile({ row, className }: { row: Row; className: string }) {
-  const r = row.release
-  return (
-    <div className={`relative overflow-hidden rounded-[20px] bg-black ${className}`}>
-      <video
-        src={r.videoUrl!}
-        poster={r.posterUrl ?? undefined}
-        controls
-        playsInline
-        preload="metadata"
-        aria-label={r.titleMr}
-        className="absolute inset-0 h-full w-full object-contain"
-      />
-      <Link
-        href={readHref(row)}
-        className="absolute left-3 right-3 top-3 rounded-xl px-3 py-2 hover:text-accent"
-        style={{ background: 'rgb(255 255 255 / 0.92)' }}
-      >
-        <span className="block text-xs text-muted">व्हिडिओ · {foldDateMr(r.date)}</span>
-        <span className="line-clamp-1 text-[0.8125rem] font-bold leading-snug">{r.titleMr}</span>
-      </Link>
-    </div>
-  )
-}
-
-function MediaWaiting({ label, className }: { label: string; className: string }) {
-  return (
-    <div className={`photo-plate relative rounded-[20px] ${className}`}>
-      <span
-        className="absolute bottom-3 left-3 right-3 rounded-xl px-3 py-2 text-[0.8125rem]"
-        style={{ background: 'rgb(255 255 255 / 0.92)' }}
-      >
-        <b className="text-ink">{label}</b> · अद्याप प्रकाशित नाही
-      </span>
-    </div>
-  )
-}
-
-function IconBuilding() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 21h18" />
-      <path d="M5 21V10h14v11" />
-      <path d="M12 3 4 8h16Z" />
-      <path d="M9 21v-7M15 21v-7" />
-    </svg>
-  )
-}
-
-/** Date and time where the desk recorded an approval time; the fold date alone
- *  where it did not, rather than printing an invented hour. */
-function Stamp({ row, timed }: { row: Row; timed: boolean }) {
-  return (
-    <time dateTime={timed ? row.article.publishedAt : row.release.date} className="text-muted">
-      · {timed ? stampMr(row.article.publishedAt) : foldDateMr(row.release.date)}
-    </time>
-  )
-}
-
-function DistrictSelect({ value, className }: { value: string; className: string }) {
-  return (
-    <select name="district" defaultValue={value} className={className}>
-      <option value="">सर्व जिल्हे</option>
-      <option value={STATEWIDE}>{DGIPR_MR.statewide}</option>
-      {[...DISTRICTS]
-        .sort((a, b) => a.mr.localeCompare(b.mr, 'mr'))
-        .map((d) => (
-          <option key={d.key} value={d.key}>
-            {d.mr}
-          </option>
+/** The cards' previews are this page's own approved releases, labelled as a
+ *  sample — never presented as posts the accounts made. */
+function SocialPreview({ id, pictured, latest, yt }: { id: string; pictured: NewsItem[]; latest: NewsItem[]; yt: NewsItem | null }) {
+  if (id === 'facebook' && pictured[0]) {
+    return (
+      <>
+        <StoryPhoto src={pictured[0].img} className="h-[150px] rounded-[14px]" />
+        <p className="m-0 mt-2.5 line-clamp-2 text-sm leading-[1.6] text-[#4A2E30]">{pictured[0].title}</p>
+        <span className="text-xs text-nr-muted">{pictured[0].dateLabel}</span>
+      </>
+    )
+  }
+  if (id === 'x' && latest.length) {
+    return (
+      <div className="flex flex-col gap-2">
+        {latest.slice(0, 2).map((x) => (
+          <div key={x.id} className="rounded-[18px] bg-nr-peach p-3.5 text-[0.9375rem] leading-[1.6]">
+            <span className="line-clamp-3">{x.title}</span>
+            <span className="mt-2 block text-xs text-nr-muted">
+              {x.dateLabel}
+              {x.time ? `, ${x.time}` : ''}
+            </span>
+          </div>
         ))}
-    </select>
+      </div>
+    )
+  }
+  if (id === 'instagram' && pictured.length >= 3) {
+    return (
+      <div className="grid grid-cols-3 gap-[3px] overflow-hidden rounded-[14px]">
+        {pictured.slice(0, 6).map((x) => (
+          <StoryPhoto key={x.id} src={x.img} className="aspect-square" />
+        ))}
+      </div>
+    )
+  }
+  if (id === 'youtube' && yt) {
+    return (
+      <>
+        <div className="relative">
+          <StoryPhoto src={yt.img} video={yt.video} className="h-[150px] rounded-[14px]" />
+          {!yt.video && (
+            <span aria-hidden className="absolute left-1/2 top-1/2 z-[2] grid h-[34px] w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-[18px] bg-[#FF0000] text-white">
+              <IPlay size={16} />
+            </span>
+          )}
+        </div>
+        <p className="m-0 mt-2.5 line-clamp-2 text-sm leading-[1.6] text-[#4A2E30]">{yt.title}</p>
+      </>
+    )
+  }
+  return <p className="m-0 rounded-[14px] border border-dashed border-nr-line2 p-4 text-sm text-nr-muted">पूर्वावलोकन लवकरच</p>
+}
+
+function FooterList({ title, children }: { title: string; children: ReactNode }) {
+  const list = Array.isArray(children) ? children : [children]
+  return (
+    <div>
+      <div className="font-extrabold">{title}</div>
+      <ul className="m-0 mt-2.5 flex list-none flex-col gap-2 p-0 [&_a:hover]:underline [&_a]:text-white">
+        {list.map((item, i) => (
+          <li key={i}>{item}</li>
+        ))}
+      </ul>
+    </div>
   )
 }
 
@@ -1176,10 +1110,7 @@ function ActiveFilters({ filters, href }: { filters: Filters; href: Href }) {
   const chips: Array<[string, Partial<Filters>]> = []
   if (filters.q) chips.push([`“${filters.q}”`, { q: '' }])
   if (filters.district) {
-    chips.push([
-      filters.district === STATEWIDE ? DGIPR_MR.statewide : districtNameMr(filters.district),
-      { district: '' },
-    ])
+    chips.push([filters.district === STATEWIDE ? DGIPR_MR.statewide : districtNameMr(filters.district), { district: '' }])
   }
   if (filters.dept) chips.push([deptLabel(filters.dept) ?? filters.dept, { dept: '' }])
   if (filters.lang) chips.push([LANG_MR[filters.lang], { lang: '' }])
@@ -1188,29 +1119,21 @@ function ActiveFilters({ filters, href }: { filters: Filters; href: Href }) {
   if (!chips.length) return null
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-xs">
-      <span className="text-muted">निवडलेले:</span>
+    <div className="mt-3 flex flex-wrap items-center gap-2 text-[0.8125rem]">
+      <span className="text-nr-muted">निवडलेले:</span>
       {chips.map(([label, patch]) => (
-        <Link key={label} href={href(patch, '#releases')} className="chip-filter" aria-label={`${label} — फिल्टर काढा`}>
+        <Link
+          key={label}
+          href={href(patch, '#releases')}
+          aria-label={`${label} — फिल्टर काढा`}
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-nr-line2 bg-white px-3 font-semibold"
+        >
           {label} <span aria-hidden>×</span>
         </Link>
       ))}
-      <Link href="/news#releases" className="text-accent underline-offset-2 hover:underline">
+      <Link href={href({ q: '', district: '', dept: '', lang: '', from: '', to: '', cm: false, topic: '' }, '#releases')} className="font-bold text-nr-primary">
         सर्व काढा
       </Link>
-    </div>
-  )
-}
-
-function FooterList({ title, items }: { title: string; items: ReactNode[] }) {
-  return (
-    <div>
-      <p className="font-bold">{title}</p>
-      <ul className="mt-2 flex flex-col gap-1.5 text-secondary [&_a:hover]:text-accent [&_a]:underline [&_a]:underline-offset-2">
-        {items.map((item, i) => (
-          <li key={i}>{item}</li>
-        ))}
-      </ul>
     </div>
   )
 }
@@ -1224,6 +1147,7 @@ function one(value: string | string[] | undefined): string {
 function parseFilters(query: Query): Filters {
   const asked = one(query.district)
   const lang = one(query.lang)
+  const topic = one(query.topic)
   const date = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '')
   return {
     q: one(query.q).slice(0, 120),
@@ -1235,50 +1159,57 @@ function parseFilters(query: Query): Filters {
     from: date(one(query.from)),
     to: date(one(query.to)),
     cm: one(query.cat) === 'cm',
+    topic: isTopic(topic) ? topic : '',
     page: Math.max(1, Number.parseInt(one(query.page), 10) || 1),
+    d: resolveDistrict(one(query.d)) ?? '',
   }
 }
 
 function isNarrowed(f: Filters): boolean {
-  return Boolean(f.q || f.district || f.dept || f.lang || f.from || f.to || f.cm)
+  return Boolean(f.q || f.district || f.dept || f.lang || f.from || f.to || f.cm || f.topic)
 }
 
-function matches(row: Row, f: Filters, meta: Meta): boolean {
-  const r = row.release
-  if (f.district === STATEWIDE && r.districtId) return false
-  if (f.district && f.district !== STATEWIDE && r.districtId !== f.district) return false
-  if (f.dept && r.departmentMr !== f.dept) return false
-  if (f.lang && meta.language !== f.lang) return false
-  if (f.cm && !r.featured) return false
-  if (f.from && r.date < f.from) return false
-  if (f.to && r.date > f.to) return false
-  if (f.q) {
-    const haystack = [r.titleMr, r.summaryMr, r.releaseNo, r.departmentMr, r.authorMr, r.datelineMr, r.attributionMr]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase()
-    if (!haystack.includes(f.q.toLowerCase())) return false
-  }
-  return true
+/** The list's filters. The words go through `searchItems`, the same matching
+ *  the search palette uses, so the palette and the list cannot disagree. */
+function filterItems(items: NewsItem[], f: Filters): NewsItem[] {
+  const dept = deptLabel(f.dept)
+  const base = items.filter((i) => {
+    if (f.district === STATEWIDE && i.districtId) return false
+    if (f.district && f.district !== STATEWIDE && i.districtId !== f.district) return false
+    if (dept && i.dept !== dept) return false
+    if (f.lang && i.language !== f.lang) return false
+    if (f.cm && !i.cm) return false
+    if (f.topic && i.topic !== f.topic) return false
+    if (f.from && i.date < f.from) return false
+    if (f.to && i.date > f.to) return false
+    return true
+  })
+  return f.q ? searchItems(base, f.q) : base
 }
 
-/** Every link on the page is built here, so the reader's district and
- *  language survive it unless the link is the one changing them. Any change
- *  other than paging goes back to page one. */
+/** Every link on the page is built here, so the reader's filters, district
+ *  and language survive it unless the link is the one changing them. Any
+ *  change other than paging goes back to page one. */
 function buildHref(current: Filters, patch: Partial<Filters>, hash: string): string {
+  const qs = queryOf(current, patch)
+  return `/news${qs ? `?${qs}` : ''}${hash}`
+}
+
+function queryOf(current: Filters, patch: Partial<Filters>): string {
   const next = { ...current, ...patch }
   if (!('page' in patch)) next.page = 1
   const params = new URLSearchParams()
   if (next.q) params.set('q', next.q)
+  if (next.topic) params.set('topic', next.topic)
   if (next.district) params.set('district', next.district)
   if (next.dept) params.set('dept', next.dept)
   if (next.lang) params.set('lang', next.lang)
   if (next.from) params.set('from', next.from)
   if (next.to) params.set('to', next.to)
   if (next.cm) params.set('cat', 'cm')
+  if (next.d) params.set('d', next.d)
   if (next.page > 1) params.set('page', String(next.page))
-  const qs = params.toString()
-  return `/news${qs ? `?${qs}` : ''}${hash}`
+  return params.toString()
 }
 
 function tally(values: string[]): Array<{ key: string; count: number }> {
@@ -1287,49 +1218,23 @@ function tally(values: string[]): Array<{ key: string; count: number }> {
   return [...counts].map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count)
 }
 
-function readHref(row: Row): string {
-  return row.release.readerUrl ?? `/news/${row.release.id}`
+/** The hero's yellow chip: the release's topic, else what kind of release. */
+function kickerOf(item: NewsItem): string {
+  if (item.topic) return topicLabel(item.topic)
+  if (item.cm) return 'मुख्यमंत्री व मंत्रिमंडळ'
+  return item.dept ?? ''
 }
 
-function placeOf(row: Row): string {
-  return row.release.districtId ? districtNameMr(row.release.districtId) : DGIPR_MR.statewide
+function shortTitle(title: string): string {
+  const words = title.split(/\s+/)
+  return words.length > 7 ? `${words.slice(0, 7).join(' ')}…` : title
 }
 
-/** `(गृह विभाग)` as the sheet prints it, without the sheet's brackets. */
-function deptLabel(dept: string | null | undefined): string | null {
-  return dept ? dept.replace(/^\s*\(\s*|\s*\)\s*$/g, '') : null
-}
-
-/** The lead's dateline: full stamp, and the release number that cites it. */
-function whenOf(row: Row, meta: Meta): string {
-  const day = meta.timed ? stampMr(row.article.publishedAt) : foldDateMr(row.release.date)
-  return row.release.releaseNo ? `${day} · ${DGIPR_MR.releaseNo} ${mr(row.release.releaseNo)}` : day
-}
-
-/** `२२ सप्टें., १५:२५` for a timed row, `२२ सप्टें.` for a fold date — the
- *  headline list is narrow and the date is the second thing on the line. */
-function shortWhen(row: Row, meta: Meta): string {
-  const at = new Date(meta.timed ? row.article.publishedAt : `${row.release.date}T12:00:00Z`)
-  if (Number.isNaN(at.getTime())) return foldDateMr(row.release.date)
-  return new Intl.DateTimeFormat('mr-IN', {
-    timeZone: 'Asia/Kolkata',
-    day: 'numeric',
-    month: 'short',
-    ...(meta.timed ? { hour: 'numeric', minute: '2-digit', hourCycle: 'h23' } : {}),
-  }).format(at)
-}
-
-/** Five steps of the house maroon, relative to the week's busiest district. */
-/* Opaque steps of the maroon, so the tinted glass behind the map cannot wash
-   the districts out the way a translucent fill does. */
+/** Five steps of the crimson, relative to the window's busiest district. */
 function shade(count: number, ceiling: number): string {
-  if (count <= 0) return '#ece8e2'
+  if (count <= 0) return '#efe6dc'
   const step = Math.min(4, Math.floor((count / ceiling) * 4.999))
-  return ['#f1d6cf', '#e0aa9d', '#c77866', '#a94d39', '#8c2f1f'][step]
-}
-
-function mr(n: number | string): string {
-  return toDevanagariDigits(n)
+  return ['#f5d9dc', '#e6a9b1', '#d06f7d', '#b5384b', '#8a1225'][step]
 }
 
 /** `सप्टेंबर २०२६` from `2026-09`. */

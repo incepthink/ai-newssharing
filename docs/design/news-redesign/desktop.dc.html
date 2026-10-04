@@ -1,0 +1,1296 @@
+<!doctype html>
+<html lang="mr">
+<head>
+<meta charset="utf-8">
+<title>महासंवाद — नवी रचना, डेस्कटॉप</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&amp;family=Noto+Sans+Devanagari:wght@600;700;800&amp;family=Mukta:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#680E1B}
+a{color:#2B1A1C;text-decoration:none}a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
+button{font-family:inherit;cursor:pointer}
+button:disabled{cursor:default}
+[data-dark] a{color:#FFFFFF}
+.dc-row:hover{background:#FDF1E6}
+.dc-motion{}
+.dc-zoom{transition:transform .6s cubic-bezier(.2,.7,.2,1)}a:hover .dc-zoom{transform:scale(1.04)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #E8871E;outline-offset:2px}
+@keyframes dcpulse{0%{box-shadow:0 0 0 0 rgba(200,51,30,0.5)}70%{box-shadow:0 0 0 8px rgba(200,51,30,0)}100%{box-shadow:0 0 0 0 rgba(200,51,30,0)}}
+.dc-live{animation:dcpulse 2s infinite}
+@keyframes dcspin{to{transform:rotate(360deg)}}
+@keyframes dcfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.dc-fill{transform-origin:left center}
+@media (prefers-reduced-motion: reduce){.dc-live{animation:none}.dc-spin{animation:none!important}.dc-zoom{transition:none}a:hover .dc-zoom{transform:none}.dc-motion{transition:none!important}.dc-fill{animation:none!important;transform:none!important}}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; box-sizing: border-box; background: #FFF8EE; font-family: 'Mukta', 'Noto Sans Devanagari', system-ui, sans-serif; color: #2B1A1C; display: flex; flex-direction: column;">
+
+<div data-dark="1" style="background: {{primary}}; color: #FFFFFF;">
+<div style="width: 1280px; margin: 0 auto; height: 46px; display: flex; align-items: center; justify-content: space-between; font-size: 14px;">
+<span style="color: rgba(255,255,255,0.92);">महाराष्ट्र शासन · माहिती व जनसंपर्क महासंचालनालय · शासनाच्या अधिकृत बातम्या</span>
+<div style="display: flex; align-items: center; gap: 6px;">
+<button type="button" onClick="{{openPalette}}" aria-label="शोधा" style="width: 36px; height: 34px; border: 1px solid rgba(255,255,255,0.28); border-radius: 18px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m20 20-4-4"></path></svg></button>
+<sc-for list="{{sizes}}" as="z" hint-placeholder-count="3"><button type="button" onClick="{{z.pick}}" aria-pressed="{{z.on}}" aria-label="{{z.label}}" style="width: 36px; height: 34px; border: 1px solid rgba(255,255,255,0.28); border-radius: 18px; background: {{z.bg}}; color: #FFFFFF; font-size: {{z.size}}; font-weight: 700; display: flex; align-items: center; justify-content: center;">अ</button></sc-for>
+<a href="#" aria-label="साइटमॅप" style="width: 36px; height: 34px; border: 1px solid rgba(255,255,255,0.28); border-radius: 18px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; box-sizing: border-box;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="5" rx="1"></rect><rect x="3" y="16" width="6" height="5" rx="1"></rect><rect x="15" y="16" width="6" height="5" rx="1"></rect><path d="M12 8v4M6 16v-4h12v4"></path></svg></a>
+<span style="width: 1px; height: 24px; margin: 0 6px; background: rgba(255,255,255,0.3);"></span>
+<label style="display: flex;"><span style="position: absolute; left: -9999px;">भाषा</span><select style="height: 34px; padding: 0 10px; border: 0; border-radius: 18px; background: #FFFFFF; color: #2B1A1C; font: inherit; font-size: 14px; font-weight: 700;"><option>मराठी</option><option>English</option><option>हिंदी</option></select></label>
+<a href="#" style="margin-left: 8px; color: rgba(255,255,255,0.88);">कर्मचारी प्रवेश</a>
+</div>
+</div>
+</div>
+
+<header style="position: sticky; top: 0; z-index: 30; background: rgba(255,248,238,0.97); border-bottom: 1px solid #F0DCC8;">
+<div style="width: 1280px; margin: 0 auto; height: 104px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 24px;">
+<div style="display: flex; align-items: center; gap: 14px;"><img src="assets/emblem.png" alt="महाराष्ट्र शासन" style="width: 66px; height: 66px; object-fit: contain;"><span style="font-size: 13px; line-height: 1.5; color: #6B4E4F;">महाराष्ट्र शासन<br><b style="color: #2B1A1C;">माहिती व जनसंपर्क महासंचालनालय</b></span></div>
+<a href="#top" aria-label="महासंवाद — मुखपृष्ठ" style="display: flex; flex-direction: column; align-items: center;"><img src="assets/mahasamvad-logo.png" alt="महासंवाद" style="height: 66px; width: auto;"></a>
+<div style="justify-self: end; display: flex; align-items: center; gap: 10px;">
+<label style="display: flex; align-items: center; gap: 6px; height: 48px; padding: 0 6px 0 14px; border: 1.5px solid #EBCFB8; border-radius: 999px; background: #FFFFFF;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{place}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg><span style="position: absolute; left: -9999px;">माझा जिल्हा</span><select value="{{dist}}" onChange="{{onDist}}" style="height: 40px; border: 0; background: transparent; font: inherit; font-size: 15px; font-weight: 700; color: #2B1A1C;"><option value="अहिल्यानगर">अहिल्यानगर</option><option value="अकोला">अकोला</option><option value="अमरावती">अमरावती</option><option value="बीड">बीड</option><option value="भंडारा">भंडारा</option><option value="बुलढाणा">बुलढाणा</option><option value="चंद्रपूर">चंद्रपूर</option><option value="छत्रपती संभाजीनगर">छत्रपती संभाजीनगर</option><option value="धाराशिव">धाराशिव</option><option value="धुळे">धुळे</option><option value="गडचिरोली">गडचिरोली</option><option value="गोंदिया">गोंदिया</option><option value="हिंगोली">हिंगोली</option><option value="जालना">जालना</option><option value="जळगाव">जळगाव</option><option value="कोल्हापूर">कोल्हापूर</option><option value="लातूर">लातूर</option><option value="मुंबई">मुंबई</option><option value="मुंबई उपनगर">मुंबई उपनगर</option><option value="नागपूर">नागपूर</option><option value="नांदेड">नांदेड</option><option value="नंदुरबार">नंदुरबार</option><option value="नाशिक">नाशिक</option><option value="पालघर">पालघर</option><option value="परभणी">परभणी</option><option value="पुणे">पुणे</option><option value="रायगड">रायगड</option><option value="रत्नागिरी">रत्नागिरी</option><option value="सांगली">सांगली</option><option value="सातारा">सातारा</option><option value="सिंधुदुर्ग">सिंधुदुर्ग</option><option value="सोलापूर">सोलापूर</option><option value="ठाणे">ठाणे</option><option value="वर्धा">वर्धा</option><option value="वाशिम">वाशिम</option><option value="यवतमाळ">यवतमाळ</option></select></label>
+<button type="button" id="fold-trigger" onClick="{{openFold}}" aria-haspopup="dialog" style="height: 48px; padding: 0 8px 0 18px; border: 0; border-radius: 999px; background: {{primary}}; color: #FFFFFF; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 22px -12px {{primary}};">आजचा फोल्ड<span style="width: 34px; height: 34px; border-radius: 999px; background: #FFFFFF; display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{primary}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"></path><path d="m7 10 5 5 5-5"></path><path d="M5 20h14"></path></svg></span></button>
+</div>
+</div>
+<nav aria-label="मुख्य विभाग" style="border-top: 1px solid #F3E2D2;">
+<div style="width: 1280px; margin: 0 auto; height: 50px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 15.5px;">
+<a href="#top" aria-current="page" style="padding: 6px 16px; border-radius: 999px; background: {{primary}}; color: #FFFFFF; font-weight: 700;">मुख्यपृष्ठ</a>
+<a href="#releases" style="padding: 6px 14px; border-radius: 999px; font-weight: 600; color: #4A2E30;">वृत्त विशेष</a>
+<a href="#districts" style="padding: 6px 14px; border-radius: 999px; font-weight: 600; color: #4A2E30;">जिल्हा वार्ता</a>
+<a href="#drought" style="padding: 6px 14px; border-radius: 999px; font-weight: 700; color: {{primary}}; background: #FDE8E2;">दुष्काळ २०२६</a>
+<a href="#releases" style="padding: 6px 14px; border-radius: 999px; font-weight: 600; color: #4A2E30;">कर्जमुक्ती २०२६</a>
+<a href="#features" style="padding: 6px 14px; border-radius: 999px; font-weight: 600; color: #4A2E30;">विशेष लेख</a>
+<a href="#media" style="padding: 6px 14px; border-radius: 999px; font-weight: 600; color: #4A2E30;">जय महाराष्ट्र</a>
+<a href="#media" style="padding: 6px 14px; border-radius: 999px; font-weight: 600; color: #4A2E30;">लोकराज्य</a>
+<a href="#factcheck" style="padding: 6px 14px; border-radius: 999px; font-weight: 600; color: #4A2E30;">फॅक्ट चेक</a>
+</div>
+</nav>
+</header>
+
+<section id="top" role="region" aria-roledescription="carousel" aria-label="प्रमुख बातम्या" onMouseEnter="{{holdOn}}" onMouseLeave="{{holdOff}}" onFocus="{{holdOn}}" onBlur="{{holdOff}}" style="position: relative; height: 660px; background: {{primaryDeep}}; overflow: hidden;">
+<div aria-live="{{liveMode}}">
+<sc-for list="{{slides}}" as="s" hint-placeholder-count="5">
+<div role="group" aria-roledescription="slide" aria-label="{{s.label}}" aria-hidden="{{s.hidden}}" class="dc-motion" style="position: absolute; inset: 0; opacity: {{s.op}}; visibility: {{s.vis}}; transition: opacity 800ms ease, visibility 800ms;">
+<img src="{{s.img}}" alt="" class="dc-motion" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale({{s.zoom}}); transition: transform 7s linear;">
+<div style="position: absolute; inset: 0; background: linear-gradient(90deg, {{heroTintA}} 0%, {{heroTintB}} 38%, {{heroTintC}} 62%, rgba(0,0,0,0.05) 100%);"></div>
+<div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 60%, rgba(40,6,10,0.45) 100%);"></div>
+<div data-dark="1" style="position: absolute; left: 80px; top: 64px; width: 600px; display: flex; flex-direction: column; gap: 16px; color: #FFFFFF;">
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<span style="padding: 5px 14px; border-radius: 999px; background: #FFD978; color: #7A1020; font-size: 14px; font-weight: 800;">{{s.kicker}}</span>
+<span style="padding: 5px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); font-size: 14px; font-weight: 600;">{{s.place}} · {{s.dateLabel}}, {{s.time}}</span>
+</div>
+<h1 style="margin: 4px 0 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 800; font-size: 40px; line-height: 1.42; text-wrap: balance; text-shadow: 0 2px 18px rgba(60,0,10,0.35);"><a href="#" onClick="{{s.open}}">{{s.title}}</a></h1>
+<div style="margin-top: 6px; display: flex; gap: 12px; align-items: center;">
+<button type="button" onClick="{{s.open}}" style="height: 54px; padding: 0 22px 0 8px; border: 0; border-radius: 999px; background: #FFFFFF; color: #2B1A1C; font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 12px; box-shadow: 0 0 0 6px rgba(255,217,120,0.25), 0 14px 30px -10px rgba(0,0,0,0.45);"><span style="width: 40px; height: 40px; border-radius: 999px; background: {{primary}}; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></span>संपूर्ण बातमी वाचा</button>
+<button type="button" onClick="{{s.listen}}" aria-pressed="{{s.listenPressed}}" style="height: 54px; padding: 0 20px; border: 1.5px solid rgba(255,255,255,0.55); border-radius: 999px; background: rgba(255,255,255,0.1); color: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"></path><path d="M15.5 9a4 4 0 0 1 0 6"></path><path d="M18 6.5a7.5 7.5 0 0 1 0 11"></path></svg>{{s.listenLabel}}</button>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+<span style="position: absolute; left: 80px; top: 24px; font-size: 12px; color: rgba(255,255,255,0.8);">छायाचित्र: महासंवाद · {{curPos}} / ५</span>
+<div style="position: absolute; left: 80px; bottom: 40px; display: flex; align-items: center; gap: 14px;">
+<button type="button" onClick="{{prev}}" aria-label="मागील बातमी" style="width: 46px; height: 46px; border: 1.5px solid rgba(255,255,255,0.6); border-radius: 999px; background: rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"></path><path d="m11 6-6 6 6 6"></path></svg></button>
+<div role="tablist" aria-label="प्रमुख बातम्या निवडा" onKeyDown="{{tabKey}}" style="display: flex; gap: 6px;">
+<sc-for list="{{slides}}" as="s" hint-placeholder-count="5"><button id="{{s.tabId}}" type="button" role="tab" aria-selected="{{s.tabSel}}" aria-label="{{s.short}}" tabIndex="{{s.tabIndex}}" onClick="{{s.pick}}" style="width: {{s.dashW}}; height: 44px; border: 0; padding: 0; background: transparent; display: flex; align-items: center; transition: width 300ms;"><span style="position: relative; display: block; width: 100%; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.35); overflow: hidden;"><sc-if value="{{s.done}}" hint-placeholder-val="{{false}}"><span style="position: absolute; inset: 0; background: rgba(255,255,255,0.75);"></span></sc-if><sc-if value="{{s.activeRun}}" hint-placeholder-val="{{false}}"><span class="dc-fill" onAnimationEnd="{{advance}}" style="position: absolute; inset: 0; background: #FFD978; animation: dcfill 7s linear forwards; animation-play-state: {{animState}};"></span></sc-if><sc-if value="{{s.activeHold}}" hint-placeholder-val="{{false}}"><span style="position: absolute; inset: 0; background: #FFD978;"></span></sc-if></span></button></sc-for>
+</div>
+<button type="button" onClick="{{next}}" aria-label="पुढील बातमी" style="width: 46px; height: 46px; border: 1.5px solid rgba(255,255,255,0.6); border-radius: 999px; background: rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></button>
+<button type="button" onClick="{{togglePause}}" aria-label="{{pauseLabel}}" style="width: 46px; height: 46px; border: 0; border-radius: 999px; background: transparent; display: flex; align-items: center; justify-content: center;">
+<sc-if value="{{paused}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"></path></svg></sc-if>
+<sc-if value="{{playing}}" hint-placeholder-val="{{true}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1"></rect><rect x="14" y="4.5" width="4" height="15" rx="1"></rect></svg></sc-if>
+</button>
+</div>
+
+<aside aria-labelledby="latest-h" style="position: absolute; right: 80px; top: 48px; bottom: 48px; width: 400px; box-sizing: border-box; padding: 22px 22px 18px; border-radius: 22px; background: rgba(255,248,238,0.95); box-shadow: 0 30px 60px -24px rgba(40,6,10,0.55); display: flex; flex-direction: column;">
+<div style="display: flex; justify-content: space-between; align-items: center;"><h2 id="latest-h" style="margin: 0; display: flex; align-items: center; gap: 8px; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 800; font-size: 20px; color: #2B1A1C;"><span class="dc-live" aria-hidden="true" style="width: 9px; height: 9px; border-radius: 999px; background: {{primary}};"></span>ताज्या बातम्या</h2><span style="font-size: 12.5px; color: #7A5F60;">नवीन प्रथम</span></div>
+<ol style="list-style: none; margin: 10px 0 0; padding: 0; flex-grow: 1; overflow: hidden;">
+<sc-for list="{{latestHero}}" as="l" hint-placeholder-count="5">
+<li style="display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid #F0DCC8;">
+<img src="{{l.img}}" alt="" style="width: 76px; height: 60px; border-radius: 12px; object-fit: {{l.imgFit}}; object-position: {{l.imgPos}}; background: #FFFFFF;">
+<div style="min-width: 0;"><span style="font-size: 12px; color: #7A5F60;"><b style="color: {{place}};">{{l.place}}</b> · {{l.time}}</span><a href="#" onClick="{{l.open}}" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14.5px; font-weight: 700; line-height: 1.5; color: #2B1A1C;">{{l.title}}</a></div>
+</li>
+</sc-for>
+</ol>
+<a href="#releases" style="margin-top: 12px; height: 44px; border-radius: 999px; background: {{primary}}; color: #FFFFFF; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center;">सर्व प्रसिद्धीपत्रके →</a>
+</aside>
+</section>
+
+<div style="background: #FFFFFF; border-bottom: 1px solid #F0DCC8;">
+<div style="width: 1280px; margin: 0 auto; padding: 14px 0; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+<b style="flex-shrink: 0; color: {{primary}}; margin-right: 4px;">सध्या चर्चेत</b>
+<sc-for list="{{trending}}" as="g" hint-placeholder-count="7"><button type="button" onClick="{{g.pick}}" style="flex-shrink: 0; height: 36px; padding: 0 14px; border: 1px solid #EBCFB8; border-radius: 999px; background: #FFF8EE; font-size: 14px; color: #4A2E30;">{{g.label}}</button></sc-for>
+</div>
+</div>
+
+
+<section id="drought" aria-labelledby="drought-h" data-dark="1" style="margin-top: 64px; background: {{primaryDeep}}; color: #FFFFFF;">
+<div style="width: 1280px; margin: 0 auto; padding: 56px 0; display: flex; flex-direction: column; gap: 36px;">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 640px; gap: 56px; align-items: end;">
+<div>
+<div style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 4px; background: {{accent}}; color: #2B1A1C; font-size: 13px; font-weight: 800;">विशेष वृत्तांकन</div>
+<h2 id="drought-h" style="margin: 14px 0 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 800; font-size: 46px; line-height: 1.4;">दुष्काळ २०२६ : शासन काय करत आहे</h2>
+</div>
+<dl style="margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+<div style="padding: 18px; border-radius: 18px; background: rgba(255,255,255,0.08);"><dt style="font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 800; font-size: 40px; line-height: 1.3; color: {{accent}};">२६५</dt><dd style="margin: 4px 0 0; font-size: 14px; line-height: 1.55; color: rgba(255,255,255,0.9);">दुष्काळसदृश तालुके</dd></div>
+<div style="padding: 18px; border-radius: 18px; background: rgba(255,255,255,0.08);"><dt style="font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 800; font-size: 40px; line-height: 1.3; color: {{accent}};">१२</dt><dd style="margin: 4px 0 0; font-size: 14px; line-height: 1.55; color: rgba(255,255,255,0.9);">उपाययोजना सुरू</dd></div>
+<div style="padding: 18px; border-radius: 18px; background: rgba(255,255,255,0.08);"><dt style="font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 800; font-size: 40px; line-height: 1.3; color: {{accent}};">१९</dt><dd style="margin: 4px 0 0; font-size: 14px; line-height: 1.55; color: rgba(255,255,255,0.9);">तालुक्यांत सर्वेक्षण</dd></div>
+</dl>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px;">
+<sc-for list="{{drought}}" as="d" hint-placeholder-count="4">
+<article style="display: flex; flex-direction: column; gap: 10px;">
+<a href="#" onClick="{{d.open}}" tabIndex="-1" aria-hidden="true" style="display: block; overflow: hidden; border-radius: 14px;"><img class="dc-zoom" src="{{d.img}}" alt="" style="display: block; width: 100%; height: 170px; object-fit: cover;"></a>
+<span style="font-size: 13px; font-weight: 700; color: {{accent}};">{{d.place}} · {{d.dateLabel}}</span>
+<h3 style="margin: 0; font-family: 'Noto Sans Devanagari', sans-serif; font-weight: 700; font-size: 16px; line-height: 1.6;"><a href="#" onClick="{{d.open}}">{{d.title}}</a></h3>
+</article>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 24px; align-items: center; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.18);">
+<b style="font-size: 15px;">महत्त्वाचे निर्णय</b>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; gap: 10px 28px; flex-wrap: wrap; font-size: 15px;">
+<li><a href="#">पीक कर्जाचे मध्यम मुदतीच्या कर्जात पुनर्गठन; वसुलीला स्थगिती</a></li>
+<li><a href="#">विद्यार्थ्यांच्या परीक्षा शुल्क माफीसह इतर मदत</a></li>
+<li><a href="#">वैरण विकास कार्यक्रम — चारा सुरक्षा</a></li>
+</ul>
+<button type="button" onClick="{{droughtAll}}" style="height: 46px; padding: 0 20px; border: 0; border-radius: 999px; background: #FFFFFF; color: {{primaryDeep}}; font-size: 15px; font-weight: 800;">दुष्काळ २०२६ — सर्व बातम्या →</button>
+</div>
+</div>
+</section>
+
+<main style="width: 1280px; margin: 0 auto; padding: 72px 0 0; display: flex; flex-direction: column; gap: 80px;">
+
+<section id="districts" aria-labelledby="dist-h" style="display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 48px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; padding-bottom: 14px; border-bottom: 1px solid #F0DCC8;">
+<div><div style="font-size: 14px; font-weight: 800; color: {{place}};">जिल्हा वार्ता · माझा जिल्हा</div><h2 id="dist-h" style="margin: 2px 0 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 800; font-size: 44px; line-height: 1.35;">{{dist}}</h2></div>
+<span style="font-size: 15px; color: #5C4344;">{{distCountLine}}</span>
+</div>
+<div role="group" aria-label="जिल्हा निवडा" style="display: flex; flex-wrap: wrap; gap: 8px;">
+<sc-for list="{{distChips}}" as="c" hint-placeholder-count="9"><button type="button" onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="height: 40px; padding: 0 14px; border: 1.5px solid {{c.border}}; border-radius: 999px; background: {{c.bgL}}; color: {{c.inkL}}; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px;">{{c.name}} <b>{{c.n}}</b></button></sc-for>
+</div>
+<sc-if value="{{distHas}}" hint-placeholder-val="{{true}}">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 28px;">
+<sc-for list="{{distItems}}" as="d" hint-placeholder-count="4">
+<article style="display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; align-items: start;">
+<a href="#" onClick="{{d.open}}" tabIndex="-1" aria-hidden="true" style="display: block; overflow: hidden; border-radius: 14px;"><img class="dc-zoom" src="{{d.img}}" alt="" style="display: block; width: 150px; height: 100px; object-fit: {{d.imgFit}}; object-position: {{d.imgPos}};"></a>
+<div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 13px; color: #7A5F60;">{{d.dateLabel}}, {{d.time}}</span><h3 style="margin: 0; font-family: 'Noto Sans Devanagari', sans-serif; font-weight: 700; font-size: 16px; line-height: 1.6;"><a href="#" onClick="{{d.open}}">{{d.title}}</a></h3></div>
+</article>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{distEmpty}}" hint-placeholder-val="{{false}}"><div style="padding: 24px; border-radius: 18px; border: 1.5px dashed #CFC4B4; font-size: 16px; line-height: 1.6; color: #5C4344;">मागील ४ दिवसांत {{dist}} जिल्ह्यातून प्रसिद्धीपत्रक आलेले नाही. वरील यादीतून दुसरा जिल्हा निवडा.</div></sc-if>
+</div>
+<figure style="margin: 0; background: #FFFFFF; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 1px 0 #F0DCC8, 0 20px 40px -28px rgba(120,30,30,0.35);">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><b style="font-size: 17px;">महाराष्ट्राचा बातम्या नकाशा</b><span style="font-size: 13px; color: #7A5F60;">मागील ३० दिवस</span></div>
+<img src="assets/maharashtra-news-map.svg" alt="महाराष्ट्राचे ३६ जिल्हे — प्रसिद्धीपत्रकांच्या संख्येनुसार छटा" style="width: 100%; height: 340px; object-fit: contain;">
+<figcaption style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #5C4344;"><span style="display: flex; align-items: center; gap: 5px;">कमी <span style="width: 20px; height: 9px; border-radius: 2px; background: rgb(140 47 31 / 0.18);"></span><span style="width: 20px; height: 9px; border-radius: 2px; background: rgb(140 47 31 / 0.4);"></span><span style="width: 20px; height: 9px; border-radius: 2px; background: rgb(140 47 31 / 0.65);"></span><span style="width: 20px; height: 9px; border-radius: 2px; background: rgb(140 47 31 / 0.9);"></span> जास्त</span><a href="#" style="font-weight: 800; color: {{primary}};">पूर्ण नकाशा →</a></figcaption>
+</figure>
+</section>
+
+<section id="releases" aria-labelledby="rel-h" style="display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; padding-bottom: 14px; border-bottom: 1px solid #F0DCC8;">
+<div><div style="font-size: 14px; font-weight: 800; color: {{primary}};">वृत्त विशेष</div><h2 id="rel-h" style="margin: 2px 0 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 800; font-size: 40px; line-height: 1.35;">सर्व मंजूर प्रसिद्धीपत्रके</h2></div>
+<p style="margin: 0; font-size: 15px; color: #5C4344;">प्रत्येक बातमी माहिती व जनसंपर्क महासंचालनालयाने मंजूर केलेली</p>
+</div>
+<div role="group" aria-label="विषयानुसार निवडा" style="display: flex; gap: 8px; flex-wrap: wrap;">
+<sc-for list="{{topics}}" as="t" hint-placeholder-count="8"><button type="button" onClick="{{t.pick}}" aria-pressed="{{t.on}}" style="height: 42px; padding: 0 18px; border: 1.5px solid {{t.border}}; border-radius: 999px; background: {{t.bg}}; color: {{t.ink}}; font-size: 15px; font-weight: 600;">{{t.label}}</button></sc-for>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 48px; align-items: start;">
+<div>
+<p role="status" style="margin: 0; font-size: 14px; color: #5C4344;">{{feedStatus}}</p>
+<ol style="list-style: none; margin: 0; padding: 0;">
+<sc-for list="{{feed}}" as="r" hint-placeholder-count="6">
+<li style="display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 26px; padding: 24px 0; border-bottom: 1px solid #F0DCC8;">
+<a href="#" onClick="{{r.open}}" tabIndex="-1" aria-hidden="true" style="display: block; overflow: hidden; border-radius: 14px; background: #FFFFFF;"><img class="dc-zoom" src="{{r.img}}" alt="" style="display: block; width: 220px; height: 146px; object-fit: {{r.imgFit}}; object-position: {{r.imgPos}};"></a>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 13px;"><span style="padding: 2px 10px; border-radius: 4px; background: {{placeSoft}}; color: {{place}}; font-weight: 700;">{{r.place}}</span><span style="font-weight: 800; color: {{primary}};">{{r.topic}}</span><span style="color: #7A5F60;">· {{r.dateLabel}}, {{r.time}}</span></div>
+<h3 style="margin: 0; font-family: 'Noto Sans Devanagari', sans-serif; font-weight: 700; font-size: {{fsHead}}; line-height: 1.6;"><a href="#" onClick="{{r.open}}">{{r.title}}</a></h3>
+<p style="margin: 0; font-size: {{fsBody}}; line-height: 1.7; color: #4A2E30; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{r.summary}}</p>
+<div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 2px;">
+<button type="button" onClick="{{r.listen}}" aria-pressed="{{r.listenPressed}}" style="height: 38px; padding: 0 13px; border: 1px solid {{r.listenBorder}}; border-radius: 999px; background: {{r.listenBg}}; font-size: 14px; font-weight: 600; color: #2A221D; display: inline-flex; align-items: center; gap: 6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2A221D" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"></path><path d="M15.5 9a4 4 0 0 1 0 6"></path><path d="M18 6.5a7.5 7.5 0 0 1 0 11"></path></svg>{{r.listenLabel}}</button>
+<button type="button" onClick="{{r.copy}}" style="height: 38px; padding: 0 13px; border: 1px solid #EBCFB8; border-radius: 999px; background: #FFFFFF; font-size: 14px; font-weight: 600; color: #2A221D; display: inline-flex; align-items: center; gap: 6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A221D" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"></rect><path d="M15.5 8.5V5.5a1.5 1.5 0 0 0-1.5-1.5H5.5A1.5 1.5 0 0 0 4 5.5V14a1.5 1.5 0 0 0 1.5 1.5h3"></path></svg>कॉपी</button>
+<a href="#" style="height: 38px; padding: 0 13px; border: 1px solid #EBCFB8; border-radius: 999px; background: #FFFFFF; font-size: 14px; font-weight: 600; color: #2A221D; display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A221D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"></path><path d="m7 10 5 5 5-5"></path><path d="M5 20h14"></path></svg>DOCX</a>
+<a href="{{r.wa}}" target="_blank" rel="noopener" style="height: 38px; padding: 0 13px; border: 1px solid #EBCFB8; border-radius: 999px; background: #FFFFFF; font-size: 14px; font-weight: 600; color: #2A221D; display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A221D" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5.5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="18.5" r="2.5"></circle><path d="m8.2 10.8 7.6-4.1M8.2 13.2l7.6 4.1"></path></svg>शेअर</a>
+<span style="margin-left: auto; font-size: 13px; color: #7A5F60;">वृत्त क्र. <b style="color: #2B1A1C; font-weight: 600;">{{r.no}}</b></span>
+</div>
+</div>
+</li>
+</sc-for>
+</ol>
+<div style="padding-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 15px;"><span style="color: #8F857B;">← मागील पान</span><span style="color: #4A2E30;">पान १ / ८</span><a href="#" style="font-weight: 800; color: {{primary}}; min-height: 44px; display: flex; align-items: center;">पुढील पान →</a></div>
+</div>
+<aside style="display: flex; flex-direction: column; gap: 20px;">
+<div style="background: #FFFFFF; border-top: 4px solid {{accent}}; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 20px 40px -30px rgba(120,30,30,0.4);">
+<div style="font-size: 14px; font-weight: 800; color: {{accentInk}};">पत्रकारांसाठी</div>
+<div style="font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 700; font-size: 22px; line-height: 1.5;">आजचा फोल्ड — एकाच DOCX मध्ये</div>
+<p style="margin: 0; font-size: 15px; line-height: 1.65; color: #5C4344;">आज मंजूर झालेले <b style="color: #2B1A1C;">{{todayCount}}</b> लेख, वृत्त विभागाच्या क्रमाने. हवे ते निवडा, क्रम बदला आणि डाउनलोड करा.</p>
+<button type="button" onClick="{{openFold}}" aria-haspopup="dialog" style="height: 50px; border: 0; border-radius: 999px; background: {{primary}}; color: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"></path><path d="m7 10 5 5 5-5"></path><path d="M5 20h14"></path></svg>फोल्ड उघडा</button>
+<form onSubmit="{{byNo}}" style="margin-top: 6px; padding-top: 16px; border-top: 1px solid #F5E6D6; display: flex; flex-direction: column; gap: 8px;">
+<label for="by-no" style="font-size: 15px; font-weight: 700;">वृत्त क्रमांकाने शोधा</label>
+<div style="display: flex; gap: 8px;"><input id="by-no" type="search" inputMode="numeric" value="{{noQ}}" onChange="{{onNoQ}}" placeholder="उदा. २१७७११" style="flex-grow: 1; min-width: 0; height: 46px; border: 1.5px solid #EBCFB8; border-radius: 18px; padding: 0 12px; font: inherit; font-size: 16px;"><button type="submit" style="height: 46px; padding: 0 16px; border: 1.5px solid {{primary}}; border-radius: 18px; background: #FFFFFF; color: {{primary}}; font-size: 15px; font-weight: 700;">शोधा</button></div>
+</form>
+</div>
+<div id="subscribe" style="background: #FFFFFF; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 20px 40px -30px rgba(120,30,30,0.4);">
+<div style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">बातम्या थेट तुमच्याकडे</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-top: 1px solid #F5E6D6;"><span><b style="display: block; font-size: 15px;">Telegram</b><span style="font-size: 13px; color: #7A5F60;">प्रत्येक प्रसिद्धीपत्रक, मंजूर होताच</span></span><a href="https://t.me/MahaDGIPR" target="_blank" rel="noopener" style="flex-shrink: 0; height: 40px; padding: 0 14px; border-radius: 999px; background: {{primarySoft}}; color: {{primary}}; font-size: 14px; font-weight: 700; display: flex; align-items: center;">फॉलो करा</a></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-top: 1px solid #F5E6D6;"><span><b style="display: block; font-size: 15px;">WhatsApp चॅनेल</b><span style="font-size: 13px; color: #7A5F60;">दिवसाचा सारांश</span></span><span style="flex-shrink: 0; padding: 4px 10px; border-radius: 999px; background: #F2ECE3; font-size: 12px; font-weight: 700; color: #5C4344;">पडताळणी प्रलंबित</span></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-top: 1px solid #F5E6D6;"><span><b style="display: block; font-size: 15px;">ईमेल व RSS</b><span style="font-size: 13px; color: #7A5F60;">जिल्हा किंवा विषयानुसार</span></span><span style="flex-shrink: 0; padding: 4px 10px; border-radius: 999px; background: #F2ECE3; font-size: 12px; font-weight: 700; color: #5C4344;">लवकरच</span></div>
+</div>
+<div id="archive" style="background: #FFFFFF; border-radius: 18px; padding: 24px; box-shadow: 0 20px 40px -30px rgba(120,30,30,0.4);">
+<div style="font-size: 18px; font-weight: 800;">तारखेनुसार संग्रह</div>
+<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;"><a href="#" style="display: flex; justify-content: space-between; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 18px; background: #FFF8EE; font-size: 15px;"><span>ऑक्टोबर २०२६</span><span>→</span></a><a href="#" style="display: flex; justify-content: space-between; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 18px; background: #FFF8EE; font-size: 15px;"><span>सप्टेंबर २०२६</span><span>→</span></a></div>
+</div>
+</aside>
+</div>
+</section>
+
+<section id="features" aria-labelledby="feat-h" style="display: flex; flex-direction: column; gap: 24px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 14px; border-bottom: 1px solid #F0DCC8;">
+<div><div style="font-size: 14px; font-weight: 800; color: {{primary}};">विशेष लेख</div><h2 id="feat-h" style="margin: 2px 0 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 800; font-size: 40px; line-height: 1.35;">सविस्तर वाचा</h2></div>
+<a href="#" style="font-size: 15px; font-weight: 800; color: {{primary}};">सर्व विशेष लेख →</a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px;">
+<article style="display: flex; flex-direction: column; gap: 12px;">
+<a href="#" tabIndex="-1" aria-hidden="true" style="display: block; overflow: hidden; border-radius: 14px;"><img class="dc-zoom" src="assets/ms-217519.jpg" alt="" style="display: block; width: 100%; height: 240px; object-fit: cover;"></a>
+<span style="font-size: 13px; font-weight: 800; color: {{primary}};">विशेष लेख · छत्रपती संभाजीनगर</span>
+<h3 style="margin: 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 700; font-size: 22px; line-height: 1.55;"><a href="#">महात्मा गांधी : वन मॅन आर्मी</a></h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.7; color: #4A2E30;">ना बंदूक, ना सैन्यदल, ना सत्ता — तरीही विसाव्या शतकातील सर्वांत प्रभावी नेतृत्व. गांधी जयंतीनिमित्त विशेष लेख.</p>
+<span style="font-size: 13px; color: #7A5F60;">१ ऑक्टो.</span>
+</article>
+<article style="display: flex; flex-direction: column; gap: 12px;">
+<a href="#" tabIndex="-1" aria-hidden="true" style="display: block; overflow: hidden; border-radius: 14px;"><img class="dc-zoom" src="assets/ms-217495.jpg" alt="" style="display: block; width: 100%; height: 240px; object-fit: cover;"></a>
+<span style="font-size: 13px; font-weight: 800; color: {{primary}};">विशेष लेख · अमरावती</span>
+<h3 style="margin: 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 700; font-size: 22px; line-height: 1.55;"><a href="#">दुष्काळावर मात : हवी सर्वांची साथ</a></h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.7; color: #4A2E30;">२६५ तालुक्यांत दुष्काळसदृश परिस्थिती जाहीर करून शासनाने १२ उपाययोजनांची अंमलबजावणी सुरू केली आहे — या पार्श्वभूमीवर.</p>
+<span style="font-size: 13px; color: #7A5F60;">१ ऑक्टो.</span>
+</article>
+<article style="display: flex; flex-direction: column; gap: 12px;">
+<a href="#" tabIndex="-1" aria-hidden="true" style="display: block; overflow: hidden; border-radius: 14px;"><img class="dc-zoom" src="assets/ms-217408.jpg" alt="" style="display: block; width: 100%; height: 240px; object-fit: cover;"></a>
+<span style="font-size: 13px; font-weight: 800; color: {{primary}};">विशेष लेख · पुणे</span>
+<h3 style="margin: 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 700; font-size: 22px; line-height: 1.55;"><a href="#">जिल्हा परिषद शाळेच्या वर्गातून जगाच्या भाषांची खिडकी खुली!</a></h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.7; color: #4A2E30;">ग्रामीण शाळेच्या फळ्यावर Guten Tag, Bonjour, Hola… मराठी माध्यमातील विद्यार्थी परदेशी भाषा शिकत आहेत.</p>
+<span style="font-size: 13px; color: #7A5F60;">३० सप्टें.</span>
+</article>
+
+</div>
+</section>
+
+</main>
+
+<section id="media" aria-labelledby="media-h" data-dark="1" style="margin-top: 80px; background: #2B1A1C; color: #FFFFFF;">
+<div style="width: 1280px; margin: 0 auto; padding: 56px 0; display: grid; grid-template-columns: minmax(0, 1fr) 340px 260px; gap: 40px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 16px;">
+<div><div style="font-size: 14px; font-weight: 800; color: {{accent}};">जय महाराष्ट्र · दिलखुलास</div><h2 id="media-h" style="margin: 2px 0 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 800; font-size: 36px; line-height: 1.4;">पाहा आणि ऐका</h2></div>
+<a href="#" style="position: relative; display: block; overflow: hidden; border-radius: 18px;"><img class="dc-zoom" src="assets/ms-217627.jpg" alt="" style="display: block; width: 100%; height: 330px; object-fit: cover;"><span style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.75) 100%);"></span><span aria-hidden="true" style="position: absolute; left: 24px; top: 24px; width: 64px; height: 64px; border-radius: 999px; background: {{accent}}; display: flex; align-items: center; justify-content: center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="#2B1A1C"><path d="M8 5v14l11-7z"></path></svg></span><span style="position: absolute; left: 24px; right: 24px; bottom: 20px; font-family: 'Noto Sans Devanagari', sans-serif; font-weight: 700; font-size: 19px; line-height: 1.6;">‘जय महाराष्ट्र’ आणि ‘दिलखुलास’ मध्ये खादी व ग्रामोद्योग मंडळाचे सभापती रवींद्र साठे यांची विशेष मुलाखत</span></a>
+</div>
+<div style="display: flex; flex-direction: column;">
+<div style="font-size: 15px; font-weight: 800; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2);">मागील भाग</div>
+<a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.14);"><span style="font-size: 15px; font-weight: 600; line-height: 1.55;">शालेय शिक्षण व क्रीडा विभागाचे प्रधान सचिव रणजितसिंह देओल यांची विशेष मुलाखत</span><span style="font-size: 13px; color: rgba(255,255,255,0.7);">२४ सप्टेंबर</span></a>
+<a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.14);"><span style="font-size: 15px; font-weight: 600; line-height: 1.55;">जमाबंदी आयुक्त शैलेश नवाल यांची विशेष मुलाखत</span><span style="font-size: 13px; color: rgba(255,255,255,0.7);">२३ सप्टेंबर</span></a>
+<a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.14);"><span style="font-size: 15px; font-weight: 600; line-height: 1.55;">एमएसआरडीसीचे व्यवस्थापकीय संचालक अनिलकुमार गायकवाड यांची मुलाखत</span><span style="font-size: 13px; color: rgba(255,255,255,0.7);">१८ सप्टेंबर</span></a>
+<a href="#" style="margin-top: 14px; font-size: 15px; font-weight: 800; color: {{accent}};">सर्व भाग YouTube वर →</a>
+</div>
+<a href="#" style="display: flex; flex-direction: column; gap: 14px;">
+<span aria-hidden="true" style="display: flex; flex-direction: column; justify-content: space-between; height: 330px; padding: 22px; border-radius: 14px; background: {{accent}}; color: #2B1A1C; box-shadow: 0 30px 50px -24px rgba(0,0,0,0.7);"><span style="font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 800; font-size: 44px; line-height: 1.3;">लोकराज्य</span><span style="font-size: 14px; font-weight: 700;">[अंकाचे मुखपृष्ठ · ऑक्टोबर २०२६]</span></span>
+<span style="font-size: 15px; font-weight: 800; color: #FFFFFF;">लोकराज्य मासिक — नवा अंक वाचा →</span>
+</a>
+</div>
+</section>
+
+<main style="width: 1280px; margin: 0 auto; padding: 80px 0 0; display: flex; flex-direction: column; gap: 80px;">
+<section id="factcheck" aria-labelledby="fc-h" style="background: #FFFFFF; border: 1px solid #E7E0D5; border-radius: 28px; padding: 44px; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 48px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 16px; min-width: 0;">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: {{accentInk}};"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{accentInk}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6z"></path><path d="m8.8 12.2 2.3 2.3 4.3-4.6"></path></svg>फॅक्ट चेक</div>
+<h2 id="fc-h" style="margin: 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 700; font-size: 42px; line-height: 1.25;">मेसेज खरा आहे का? इथे तपासा</h2>
+<p style="margin: 0; font-size: 17px; line-height: 1.65; color: #3A302A;">WhatsApp वर आलेला शासकीय संदेश, बातमी किंवा वृत्त क्रमांक इथे पेस्ट करा. तो मंजूर प्रसिद्धीपत्रकांशी लगेच जुळवून दाखवू.</p>
+<form onSubmit="{{fcCheck}}" style="display: flex; flex-direction: column; gap: 10px;">
+<label for="fc-text" style="font-size: 15px; font-weight: 700;">संदेशाचा मजकूर किंवा वृत्त क्रमांक</label>
+<textarea id="fc-text" value="{{fcText}}" onChange="{{onFcText}}" rows="4" placeholder="इथे संदेश पेस्ट करा…" style="width: 100%; box-sizing: border-box; min-height: 120px; resize: vertical; border: 1.5px solid #DDD3C5; border-radius: 14px; padding: 14px 16px; font: inherit; font-size: 16px; line-height: 1.6; background: #FAF7F2; color: #1D1714;"></textarea>
+<div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+<button type="submit" disabled="{{fcEmpty}}" style="height: 50px; padding: 0 26px; border: 0; border-radius: 999px; background: {{primary}}; color: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6z"></path><path d="m8.8 12.2 2.3 2.3 4.3-4.6"></path></svg>तपासा</button>
+<sc-for list="{{fcSamples}}" as="x" hint-placeholder-count="2"><button type="button" onClick="{{x.pick}}" style="height: 44px; padding: 0 14px; border: 1px dashed #BFB3A3; border-radius: 999px; background: #FFFFFF; font-size: 14px; color: #3A302A;">{{x.label}}</button></sc-for>
+</div>
+</form>
+<div role="status" aria-live="polite">
+<sc-if value="{{fcHas}}" hint-placeholder-val="{{false}}">
+<div style="border-radius: 18px; background: {{fcBg}}; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; gap: 10px; align-items: flex-start; color: {{fcInk}}; font-size: 19px; font-weight: 800; line-height: 1.4;">
+<sc-if value="{{fcMatchIcon}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;"><circle cx="12" cy="12" r="9"></circle><path d="m8 12.5 2.7 2.7L16.5 9.5"></path></svg></sc-if>
+<sc-if value="{{fcWarnIcon}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;"><path d="M12 3.5 21.5 20h-19z"></path><path d="M12 10v4.5M12 17.2v.1"></path></svg></sc-if>
+<sc-if value="{{fcNoneIcon}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;"><circle cx="12" cy="12" r="9"></circle><path d="m9 9 6 6M15 9l-6 6"></path></svg></sc-if>
+<span>{{fcHead}}</span></div>
+<p style="margin: 0; font-size: 15px; line-height: 1.6; color: #2A221D;">{{fcBody}}</p>
+<sc-if value="{{fcHasCards}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<sc-for list="{{fcCards}}" as="c" hint-placeholder-count="1">
+<div style="background: #FFFFFF; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 13px; color: #4A403A;">मंजूर प्रसिद्धीपत्रक · {{c.place}} · {{c.dateLabel}} · वृत्त क्र. {{c.noLabel}}</span>
+<a href="#" onClick="{{c.open}}" style="font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-size: 19px; line-height: 1.45;">{{c.title}}</a>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{fcCanSend}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{fcSend}}" style="align-self: flex-start; height: 46px; padding: 0 18px; border: 1.5px solid {{fcInk}}; border-radius: 999px; background: #FFFFFF; color: {{fcInk}}; font-size: 15px; font-weight: 700;">फॅक्ट-चेक टीमकडे पडताळणीसाठी पाठवा</button></sc-if>
+<sc-if value="{{fcSent}}" hint-placeholder-val="{{false}}"><p style="margin: 0; font-size: 15px; font-weight: 600; color: #2A221D;">पडताळणीसाठी पाठवले. निष्कर्ष “अलीकडील फॅक्ट चेक” मध्ये प्रसिद्ध होईल.</p></sc-if>
+</div>
+</sc-if>
+</div>
+
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px;">
+<h3 style="margin: 0; font-size: 20px; font-weight: 700;">अलीकडील फॅक्ट चेक</h3>
+<p style="margin: 0; font-size: 14px; color: #4A403A;">व्हायरल दाव्यांची पडताळणी — महासंचालनालयाच्या फॅक्ट-चेक टीमकडून</p>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px;">
+<sc-for list="{{verdicts}}" as="v" hint-placeholder-count="3">
+<li style="padding: 16px; border-radius: 16px; background: #F6F1EA; display: flex; flex-direction: column; gap: 8px;">
+<span style="align-self: flex-start; padding: 3px 12px; border-radius: 999px; background: {{v.bg}}; color: {{v.ink}}; font-size: 13px; font-weight: 800;">{{v.label}}</span>
+<a href="#" style="font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-size: 19px; line-height: 1.45;">[व्हायरल दाव्याचा मजकूर]</a>
+<span style="font-size: 13px; color: #6B615A;">[दिनांक] · [पडताळणीचा अधिकृत स्रोत]</span>
+</li>
+</sc-for>
+</ul>
+
+<a href="#" style="align-self: flex-start; min-height: 44px; display: flex; align-items: center; font-size: 15px; font-weight: 700; color: {{primary}};">सर्व फॅक्ट चेक →</a>
+</div>
+</section>
+
+
+
+<section aria-labelledby="social-h" style="display: flex; flex-direction: column; gap: 24px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 14px; border-bottom: 1px solid #F0DCC8;">
+<div><div style="font-size: 14px; font-weight: 800; color: {{primary}};">सामाजिक माध्यमे</div><h2 id="social-h" style="margin: 2px 0 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 800; font-size: 40px; line-height: 1.35;">सोशल मीडियावर महासंवाद</h2></div>
+<span style="font-size: 14px; color: #7A5F60;">पूर्वावलोकन नमुना · अधिकृत खाती</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px;"><article style="background: #FFFFFF; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 0 #F0DCC8, 0 20px 40px -30px rgba(120,30,30,0.4);">
+<div style="height: 4px; background: #1877F2;"></div>
+<div style="padding: 16px 18px 12px; display: flex; align-items: center; gap: 12px;"><span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 18px; background: #1877F2; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px;">f</span><span style="flex-grow: 1;"><b style="display: block; font-size: 16px;">Facebook</b><span style="font-size: 12.5px; color: #7A5F60;">महासंवाद · DGIPR महाराष्ट्र</span></span></div>
+<div style="padding: 0 18px; flex-grow: 1;"><img src="assets/ms-217711.jpg" alt="" style="width: 100%; height: 150px; object-fit: cover; border-radius: 14px;"><p style="margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: #4A2E30;">मराठी ही केवळ संवादाची भाषा नव्हे, तर संस्कृती-इतिहासाची साक्षीदार…</p><span style="font-size: 12px; color: #7A5F60;">३ ऑक्टो.</span></div>
+<div style="padding: 14px 18px 18px;"><a href="https://www.facebook.com/MahaDGIPR" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; height: 42px; border-radius: 999px; border: 1.5px solid #EBCFB8; font-size: 14px; font-weight: 700;">Facebook वर फॉलो करा</a></div>
+</article><article style="background: #FFFFFF; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 0 #F0DCC8, 0 20px 40px -30px rgba(120,30,30,0.4);">
+<div style="height: 4px; background: #000000;"></div>
+<div style="padding: 16px 18px 12px; display: flex; align-items: center; gap: 12px;"><span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 18px; background: #000000; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px;">X</span><span style="flex-grow: 1;"><b style="display: block; font-size: 16px;">X</b><span style="font-size: 12.5px; color: #7A5F60;">महासंवाद · DGIPR महाराष्ट्र</span></span></div>
+<div style="padding: 0 18px; flex-grow: 1;"><div style="padding: 14px; border-radius: 18px; background: #FDF1E6; font-size: 15px; line-height: 1.6;">भूकंपाच्या पार्श्वभूमीवर नांदेड प्रशासन सतर्क; जिल्ह्यात जीवित व वित्तहानी नाही. नागरिकांनी घाबरू नये, अफवांवर विश्वास ठेवू नये.<span style="display: block; margin-top: 8px; font-size: 12px; color: #7A5F60;">३ ऑक्टो., १८:२८</span></div><div style="margin-top: 8px; padding: 14px; border-radius: 18px; background: #FDF1E6; font-size: 15px; line-height: 1.6;">‘आवडेल तेथे कोठेही प्रवास पास’ आता ऑनलाइन.<span style="display: block; margin-top: 8px; font-size: 12px; color: #7A5F60;">२ ऑक्टो., १७:०६</span></div></div>
+<div style="padding: 14px 18px 18px;"><a href="https://x.com/MahaDGIPR" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; height: 42px; border-radius: 999px; border: 1.5px solid #EBCFB8; font-size: 14px; font-weight: 700;">X वर फॉलो करा</a></div>
+</article><article style="background: #FFFFFF; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 0 #F0DCC8, 0 20px 40px -30px rgba(120,30,30,0.4);">
+<div style="height: 4px; background: linear-gradient(45deg, #F58529, #DD2A7B 50%, #8134AF);"></div>
+<div style="padding: 16px 18px 12px; display: flex; align-items: center; gap: 12px;"><span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 18px; background: linear-gradient(45deg, #F58529, #DD2A7B 50%, #8134AF); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px;"><span style="width: 18px; height: 18px; border: 2.5px solid #FFFFFF; border-radius: 14px;"></span></span><span style="flex-grow: 1;"><b style="display: block; font-size: 16px;">Instagram</b><span style="font-size: 12.5px; color: #7A5F60;">महासंवाद · DGIPR महाराष्ट्र</span></span></div>
+<div style="padding: 0 18px; flex-grow: 1;"><div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; border-radius: 14px; overflow: hidden;"><img src="assets/ms-217703.jpg" alt="" style="width: 100%; aspect-ratio: 1; object-fit: cover; display: block;"><img src="assets/ms-217684.jpg" alt="" style="width: 100%; aspect-ratio: 1; object-fit: cover; display: block;"><img src="assets/ms-217577.jpg" alt="" style="width: 100%; aspect-ratio: 1; object-fit: cover; display: block;"><img src="assets/ms-217674.jpg" alt="" style="width: 100%; aspect-ratio: 1; object-fit: cover; display: block;"><img src="assets/ms-217551.jpg" alt="" style="width: 100%; aspect-ratio: 1; object-fit: cover; display: block;"><img src="assets/ms-217489.jpg" alt="" style="width: 100%; aspect-ratio: 1; object-fit: cover; display: block;"></div></div>
+<div style="padding: 14px 18px 18px;"><a href="https://www.instagram.com/mahadgipr" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; height: 42px; border-radius: 999px; border: 1.5px solid #EBCFB8; font-size: 14px; font-weight: 700;">Instagram वर फॉलो करा</a></div>
+</article><article style="background: #FFFFFF; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 0 #F0DCC8, 0 20px 40px -30px rgba(120,30,30,0.4);">
+<div style="height: 4px; background: #FF0000;"></div>
+<div style="padding: 16px 18px 12px; display: flex; align-items: center; gap: 12px;"><span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 18px; background: #FF0000; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M8 5v14l11-7z"></path></svg></span><span style="flex-grow: 1;"><b style="display: block; font-size: 16px;">YouTube</b><span style="font-size: 12.5px; color: #7A5F60;">महासंवाद · DGIPR महाराष्ट्र</span></span></div>
+<div style="padding: 0 18px; flex-grow: 1;"><div style="position: relative;"><img src="assets/ms-217627.jpg" alt="" style="width: 100%; height: 150px; object-fit: cover; border-radius: 14px; display: block;"><span aria-hidden="true" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 48px; height: 34px; border-radius: 18px; background: #FF0000; display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M8 5v14l11-7z"></path></svg></span></div><p style="margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: #4A2E30;">जय महाराष्ट्र — खादी व ग्रामोद्योग मंडळाचे सभापती रवींद्र साठे</p></div>
+<div style="padding: 14px 18px 18px;"><a href="https://www.youtube.com/@MAHARASHTRADGIPR" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; height: 42px; border-radius: 999px; border: 1.5px solid #EBCFB8; font-size: 14px; font-weight: 700;">YouTube वर फॉलो करा</a></div>
+</article></div>
+</section>
+</main>
+
+<footer data-dark="1" style="margin-top: 96px; background: {{primaryDeep}}; color: #FFFFFF;">
+<div style="width: 1280px; margin: 0 auto; padding: 52px 0 36px; display: grid; grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr)); gap: 40px; font-size: 15px;">
+<div style="display: flex; flex-direction: column; gap: 12px;"><span style="align-self: flex-start; padding: 10px 14px; border-radius: 18px; background: #FFFFFF;"><img src="assets/mahasamvad-logo.png" alt="महासंवाद" style="display: block; height: 46px; width: auto;"></span><p style="margin: 0; color: rgba(255,255,255,0.84); line-height: 1.65;">माहिती व जनसंपर्क महासंचालनालय, महाराष्ट्र शासन. इथली प्रत्येक बातमी वृत्त विभागाने मंजूर केलेले प्रसिद्धीपत्रक आहे.</p></div>
+<div><div style="font-weight: 800;">बातम्या</div><div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;"><a href="#releases">वृत्त विशेष</a><a href="#districts">जिल्हा वार्ता</a><a href="#features">विशेष लेख</a><a href="#archive">संग्रह</a></div></div>
+<div><div style="font-weight: 800;">शासकीय दुवे</div><div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;"><a href="#">महाराष्ट्र शासन</a><a href="#">माहिती व जनसंपर्क महासंचालनालय</a><a href="#">आपले सरकार</a></div></div>
+<div><div style="font-weight: 800;">मदत व धोरणे</div><div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;"><a href="#">संपर्क</a><a href="#">माहितीचा अधिकार</a><a href="#">सुलभता · गोपनीयता</a></div></div>
+<p style="grid-column: 1 / -1; margin: 8px 0 0; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.18); font-size: 13px; color: rgba(255,255,255,0.78);">स्थिती: हे पान प्रस्ताव नमुना (pitch prototype) आहे; महासंचालनालयाने अधिकृत संकेतस्थळ म्हणून अद्याप स्वीकारलेले नाही. बातम्या व छायाचित्रे mahasamvad.in वरून. · शेवटचे अद्यतन: ३ ऑक्टोबर २०२६, १९:२२</p>
+</div>
+</footer>
+
+<nav aria-label="जलद दुवे" style="position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 45; width: 680px; height: 68px; box-sizing: border-box; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,0.97); border: 1px solid #F0DCC8; box-shadow: 0 18px 44px -16px rgba(40,6,10,0.45); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 84px repeat(3, minmax(0, 1fr)); align-items: center;">
+<a href="#top" aria-current="page" style="border: 0; background: transparent; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12.5px; font-weight: 700; color: {{primary}};"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V9l8-5 8 5v11"></path><path d="M9 20v-6h6v6"></path></svg><span style="color: #4A2E30;">मुख्यपृष्ठ</span></a><button type="button" onClick="{{openPalette}}" style="border: 0; background: transparent; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12.5px; font-weight: 700; color: {{primary}};"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m20 20-4-4"></path></svg><span style="color: #4A2E30;">शोधा</span></button><a href="#districts" style="border: 0; background: transparent; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12.5px; font-weight: 700; color: {{primary}};"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg><span style="color: #4A2E30;">जिल्हा</span></a><span style="display: flex; flex-direction: column; align-items: center;"><button type="button" id="chat-trigger" onClick="{{toggleChat}}" aria-haspopup="dialog" aria-label="महासंवाद सहाय्यकाला विचारा" style="margin-top: -30px; width: 62px; height: 62px; border: 5px solid #FFFFFF; border-radius: 999px; background: {{primary}}; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 22px -8px {{primary}};"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.1A8 8 0 1 1 20 12z"></path><path d="M8.5 11h7M8.5 14h4.5"></path></svg></button><span style="font-size: 12px; font-weight: 800; color: {{primary}};">विचारा</span></span><a href="#factcheck" style="border: 0; background: transparent; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12.5px; font-weight: 700; color: {{primary}};"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6z"></path><path d="m8.8 12.2 2.3 2.3 4.3-4.6"></path></svg><span style="color: #4A2E30;">फॅक्ट चेक</span></a><button type="button" onClick="{{openFold}}" style="border: 0; background: transparent; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12.5px; font-weight: 700; color: {{primary}};"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"></path><path d="m7 10 5 5 5-5"></path><path d="M5 20h14"></path></svg><span style="color: #4A2E30;">फोल्ड</span></button><a href="#archive" style="border: 0; background: transparent; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12.5px; font-weight: 700; color: {{primary}};"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"></path><path d="M5 21V10h14v11"></path><path d="M12 3 4 8h16z"></path><path d="M9 21v-7M15 21v-7"></path></svg><span style="color: #4A2E30;">संग्रह</span></a>
+</nav>
+<button type="button" onClick="{{cycleFs}}" aria-label="अक्षरांचा आकार बदला" style="position: fixed; right: 28px; bottom: 100px; z-index: 45; width: 56px; height: 56px; border: 1px solid #F0DCC8; border-radius: 999px; background: #FFFFFF; color: {{primary}}; font-size: 24px; font-weight: 800; box-shadow: 0 12px 28px -12px rgba(40,6,10,0.45); display: flex; align-items: center; justify-content: center;">अ</button>
+
+<sc-if value="{{readerOpen}}" hint-placeholder-val="{{false}}">
+<div onClick="{{closeReader}}" style="position: fixed; inset: 0; z-index: 60; background: rgba(14,16,22,0.55);"></div>
+<div id="reader" role="dialog" aria-modal="true" aria-labelledby="reader-title" tabIndex="-1" onKeyDown="{{readerKey}}" style="position: fixed; z-index: 61; top: 0; right: 0; width: 720px; height: 100vh; box-shadow: -30px 0 80px -30px rgba(0,0,0,0.5); overflow-y: auto; background: #FFFFFF; outline: none; box-sizing: border-box;">
+<div style="position: sticky; top: 0; z-index: 1; background: rgba(255,255,255,0.97); border-bottom: 1px solid #E7E0D5; padding: 10px 48px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+<button type="button" onClick="{{closeReader}}" aria-label="बंद करा" style="width: 44px; height: 44px; border: 0; border-radius: 999px; background: #F4EFE7; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B1A1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg></button>
+<div role="group" aria-label="अक्षरांचा आकार" style="margin-right: auto; display: flex; gap: 2px;">
+<sc-for list="{{sizes}}" as="z" hint-placeholder-count="3"><button type="button" onClick="{{z.pick}}" aria-pressed="{{z.on}}" aria-label="{{z.label}}" style="width: 40px; height: 44px; border: 0; border-radius: 18px; background: {{z.bgLight}}; color: {{primary}}; font-size: {{z.size}}; font-weight: 700;">अ</button></sc-for>
+</div>
+<button type="button" onClick="{{rd.listen}}" aria-pressed="{{rd.listenPressed}}" style="height: 44px; padding: 0 14px; border: 1px solid {{rd.listenBorder}}; border-radius: 999px; background: {{rd.listenBg}}; font-size: 15px; font-weight: 600; color: #1D1714; display: flex; align-items: center; gap: 6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2A221D" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"></path><path d="M15.5 9a4 4 0 0 1 0 6"></path><path d="M18 6.5a7.5 7.5 0 0 1 0 11"></path></svg>{{rd.listenLabel}}</button>
+<button type="button" onClick="{{rd.copy}}" aria-label="मजकूर कॉपी करा" style="height: 44px; padding: 0 14px; border: 1px solid #DDD3C5; border-radius: 999px; background: #FFFFFF; font-size: 15px; font-weight: 600; color: #1D1714; display: flex; align-items: center; gap: 6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A221D" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"></rect><path d="M15.5 8.5V5.5a1.5 1.5 0 0 0-1.5-1.5H5.5A1.5 1.5 0 0 0 4 5.5V14a1.5 1.5 0 0 0 1.5 1.5h3"></path></svg>कॉपी</button>
+<a href="{{rd.wa}}" target="_blank" rel="noopener" aria-label="WhatsApp वर पाठवा" style="height: 44px; padding: 0 14px; border: 1px solid #DDD3C5; border-radius: 999px; background: #FFFFFF; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; box-sizing: border-box;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A221D" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5.5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="18.5" r="2.5"></circle><path d="m8.2 10.8 7.6-4.1M8.2 13.2l7.6 4.1"></path></svg>शेअर</a>
+</div>
+<article style="padding: 28px 48px 48px; display: flex; flex-direction: column; gap: 18px;">
+<div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 14px;"><span style="padding: 3px 12px; border-radius: 999px; background: {{placeSoft}}; color: {{place}}; font-weight: 700;">{{rd.place}}</span><span style="padding: 3px 12px; border-radius: 999px; background: #EFE8DD; color: #2A221D; font-weight: 600;">{{rd.topic}}</span></div>
+<h2 id="reader-title" style="margin: 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 700; font-size: {{readerHead}}; line-height: 1.36; text-wrap: balance;">{{rd.title}}</h2>
+<dl style="margin: 0; display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 14px; color: #4A403A;">
+<div style="display: flex; gap: 6px;"><dt>प्रसिद्धी:</dt><dd style="margin: 0; color: #1D1714; font-weight: 600;">{{rd.dateFull}}</dd></div>
+<div style="display: flex; gap: 6px;"><dt>विभाग:</dt><dd style="margin: 0; color: #1D1714; font-weight: 600;">{{rd.dept}}</dd></div>
+<div style="display: flex; gap: 6px;"><dt>वृत्त क्र.:</dt><dd style="margin: 0; color: #1D1714; font-weight: 600;">{{rd.noLabel}}</dd></div>
+</dl>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px;"><img src="{{rd.img}}" alt="" style="width: 100%; height: 360px; object-fit: {{rd.imgFit}}; object-position: {{rd.imgPos}}; border-radius: 14px; background: #F5E6D6;"><figcaption style="font-size: 12px; color: #7A5F60;">छायाचित्र: महासंवाद</figcaption></figure>
+<sc-if value="{{rd.hasSummary}}" hint-placeholder-val="{{true}}"><p style="margin: 0; font-size: {{readerBody}}; line-height: 1.85; font-weight: 500; color: #1D1714;">{{rd.summary}}</p></sc-if>
+<div style="padding: 20px; border: 1.5px dashed #CFC4B4; border-radius: 14px; font-size: 15px; line-height: 1.7; color: #4A403A;">[प्रसिद्धीपत्रकाचा पूर्ण मजकूर — वृत्त विभागाच्या मंजूर प्रतीतून, जसा आहे तसा]</div>
+<p style="margin: 0; padding-top: 16px; border-top: 1px solid #E7E0D5; font-size: 14px; color: #4A403A;">जारी करणारे: माहिती व जनसंपर्क महासंचालनालय, महाराष्ट्र शासन · मंजूर प्रसिद्धीपत्रक</p>
+<sc-if value="{{hasRelated}}" hint-placeholder-val="{{true}}">
+<div>
+<h3 style="margin: 8px 0 4px; font-size: 18px; font-weight: 700;">संबंधित बातम्या</h3>
+<ul style="list-style: none; margin: 0; padding: 0;">
+<sc-for list="{{related}}" as="x" hint-placeholder-count="3">
+<li style="padding: 12px 0; border-top: 1px solid #EFE8DD;"><a href="#" onClick="{{x.open}}" style="display: block; font-size: 17px; font-weight: 600; line-height: 1.45;">{{x.title}}</a><span style="font-size: 13px; color: #6B615A;">{{x.place}} · {{x.dateLabel}}</span></li>
+</sc-for>
+</ul>
+</div>
+</sc-if>
+</article>
+</div>
+</sc-if>
+
+<sc-if value="{{palOpen}}" hint-placeholder-val="{{false}}">
+<div onClick="{{closePalette}}" style="position: fixed; inset: 0; z-index: 70; background: rgba(14,16,22,0.55);"></div>
+<div id="palette" role="dialog" aria-modal="true" aria-label="बातम्या शोधा" onKeyDown="{{palKey}}" style="position: fixed; z-index: 71; top: 72px; left: 50%; transform: translateX(-50%); width: 760px; max-height: calc(100vh - 144px); border-radius: 16px; box-shadow: 0 40px 90px -30px rgba(0,0,0,0.55); overflow-y: auto; background: #FFFFFF; box-sizing: border-box;">
+<div style="position: sticky; top: 0; background: #FFFFFF; display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 20px; border-bottom: 1px solid #E7E0D5;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C4344" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m20 20-4-4"></path></svg>
+<label for="pal-q" style="position: absolute; left: -9999px;">शोधा</label>
+<input id="pal-q" type="search" value="{{q}}" onChange="{{onQ}}" placeholder="उदा. पीक नुकसान, चंद्रपूर, २१६०६०" style="flex-grow: 1; min-width: 0; height: 52px; border: 0; outline: none; font: inherit; font-size: 20px; background: transparent;">
+<button type="button" onClick="{{closePalette}}" aria-label="शोध बंद करा" style="flex-shrink: 0; height: 44px; padding: 0 14px; border: 1px solid #DDD3C5; border-radius: 18px; background: #FFFFFF; font-size: 14px; font-weight: 600; color: #3A302A;">Esc</button>
+</div>
+<sc-if value="{{qEmpty}}" hint-placeholder-val="{{true}}">
+<div style="padding: 18px 20px 8px;">
+<div style="font-size: 13px; font-weight: 700; color: #6B615A;">सुचवलेले शोध</div>
+<div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
+<sc-for list="{{suggestions}}" as="g" hint-placeholder-count="5"><button type="button" onClick="{{g.pick}}" style="height: 40px; padding: 0 14px; border: 1px solid #DDD3C5; border-radius: 999px; background: #FAF7F2; font-size: 15px; color: #1D1714;">{{g.label}}</button></sc-for>
+</div>
+<div style="margin-top: 20px; font-size: 13px; font-weight: 700; color: #6B615A;">ताजी प्रसिद्धीपत्रके</div>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0 0 8px;">
+<sc-for list="{{recent}}" as="x" hint-placeholder-count="4">
+<li><button type="button" class="dc-row" onClick="{{x.open}}" style="width: 100%; border: 0; background: transparent; text-align: left; padding: 12px 20px; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600; line-height: 1.45; color: #1D1714;">{{x.title}}</span><span style="font-size: 13px; color: #6B615A;">{{x.place}} · {{x.dateLabel}}</span></button></li>
+</sc-for>
+</ul>
+</sc-if>
+<sc-if value="{{qHas}}" hint-placeholder-val="{{false}}">
+<p role="status" style="margin: 0; padding: 14px 20px 4px; font-size: 14px; color: #4A403A;">{{resultLine}}</p>
+<ul style="list-style: none; margin: 0; padding: 0 0 8px;">
+<sc-for list="{{results}}" as="x" hint-placeholder-count="3">
+<li><button type="button" class="dc-row" onClick="{{x.open}}" style="width: 100%; border: 0; background: transparent; text-align: left; padding: 12px 20px; display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 16px; font-weight: 600; line-height: 1.45; color: #1D1714;">{{x.title}}</span><span style="font-size: 13px; color: #6B615A;">{{x.place}} · {{x.topic}} · {{x.dateLabel}} · वृत्त क्र. {{x.noLabel}}</span></button></li>
+</sc-for>
+</ul>
+<sc-if value="{{noResults}}" hint-placeholder-val="{{false}}"><div style="padding: 20px 20px 28px; font-size: 15px; line-height: 1.6; color: #3A302A;">“{{q}}” साठी काही सापडले नाही. दुसरा शब्द, जिल्ह्याचे नाव किंवा वृत्त क्रमांक लिहून पाहा.</div></sc-if>
+</sc-if>
+<div style="padding: 4px 20px 14px;"><sc-if value="{{qHas}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{askChat}}" style="min-height: 44px; padding: 0 16px; border: 1.5px solid {{primary}}; border-radius: 999px; background: #FFFFFF; color: {{primary}}; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{primary}}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.1A8 8 0 1 1 20 12z"></path><path d="M8.5 11h7M8.5 14h4.5"></path></svg>“{{q}}” बद्दल सहाय्यकाला विचारा</button></sc-if></div>
+<div style="padding: 12px 20px; border-top: 1px solid #EFE8DD; font-size: 13px; color: #6B615A;">शीर्षक, जिल्हा, विषय, विभाग आणि वृत्त क्रमांकात शोधते · इंग्रजी अंकही चालतात (216060)</div>
+</div>
+</sc-if>
+
+<sc-if value="{{foldOpen}}" hint-placeholder-val="{{false}}">
+<div onClick="{{closeFold}}" style="position: fixed; inset: 0; z-index: 50; background: rgba(14,16,22,0.55);"></div>
+<div id="fold-dialog" role="dialog" aria-modal="true" aria-labelledby="fold-title" aria-describedby="fold-desc" tabIndex="-1" onKeyDown="{{trapKey}}" style="position: fixed; z-index: 51; top: 48px; left: 50%; transform: translateX(-50%); width: 820px; height: min(860px, calc(100vh - 96px)); border-radius: 16px; box-shadow: 0 40px 90px -30px rgba(0,0,0,0.6); box-sizing: border-box; display: flex; flex-direction: column; background: #FFFFFF; overflow: hidden; outline: none;">
+<div style="padding: 22px 28px 16px; display: flex; gap: 16px; align-items: flex-start;">
+<div style="flex-grow: 1; min-width: 0;">
+<div style="font-size: 13px; font-weight: 700; color: {{accentInk}};">पत्रकारांसाठी · फोल्ड</div>
+<h2 id="fold-title" style="margin: 4px 0 0; font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-weight: 700; font-size: 28px; line-height: 1.3;">फोल्ड डाउनलोड करा</h2>
+<p id="fold-desc" style="margin: 6px 0 0; font-size: 14px; line-height: 1.65; color: #4A403A;">मंजूर लेख, वृत्त विभागाने ठरवलेल्या क्रमाने. नको असलेले लेख काढा किंवा क्रम बदला — क्रमांक म्हणजे DOCX मधील त्या लेखाचे स्थान.</p>
+</div>
+<button type="button" onClick="{{closeFold}}" aria-label="बंद करा" style="flex-shrink: 0; width: 44px; height: 44px; border: 0; border-radius: 999px; background: #F4EFE7; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B1A1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg></button>
+</div>
+<div style="margin: 0 28px; padding: 8px; border-radius: 14px; background: #F4EFE7; display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap;">
+<div style="display: flex; align-items: center; gap: 6px;">
+<button type="button" onClick="{{prevDay}}" aria-label="आदला दिवस" style="width: 44px; height: 44px; border: 1px solid #E7E0D5; border-radius: 18px; background: #FFFFFF; display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1714" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"></path><path d="m11 6-6 6 6 6"></path></svg></button>
+<input type="date" value="{{iso}}" onChange="{{onDate}}" aria-label="दिनांक" style="height: 44px; border: 1px solid #DDD3C5; border-radius: 18px; padding: 0 10px; font: inherit; font-size: 14px; background: #FFFFFF; color: #1D1714;">
+<button type="button" onClick="{{nextDay}}" aria-label="पुढचा दिवस" style="width: 44px; height: 44px; border: 1px solid #E7E0D5; border-radius: 18px; background: #FFFFFF; display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1714" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></button>
+<sc-if value="{{notToday}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{goToday}}" style="height: 44px; padding: 0 14px; border: 0; border-radius: 18px; background: transparent; font-size: 14px; font-weight: 700; color: {{primary}};">आज</button></sc-if>
+</div>
+<span style="font-size: 14px; color: #3A302A;">{{dayLine}}</span>
+</div>
+<div style="margin-top: 14px; flex-grow: 1; min-height: 0; overflow-y: auto; border-top: 1px solid #EFE8DD;">
+<sc-if value="{{hasFold}}" hint-placeholder-val="{{true}}">
+<div style="position: sticky; top: 0; z-index: 1; background: #FFFFFF; padding: 6px 28px; border-bottom: 1px solid #EFE8DD; display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap;">
+<label style="display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer;"><input id="fold-all" type="checkbox" checked="{{allOn}}" onChange="{{toggleAll}}" style="width: 20px; height: 20px; margin: 0; accent-color: {{primary}};"><span style="font-size: 15px; font-weight: 700;">सर्व निवडा</span></label>
+<span style="font-size: 13px; color: #4A403A;"><b style="color: #1D1714;">{{selCountMr}}</b> / {{totalMr}} निवडले · <b style="color: #1D1714;">{{selDistMr}}</b> जिल्हे</span>
+<sc-if value="{{reordered}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{resetOrder}}" style="margin-left: auto; height: 36px; padding: 0 12px; border: 1px solid #E7E0D5; border-radius: 999px; background: #FFFFFF; font-size: 13px; font-weight: 600; color: #3A302A;">मूळ क्रम</button></sc-if>
+</div>
+<ol aria-label="फोल्डमधील लेख" style="list-style: none; margin: 0; padding: 0;">
+<sc-for list="{{foldRows}}" as="a" hint-placeholder-count="5">
+<li style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 28px; border-bottom: 1px solid #F2ECE3; background: {{a.rowBg}}; transition: background 300ms;">
+<label style="flex-shrink: 0; margin-top: 17px; width: 28px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer;"><input type="checkbox" checked="{{a.checked}}" onChange="{{a.toggle}}" aria-label="{{a.checkLabel}}" style="width: 20px; height: 20px; margin: 0; accent-color: {{primary}};"></label>
+<div style="flex-shrink: 0; display: flex; flex-direction: column; border: 1px solid #E7E0D5; border-radius: 18px; overflow: hidden; background: #F4EFE7;">
+<button type="button" onClick="{{a.up}}" disabled="{{a.upDisabled}}" aria-label="{{a.upLabel}}" style="width: 32px; height: 28px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; opacity: {{a.upOp}};"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3A302A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"></path></svg></button>
+<span style="width: 32px; height: 26px; display: flex; align-items: center; justify-content: center; border-top: 1px solid #E7E0D5; border-bottom: 1px solid #E7E0D5; background: #FFFFFF; font-size: 12px; font-weight: 700; color: {{a.numInk}};">{{a.num}}</span>
+<button type="button" onClick="{{a.down}}" disabled="{{a.downDisabled}}" aria-label="{{a.downLabel}}" style="width: 32px; height: 28px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; opacity: {{a.downOp}};"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3A302A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+</div>
+<div style="flex-grow: 1; min-width: 0; padding-top: 2px; opacity: {{a.op}}; transition: opacity 200ms;">
+<div style="display: flex; gap: 8px; align-items: flex-start;"><span style="font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; font-size: 17px; line-height: 1.5;">{{a.title}}</span><sc-if value="{{a.cm}}" hint-placeholder-val="{{false}}"><span style="flex-shrink: 0; padding: 2px 9px; border-radius: 999px; background: {{accentSoft}}; color: {{accentInk}}; font-size: 12px; font-weight: 700;">मुख्यमंत्री</span></sc-if></div>
+<div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px;">
+<sc-if value="{{a.hasNo}}" hint-placeholder-val="{{true}}"><span style="padding: 2px 9px; border-radius: 999px; background: #F2ECE3; color: #3A302A;">वृत्त क्र. <b style="color: #1D1714; font-weight: 600;">{{a.no}}</b></span></sc-if>
+<sc-if value="{{a.noMissing}}" hint-placeholder-val="{{false}}"><span style="padding: 1px 8px; border-radius: 999px; border: 1px dashed {{accentInk}}; color: {{accentInk}}; font-weight: 600;">वृत्त क्र. नाही</span></sc-if>
+<span style="padding: 2px 9px; border-radius: 999px; background: {{placeSoft}}; color: {{place}}; font-weight: 600;">{{a.district}}</span>
+</div>
+</div>
+</li>
+</sc-for>
+</ol>
+</sc-if>
+<sc-if value="{{noFold}}" hint-placeholder-val="{{false}}">
+<div style="padding: 64px 32px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
+<div style="font-size: 17px; font-weight: 700;">या दिवसासाठी अजून कोणताही लेख मंजूर झालेला नाही</div>
+<p style="margin: 0; max-width: 420px; font-size: 14px; line-height: 1.65; color: #4A403A;">वृत्त विभागाने लेख मंजूर करताच तो इथे — आणि पुढच्या डाउनलोडमध्ये — आपोआप येईल.</p>
+<sc-if value="{{notToday}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{goToday}}" style="margin-top: 6px; height: 44px; padding: 0 18px; border: 0; border-radius: 999px; background: {{primarySoft}}; color: {{primary}}; font-size: 14px; font-weight: 700;">आजचा फोल्ड पहा</button></sc-if>
+</div>
+</sc-if>
+</div>
+<div style="padding: 14px 28px; border-top: 1px solid #EFE8DD; background: #FBF8F3; display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap;">
+<div role="status" aria-live="polite" style="flex: 1 1 220px; min-width: 0; font-size: 12px; line-height: 1.6; color: #6B615A;">
+<sc-if value="{{dlDone}}" hint-placeholder-val="{{false}}"><span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: {{place}};"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg>{{doneText}}</span></sc-if>
+<sc-if value="{{dlNotDone}}" hint-placeholder-val="{{true}}"><span>निवड व क्रम फक्त या डाउनलोडपुरते — वृत्त विभागाचा क्रम बदलत नाही.</span></sc-if>
+</div>
+<button type="button" onClick="{{download}}" disabled="{{dlDisabled}}" aria-busy="{{dlBusyAttr}}" style="flex: 0 0 auto; height: 52px; padding: 0 24px; border: 0; border-radius: 999px; background: {{dlBg}}; color: {{dlInk}}; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; white-space: nowrap;">
+<sc-if value="{{dlBusy}}" hint-placeholder-val="{{false}}"><svg class="dc-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="animation: dcspin 0.9s linear infinite;"><path d="M12 3a9 9 0 1 1-9 9"></path></svg></sc-if>
+<sc-if value="{{dlIdle}}" hint-placeholder-val="{{true}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"></path><path d="m7 10 5 5 5-5"></path><path d="M5 20h14"></path></svg></sc-if>
+{{dlLabel}}
+</button>
+</div>
+</div>
+</sc-if>
+
+<div role="status" aria-live="polite" style="position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%); z-index: 90; pointer-events: none;">
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}"><div style="background: #1D1714; color: #FFFFFF; padding: 12px 20px; border-radius: 999px; font-size: 15px; font-weight: 600; white-space: nowrap; box-shadow: 0 12px 30px -10px rgba(0,0,0,0.5);">{{toast}}</div></sc-if>
+</div>
+
+<sc-if value="{{chatOpen}}" hint-placeholder-val="{{false}}">
+<div id="chat" role="dialog" aria-modal="false" aria-labelledby="chat-title" onKeyDown="{{chatKey}}" style="position: fixed; right: 28px; bottom: 28px; width: 420px; height: min(660px, calc(100vh - 56px)); border-radius: 16px; border: 1px solid #F0DCC8; box-shadow: 0 30px 80px -20px rgba(0,0,0,0.45); z-index: 58; background: #FFFFFF; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;">
+<div style="background: {{primaryDeep}}; color: #FFFFFF; padding: 12px 12px 12px 16px; display: flex; gap: 12px; align-items: center;">
+<span aria-hidden="true" style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 999px; background: {{accent}}; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2B1A1C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.1A8 8 0 1 1 20 12z"></path><path d="M8.5 11h7M8.5 14h4.5"></path></svg></span>
+<div style="flex-grow: 1; min-width: 0;"><h2 id="chat-title" style="margin: 0; font-size: 17px; font-weight: 700;">महासंवाद सहाय्यक</h2><div style="font-size: 12px; line-height: 1.4; color: rgba(255,255,255,0.82);">फक्त मंजूर प्रसिद्धीपत्रकांवरून · प्रत्येक उत्तरासोबत स्रोत</div></div>
+<button type="button" onClick="{{closeChat}}" aria-label="सहाय्यक बंद करा" style="flex-shrink: 0; width: 44px; height: 44px; border: 0; border-radius: 999px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg></button>
+</div>
+<div id="chat-log" role="log" aria-live="polite" style="flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #F6F1EA;">
+<sc-for list="{{msgs}}" as="m" hint-placeholder-count="2">
+<sc-if value="{{m.mine}}" hint-placeholder-val="{{false}}"><div style="align-self: flex-end; max-width: 82%; padding: 10px 14px; border-radius: 16px 16px 4px 16px; background: {{primary}}; color: #FFFFFF; font-size: 15px; line-height: 1.55;">{{m.text}}</div></sc-if>
+<sc-if value="{{m.bot}}" hint-placeholder-val="{{true}}">
+<div style="align-self: flex-start; max-width: 90%; display: flex; flex-direction: column; gap: 8px;">
+<div style="padding: 12px 14px; border-radius: 16px 16px 16px 4px; background: #FFFFFF; border: 1px solid #E7E0D5; font-size: 15px; line-height: 1.6;">{{m.text}}</div>
+<sc-if value="{{m.hasCites}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<span style="font-size: 12px; font-weight: 700; color: #6B615A;">स्रोत</span>
+<sc-for list="{{m.cites}}" as="c" hint-placeholder-count="2"><button type="button" onClick="{{c.open}}" style="text-align: left; border: 1px solid #E7E0D5; background: #FFFFFF; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600; line-height: 1.45; color: #1D1714;">{{c.title}}</span><span style="font-size: 12px; color: #6B615A;">{{c.place}} · {{c.dateLabel}} · वृत्त क्र. {{c.noLabel}}</span></button></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{m.fc}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{m.openFc}}" style="align-self: flex-start; height: 44px; padding: 0 16px; border: 1.5px solid {{primary}}; border-radius: 999px; background: #FFFFFF; color: {{primary}}; font-size: 15px; font-weight: 700;">फॅक्ट चेक उघडा →</button></sc-if>
+</div>
+</sc-if>
+</sc-for>
+<sc-if value="{{chatBusy}}" hint-placeholder-val="{{false}}"><div style="align-self: flex-start; padding: 10px 14px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E7E0D5; font-size: 14px; color: #6B615A;">प्रसिद्धीपत्रकांत शोधत आहे…</div></sc-if>
+</div>
+<sc-if value="{{chatFresh}}" hint-placeholder-val="{{true}}">
+<div style="padding: 10px 12px 0; display: flex; flex-wrap: wrap; gap: 6px; background: #FFFFFF;">
+<sc-for list="{{chatChips}}" as="g" hint-placeholder-count="5"><button type="button" onClick="{{g.pick}}" style="min-height: 40px; padding: 0 12px; border: 1px solid #DDD3C5; border-radius: 999px; background: #FAF7F2; font-size: 14px; color: #1D1714;">{{g.label}}</button></sc-for>
+</div>
+</sc-if>
+<form onSubmit="{{chatSend}}" style="display: flex; gap: 8px; padding: 12px; background: #FFFFFF;">
+<label for="chat-in" style="position: absolute; left: -9999px;">तुमचा प्रश्न</label>
+<input id="chat-in" value="{{chatIn}}" onChange="{{onChatIn}}" placeholder="तुमचा प्रश्न लिहा…" autoComplete="off" style="flex-grow: 1; min-width: 0; height: 48px; border: 1.5px solid #DDD3C5; border-radius: 999px; padding: 0 16px; font: inherit; font-size: 16px; color: #1D1714;">
+<button type="submit" aria-label="पाठवा" disabled="{{chatBusy}}" style="flex-shrink: 0; width: 48px; height: 48px; border: 0; border-radius: 999px; background: {{accent}}; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2B1A1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12 20 4l-5 16-3-7z"></path><path d="m12 13 8-9"></path></svg></button>
+</form>
+<p style="margin: 0; padding: 0 16px 12px; font-size: 12px; line-height: 1.5; color: #6B615A; background: #FFFFFF;">सहाय्यक अंदाज करत नाही; शंका असल्यास मूळ प्रसिद्धीपत्रक वाचा.</p>
+</div>
+</sc-if>
+
+
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"primary": {"editor": "color", "default": "#A8172C", "options": ["#A8172C", "#8C2F1F", "#23336B"], "section": "रंग"}, "accent": {"editor": "color", "default": "#E8871E", "options": ["#E8871E", "#E0A31B", "#D2553F"], "section": "रंग"}, "place": {"editor": "color", "default": "#1F6B4A", "options": ["#1F6B4A", "#0B5563", "#5A6B1F"], "section": "रंग"}, "autoplay": {"editor": "boolean", "default": true, "section": "कॅरोसेल"}, "$preview": {"width": 1440, "height": 6900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { i: 0, paused: false, hold: false, dist: 'सिंधुदुर्ग', topic: 'all', readerId: null, palette: false, q: '', noQ: '', fs: 1, speaking: null, toast: '', foldOpen: false, off: 0, order: [], sel: {}, moving: null, dl: 'idle',
+      fcText: '', fcRes: null, fcSent: false,
+      chatOpen: false, chatIn: '', typing: false,
+      msgs: [{ from: 'bot', text: 'नमस्कार! मी महासंवाद सहाय्यक. शासनाच्या मंजूर प्रसिद्धीपत्रकांवरूनच उत्तर देतो — प्रत्येक उत्तरासोबत स्रोत. काय जाणून घ्यायचे आहे?', cites: [] }] };
+  }
+  mrd(v) {
+    const digits = '०१२३४५६७८९';
+    return String(v).replace(/[0-9]/g, (d) => digits[+d]);
+  }
+  words(t) {
+    return this.mrd(t).split(/[\s,.!?“”‘’'"()–—\-:;।*#|/]+/).filter((w) => w.length >= 3);
+  }
+  verify(text) {
+    // Checks a forwarded message against the approved-release record.
+    const t = this.mrd((text || '').trim());
+    if (!t) return null;
+    const data = this.releases();
+    const num = t.match(/[०-९]{6}/);
+    if (num) {
+      const r = data.find((x) => x.no === num[0]);
+      if (r) return { kind: 'match', ids: [r.id], by: 'no' };
+      return { kind: 'none', no: num[0] };
+    }
+    const tw = this.words(t);
+    const scored = data.map((r) => {
+      const rw = this.words(r.title);
+      const hit = rw.filter((w) => t.indexOf(w) !== -1).length;
+      return { id: r.id, score: rw.length ? hit / rw.length : 0 };
+    }).sort((a, b) => b.score - a.score);
+    if (!tw.length) return { kind: 'none' };
+    if (scored[0].score >= 0.6) return { kind: 'match', ids: [scored[0].id], by: 'text' };
+    const near = scored.filter((x) => x.score >= 0.3).slice(0, 2).map((x) => x.id);
+    if (near.length) return { kind: 'partial', ids: near };
+    return { kind: 'none' };
+  }
+  answer(q) {
+    // Prototype: answers only from approved releases, always with sources. Production: retrieval over the release DB + an LLM, same rule.
+    const data = this.releases();
+    const t = this.mrd(q.trim());
+    const fold = this.foldDays()['0'];
+    const short = (r) => '“' + r.title + '” (' + r.place + ')';
+    if (/खरा|खरी|खरे|फेक|खोट|अफवा|पडताळ|सत्य/.test(t)) {
+      const v = this.verify(t.replace(/हा|मेसेज|संदेश|खरा|खरी|खरे|आहे|का\?|का/g, ' '));
+      if (v && v.kind === 'match') return { text: 'हो — हा मजकूर मंजूर प्रसिद्धीपत्रकाशी जुळतो. मूळ प्रत खाली आहे.', cites: v.ids };
+      return { text: 'संदेश खरा आहे का ते तपासण्यासाठी तो “फॅक्ट चेक” मध्ये पेस्ट करा — मी तो मंजूर प्रसिद्धीपत्रकांशी जुळवून दाखवीन.', cites: [], fc: true };
+    }
+    const num = t.match(/[०-९]{6}/);
+    if (num) {
+      const r = data.find((x) => x.no === num[0]);
+      if (r) return { text: 'वृत्त क्र. ' + num[0] + ' हे ' + short(r) + ' आहे.', cites: [r.id] };
+      return { text: 'वृत्त क्र. ' + num[0] + ' मंजूर नोंदीत सापडला नाही. क्रमांक पुन्हा तपासा.', cites: [] };
+    }
+    if (/आज|ताज/.test(t)) {
+      const today = data.filter((r) => r.day === 0);
+      return { text: 'आज (३ ऑक्टोबर) ' + this.mrd(fold.length) + ' प्रसिद्धीपत्रके मंजूर झाली. सर्वात ताजे: ' + short(today[0]) + ', ' + today[0].time + ' वाजता.', cites: today.map((r) => r.id) };
+    }
+    const places = {};
+    data.forEach((r) => { if (r.place !== 'राज्यव्यापी') places[r.place] = true; });
+    const place = Object.keys(places).find((p) => t.indexOf(p) !== -1 || t.indexOf(p.split(' ')[0]) !== -1);
+    if (place) {
+      const list = data.filter((r) => r.place === place);
+      return { text: place + ' जिल्ह्यातील ' + this.mrd(list.length) + ' अलीकडील प्रसिद्धीपत्रके. सर्वात ताजे: ' + short(list[0]) + '.', cites: list.slice(0, 3).map((r) => r.id) };
+    }
+    const TOPIC = { 'दुष्काळ २०२६': ['दुष्काळ', 'पाणी', 'टंचाई', 'जलसंधारण', 'पाऊस', 'चारा'], 'शेती': ['शेत', 'पीक', 'कर्जमुक्ती', 'कर्ज', 'आंबा', 'काजू'], 'उद्योग': ['गुंतवणूक', 'उद्योग', 'समिट', 'रोजगार'], 'आरोग्य व शिक्षण': ['आरोग्य', 'रुग्णालय', 'शाळा', 'शिक्षण', 'बाल'], 'संस्कृती': ['मराठी', 'भाषा', 'गांधी', 'फुले'], 'आपत्ती व सुरक्षा': ['भूकंप', 'सायबर', 'आपत्ती'], 'शहरे व सुविधा': ['धारावी', 'एसटी', 'वीज', 'कुंभ', 'प्रवास'], 'पर्यावरण': ['वन', 'जैवविविधता'] };
+    const topic = Object.keys(TOPIC).find((k) => TOPIC[k].some((w) => t.indexOf(w) !== -1));
+    if (topic) {
+      const stems = this.words(t).map((w) => w.slice(0, Math.max(3, w.length - 2)));
+      const rank = (r) => stems.filter((w) => (r.title + ' ' + r.summary).indexOf(w) !== -1).length;
+      const list = data.filter((r) => r.topic === topic).sort((x, y) => rank(y) - rank(x));
+      const lead = list.find((r) => r.summary) || list[0];
+      return { text: '“' + topic + '” विषयावर ' + this.mrd(list.length) + ' अलीकडील प्रसिद्धीपत्रके आहेत. ' + (lead.summary ? lead.summary + ' — ' : '') + 'स्रोत: ' + short(lead) + '.', cites: list.slice(0, 3).map((r) => r.id) };
+    }
+    const qw = this.words(t);
+    const hits = data.map((r) => ({ r: r, n: qw.filter((w) => (r.title + ' ' + r.summary).indexOf(w) !== -1).length })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n);
+    if (hits.length) return { text: 'तुमच्या प्रश्नाशी संबंधित ही अधिकृत प्रसिद्धीपत्रके सापडली:', cites: hits.slice(0, 3).map((x) => x.r.id) };
+    return { text: 'याबद्दल मंजूर प्रसिद्धीपत्रकांमध्ये माहिती सापडली नाही. मी फक्त महासंचालनालयाने मंजूर केलेल्या बातम्यांवरून उत्तर देतो — अंदाज करत नाही. जिल्हा, योजना किंवा वृत्त क्रमांक लिहून पाहा.', cites: [] };
+  }
+  openChat(q) {
+    this.setState({ chatOpen: true, palette: false });
+    if (q) this.sendChat(q);
+  }
+  sendChat(text) {
+    const t = (text || '').trim();
+    if (!t || this.state.typing) return;
+    this.setState({ msgs: this.state.msgs.concat([{ from: 'me', text: t, cites: [] }]), chatIn: '', typing: true });
+    clearTimeout(this.chatTimer);
+    this.chatTimer = setTimeout(() => {
+      const a = this.answer(t);
+      this.setState({ msgs: this.state.msgs.concat([Object.assign({ from: 'bot' }, a)]), typing: false });
+    }, 650);
+  }
+  goFactCheck(text) {
+    this.setState({ chatOpen: false, fcText: text || this.state.fcText, fcRes: null, fcSent: false }, () => {
+      const el = window.document.getElementById('factcheck');
+      if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const ta = window.document.getElementById('fc-text');
+      if (ta) ta.focus({ preventScroll: true });
+    });
+  }
+  componentDidUpdate(prevProps, prevState) {
+    const s = this.state || {};
+    const doc = window.document;
+    if (s.readerId && s.readerId !== prevState.readerId) {
+      const d = doc.getElementById('reader');
+      if (d) { d.scrollTop = 0; d.focus(); }
+    }
+    if (s.palette && !prevState.palette) {
+      const q = doc.getElementById('pal-q');
+      if (q) q.focus();
+    }
+    if (s.foldOpen && !prevState.foldOpen) {
+      const d = doc.getElementById('fold-dialog');
+      if (d) d.focus();
+    }
+    if (s.chatOpen && !prevState.chatOpen) {
+      const ci = doc.getElementById('chat-in');
+      if (ci) ci.focus();
+    }
+    if (!s.chatOpen && prevState.chatOpen && !s.readerId) {
+      const ct = doc.getElementById('chat-trigger');
+      if (ct) ct.focus();
+    }
+    if (s.chatOpen && ((s.msgs || []).length !== (prevState.msgs || []).length || s.typing !== prevState.typing || !prevState.chatOpen)) {
+      const log = doc.getElementById('chat-log');
+      if (log) log.scrollTop = log.scrollHeight;
+    }
+    const closedReader = !s.readerId && prevState.readerId;
+    const closedPalette = !s.palette && prevState.palette && !s.readerId;
+    const closedFold = !s.foldOpen && prevState.foldOpen;
+    if ((closedReader || closedPalette || closedFold) && this.returnTo && this.returnTo.focus && doc.contains(this.returnTo)) {
+      this.returnTo.focus();
+      this.returnTo = null;
+    }
+    const all = doc.getElementById('fold-all');
+    if (all) {
+      const ids = s.order || [];
+      const n = ids.filter((id) => (s.sel || {})[id]).length;
+      all.indeterminate = n > 0 && n < ids.length;
+    }
+  }
+  componentWillUnmount() {
+    clearTimeout(this.moveTimer);
+    clearTimeout(this.dlTimer);
+    clearTimeout(this.toastTimer);
+    clearTimeout(this.chatTimer);
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  }
+  releases() {
+    // Real releases from mahasamvad.in, 30 Sept – 3 Oct 2026. Newest first. day = offset from Saturday 3 Oct 2026.
+    return [
+      {"id": "r217722", "title": "आकस्मिक पाणीपुरवठ्यासाठी तात्पुरत्या उपाययोजनांचे अंदाजपत्रक तयार करण्याचे पालकमंत्री नितेश राणे यांचे निर्देश", "place": "सिंधुदुर्ग", "dept": "जिल्हा वार्ता", "topic": "दुष्काळ २०२६", "day": 0, "time": "१९:२२", "no": "२१७७२२", "summary": "सिंधुदुर्ग, दि. ३ : जिल्ह्यातील सर्व भागांमध्ये आवश्यकतेनुसार पिण्याचे पाणी उपलब्ध करून देण्यासाठी संभाव्य उपाययोजनांचे आगाऊ नियोजन करण्यात येणार आहे.", "img": "assets/ms-217722.jpg", "cm": false},
+      {"id": "r217711", "title": "मराठी ही केवळ संवादाची भाषा नव्हे, तर संस्कृती-इतिहासाची साक्षीदार; डिजिटल युगात मराठीला ज्ञानभाषा करणार – मुख्यमंत्री देवेंद्र फडणवीस", "place": "मुंबई", "dept": "वृत्त विशेष", "topic": "संस्कृती", "day": 0, "time": "१८:३९", "no": "२१७७११", "summary": "मुंबई, दि. ३ : मराठी भाषा ही केवळ संवादाचे माध्यम नाही, तर ती आपल्या समृद्ध संस्कृतीची वाहक आणि जाज्वल्य इतिहासाची साक्षीदार आहे. विपुल शब्दसंपदा, समृद्ध साहित्यपरंपरा आणि विविध बोलीभाषांचा वारसा लाभलेल्या मराठीला २१व्या शतकात डिजिटल आणि ज्ञानभाषा म्हणून अधिक सक्षम करण्यात येईल.", "img": "assets/ms-217711.jpg", "cm": true},
+      {"id": "r217707", "title": "भूकंपाच्या पार्श्वभूमीवर नांदेड प्रशासन सतर्क; जिल्ह्यात जीवित व वित्तहानी नाही, नागरिकांनी घाबरू नये, अफवांवर विश्वास ठेवू नये – पालकमंत्री अतुल सावे", "place": "नांदेड", "dept": "जिल्हा वार्ता", "topic": "आपत्ती व सुरक्षा", "day": 0, "time": "१८:२८", "no": "२१७७०७", "summary": "नांदेड, दि. ३ : सकाळी ०७:४६ व ०९:४३ वाजता भूकंपाचे सौम्य धक्के जाणवल्याची माहिती जिल्हा आपत्कालीन कार्यकेंद्रास प्राप्त झाली आहे. जिल्ह्यात जीवित व वित्तहानी झालेली नाही.", "img": "assets/ms-217707.jpg", "cm": false},
+      {"id": "r217703", "title": "आंबा-काजू उत्पादकांना AI तंत्रज्ञानाची जोड; शेती क्षेत्रात क्रांतिकारी बदल घडवून आणणारा प्रकल्प – पालकमंत्री नितेश राणे", "place": "सिंधुदुर्ग", "dept": "जिल्हा वार्ता", "topic": "शेती", "day": 0, "time": "१८:१७", "no": "२१७७०३", "summary": "सिंधुदुर्ग, दि. ३ : बदलत्या हवामानामुळे गेल्या दीड-दोन वर्षांत जिल्ह्यातील आंबा आणि काजू फळपिकांवर परिणाम झाला आहे. शेतकऱ्यांना शाश्वत शेतीसाठी आधुनिक तंत्रज्ञानाची जोड देण्यात येत आहे.", "img": "assets/ms-217703.jpg", "cm": false},
+      {"id": "r217699", "title": "सिंधुदुर्गच्या पाण्यासाठी आता प्रत्येकाचा हातभार! ‘सिंधुदुर्ग हे आपले कुटुंब’ मानून संभाव्य दुष्काळजन्य परिस्थितीवर मात करण्यासाठी एकत्र या – पालकमंत्री नितेश राणे", "place": "सिंधुदुर्ग", "dept": "जिल्हा वार्ता", "topic": "दुष्काळ २०२६", "day": 0, "time": "१८:०९", "no": "२१७६९९", "summary": "सिंधुदुर्गनगरी, दि. ३ : संभाव्य दुष्काळजन्य परिस्थितीचे संकट निर्माण होत असताना उद्योजक, व्यापारी, संस्था आणि नागरिक — समाजातील प्रत्येक घटकाने आपापल्या परीने योगदान द्यावे, असे आवाहन करण्यात आले.", "img": "assets/ms-217699.jpg", "cm": false},
+      {"id": "r217694", "title": "ग्रामीण भागात रोजगारनिर्मिती, जलसंधारणाची कामे व्यापक प्रमाणावर राबविणार – महसूल मंत्री चंद्रशेखर बावनकुळे", "place": "अकोला", "dept": "जिल्हा वार्ता", "topic": "दुष्काळ २०२६", "day": 0, "time": "१७:४३", "no": "२१७६९४", "summary": "अकोला, दि. ३ : दुष्काळग्रस्त शेतकऱ्यांना मदत करणे हेच शासनाचे प्राधान्य असून, ग्रामीण भागात रोजगारनिर्मिती, पशुधनासाठी वैरण, पेयजल व्यवस्था आणि जलसंधारणाची कामे व्यापक प्रमाणावर राबविण्यात येतील.", "img": "assets/ms-217694.jpg", "cm": false},
+      {"id": "r217684", "title": "हरकुळ बुद्रुक येथे वनराई बंधारा निर्मितीमध्ये पालकमंत्री नितेश राणे यांचे श्रमदान; लोकसहभागातून जलसंवर्धनाचे आवाहन", "place": "सिंधुदुर्ग", "dept": "जिल्हा वार्ता", "topic": "दुष्काळ २०२६", "day": 0, "time": "१३:१६", "no": "२१७६८४", "summary": "सिंधुदुर्ग, दि. ३ : जलसंधारणाच्या कामांना लोकसहभागाची जोड देत आगामी काळात दुष्काळाचे संकट कोणत्याही पिढीला भेडसावू नये, यासाठी सर्वांनी एकत्रितपणे काम करण्याचे आवाहन करण्यात आले.", "img": "assets/ms-217684.jpg", "cm": false},
+      {"id": "r217674", "title": "वाडिया रुग्णालयामुळे मालेगावकरांना दर्जेदार आरोग्यसेवा – मंत्री दादाजी भुसे", "place": "नाशिक", "dept": "जिल्हा वार्ता", "topic": "आरोग्य व शिक्षण", "day": -1, "time": "२३:५६", "no": "२१७६७४", "summary": "मालेगाव, दि. २ : महानगरपालिकेच्या माध्यमातून साकारलेल्या वाडिया रुग्णालयामुळे शहरातील नागरिकांना, विशेषतः गरीब व गरजू रुग्णांना दर्जेदार आरोग्यसेवा उपलब्ध होणार आहे.", "img": "assets/ms-217674.jpg", "cm": false},
+      {"id": "r217660", "title": "महसूल मंत्री चंद्रशेखर बावनकुळे यांनी केली दुष्काळी स्थितीची पाहणी", "place": "छत्रपती संभाजीनगर", "dept": "जिल्हा वार्ता", "topic": "दुष्काळ २०२६", "day": -1, "time": "१८:४०", "no": "२१७६६०", "summary": "छत्रपती संभाजीनगर, दि. २ : दुष्काळी स्थितीच्या पार्श्वभूमीवर महसूल मंत्री चंद्रशेखर बावनकुळे यांनी शेकटा मंडळात पिकांच्या अवस्थेची पाहणी केली.", "img": "assets/ms-217660.jpg", "cm": false},
+      {"id": "r217652", "title": "मुख्यमंत्री देवेंद्र फडणवीस यांचे राष्ट्रपिता महात्मा गांधी आणि लाल बहादूर शास्त्री यांना अभिवादन", "place": "मुंबई", "dept": "वृत्त विशेष", "topic": "संस्कृती", "day": -1, "time": "१८:१४", "no": "२१७६५२", "summary": "मुंबई, दि. २ : मुख्यमंत्री देवेंद्र फडणवीस यांनी ‘वर्षा’ या शासकीय निवासस्थानी राष्ट्रपिता महात्मा गांधी आणि माजी पंतप्रधान भारतरत्न लाल बहादूर शास्त्री यांच्या प्रतिमेस पुष्पांजली अर्पण करून अभिवादन केले.", "img": "assets/ms-217652.jpg", "cm": true},
+      {"id": "r217646", "title": "भविष्यातील सायबर गुन्ह्यांपासून संरक्षणासाठी जनजागृती हीच ‘फायरवॉल’ – मंत्री ॲड. आशिष शेलार", "place": "मुंबई", "dept": "वृत्त विशेष", "topic": "आपत्ती व सुरक्षा", "day": -1, "time": "१८:१०", "no": "२१७६४६", "summary": "मुंबई, दि. २ : बीएसईमध्ये ‘रिंग द बेल फॉर सिक्युरिटी’ उपक्रम; ऑक्टोबर महिन्यात सायबर सुरक्षेबाबत जनजागृती करण्यात येणार आहे.", "img": "assets/ms-217646.jpg", "cm": false},
+      {"id": "r217624", "title": "‘आवडेल तेथे कोठेही प्रवास पास’, आता ऑनलाइन; एसटीचा प्रवास अधिक सुलभ", "place": "राज्यव्यापी", "dept": "वृत्त विशेष", "topic": "शहरे व सुविधा", "day": -1, "time": "१७:०६", "no": "२१७६२४", "summary": "मुंबई, दि. २ : एसटी महामंडळाच्या ‘आवडेल तेथे कोठेही प्रवास पास’ योजनेतील पास आता ऑनलाइन उपलब्ध होणार असल्याने प्रवाशांना आगारात जाऊन पास काढण्याची गरज राहणार नाही.", "img": "assets/ms-217624.jpg", "cm": false},
+      {"id": "r217619", "title": "‘धारावी एक्सपिरियन्स सेंटर’मुळे धारावीकरांमध्ये विश्वासनिर्मिती होईल – मुख्यमंत्री देवेंद्र फडणवीस", "place": "मुंबई", "dept": "वृत्त विशेष", "topic": "शहरे व सुविधा", "day": -1, "time": "१६:५९", "no": "२१७६१९", "summary": "मुंबई, दि. २ : ‘धारावी एक्सपिरियन्स सेंटर’मध्ये नागरिकांना पुनर्निर्माण प्रकल्पाचे आराखडेच नव्हे, तर भविष्यातील घराचा, परिसराचा आणि कामाच्या ठिकाणाचा प्रत्यक्ष अनुभव घेता येईल.", "img": "assets/ms-217619.jpg", "cm": true},
+      {"id": "r217606", "title": "जिल्हाधिकारी एस. कार्तिकेयन यांच्याकडून मंगळवेढा-सांगोला तालुक्यात दुष्काळी परिस्थितीची पाहणी", "place": "सोलापूर", "dept": "जिल्हा वार्ता", "topic": "दुष्काळ २०२६", "day": -1, "time": "१६:३५", "no": "२१७६०६", "summary": "सोलापूर, दि. २ : जिल्हाधिकाऱ्यांनी मंगळवेढा व सांगोला तालुक्यातील गावांना भेटी देऊन पिकांचे नुकसान, पाणीटंचाई, कोरड्या विहिरी आणि जनावरांसाठी उपलब्ध चाऱ्याची पाहणी केली.", "img": "assets/ms-217606.jpg", "cm": false},
+      {"id": "r217577", "title": "महाराष्ट्र इन्व्हेस्टमेंट समिटमध्ये ८.५७ लाख कोटींचे सामंजस्य करार", "place": "मुंबई", "dept": "वृत्त विशेष", "topic": "उद्योग", "day": -2, "time": "२३:५४", "no": "२१७५७७", "summary": "मुंबई, दि. १ : महाराष्ट्र इन्व्हेस्टमेंट समिटमध्ये ८ लाख ५७ हजार ४५२ कोटी रुपयांच्या गुंतवणुकीचे ६७ सामंजस्य करार मुख्यमंत्री देवेंद्र फडणवीस यांच्या उपस्थितीत करण्यात आले.", "img": "assets/ms-217577.jpg", "cm": true},
+      {"id": "r217571", "title": "‘इन्व्हेस्ट महाराष्ट्र’च्या माध्यमातून गुंतवणुकीला नवी ओळख आणि विकासाला नवी दिशा – मुख्यमंत्री देवेंद्र फडणवीस", "place": "मुंबई", "dept": "वृत्त विशेष", "topic": "उद्योग", "day": -2, "time": "२३:५०", "no": "२१७५७१", "summary": "मुंबई, दि. १ : महाराष्ट्राला जगातील गुंतवणुकीचे प्रमुख केंद्र बनविण्याच्या उद्देशाने ‘इन्व्हेस्ट महाराष्ट्र’ हे व्यासपीठ कार्यरत राहणार आहे.", "img": "assets/ms-217571.jpg", "cm": true},
+      {"id": "r217565", "title": "वनसंपदेच्या व्यवस्थापनातून जैवविविधता संवर्धन व आर्थिक विकास साधा – सहपालकमंत्री ॲड. आशिष जयस्वाल", "place": "गडचिरोली", "dept": "जिल्हा वार्ता", "topic": "पर्यावरण", "day": -2, "time": "२१:३९", "no": "२१७५६५", "summary": "गडचिरोली, दि. १ : जिल्ह्यातील वनसंपदेचे शाश्वत व्यवस्थापन करून वन्यजीव व जैवविविधतेचे संवर्धन आणि आर्थिक विकासाच्या संधींचा अभ्यास करण्याच्या सूचना देण्यात आल्या.", "img": "assets/ms-217565.jpg", "cm": false},
+      {"id": "r217559", "title": "कर्जमुक्तीच्या तिसऱ्या टप्प्यात ३ लाख २७ हजार २५० शेतकऱ्यांना ३ हजार १६० कोटी ४३ लाख रुपयांचा लाभ", "place": "राज्यव्यापी", "dept": "वृत्त विशेष", "topic": "शेती", "day": -2, "time": "२१:१०", "no": "२१७५५९", "summary": "मुंबई, दि. १ : पुण्यश्लोक अहिल्यादेवी होळकर शेतकरी कर्जमुक्ती योजना २०२६ च्या तिसऱ्या टप्प्यात राज्यातील ३ लाख २७ हजार २५० पात्र शेतकऱ्यांना कर्जमुक्ती लाभाचे वितरण सुरू करण्यात आले आहे.", "img": "assets/ms-217559.jpg", "cm": true},
+      {"id": "r217551", "title": "महात्मा जोतिराव फुले यांच्या द्विशताब्दी वर्षानिमित्त विशेष स्मृती नाणे आणि टपाल तिकीट प्रसिद्ध होणार", "place": "राज्यव्यापी", "dept": "वृत्त विशेष", "topic": "संस्कृती", "day": -2, "time": "२०:५५", "no": "२१७५५१", "summary": "मुंबई, दि. १ : महात्मा जोतिराव फुले यांच्या द्विशताब्दी जयंती वर्षानिमित्त विशेष स्मृती नाणे आणि टपाल तिकिटासाठी शासनाकडून ५५ लाख रुपयांच्या खर्चास प्रशासकीय मान्यता देण्यात आली.", "img": "assets/ms-217551.jpg", "cm": false},
+      {"id": "r217543", "title": "शिक्षण व आरोग्य संस्थांच्या सुधारणांसाठी जिल्हानिहाय कालबद्ध अभियान राबवा – मुख्यमंत्री देवेंद्र फडणवीस", "place": "राज्यव्यापी", "dept": "वृत्त विशेष", "topic": "आरोग्य व शिक्षण", "day": -2, "time": "२०:३५", "no": "२१७५४३", "summary": "मुंबई, दि. १ : शाळा, आश्रमशाळा, अंगणवाडी केंद्रे, प्राथमिक आरोग्य केंद्रे आणि आयटीआयच्या इमारतींची देखभाल-दुरुस्ती व पायाभूत सुविधांसाठी अल्पकालीन व दीर्घकालीन कृती आराखडे तयार करण्याचे निर्देश.", "img": "assets/ms-217543.jpg", "cm": true},
+      {"id": "r217538", "title": "बाल्यावस्थेच्या सर्वांगीण विकासासाठी ‘पहिल्या हजार दिवसांचे मिशन’ – मुख्यमंत्री देवेंद्र फडणवीस", "place": "राज्यव्यापी", "dept": "वृत्त विशेष", "topic": "आरोग्य व शिक्षण", "day": -2, "time": "२०:२०", "no": "२१७५३८", "summary": "मुंबई, दि. १ : माता आणि बालक यांना केंद्रस्थानी ठेवून विभागांनी एकात्मिक पद्धतीने काम करावे आणि डेटा आधारित देखरेख यंत्रणा उभारावी, असे निर्देश देण्यात आले.", "img": "assets/ms-217538.jpg", "cm": true},
+      {"id": "r217534", "title": "मुंबईत २९३ ग्राहकांना घरगुती वीज जोडणीस मंजुरी", "place": "मुंबई", "dept": "वृत्त विशेष", "topic": "शहरे व सुविधा", "day": -2, "time": "२०:०५", "no": "२१७५३४", "summary": "मुंबई, दि. १ : सेवा संकल्प अभियानांतर्गत मुंबई शहरात २९३ ग्राहकांना घरगुती वीज जोडणीस मंजुरी आणि १०२१ ग्राहकांच्या नावनोंदणीस मान्यता देण्यात आली.", "img": "assets/ms-217534.jpg", "cm": false},
+      {"id": "r217516", "title": "गर्दी व्यवस्थापन, वाहतूक, स्वच्छता व कचरा व्यवस्थापनाचे सूक्ष्म नियोजन करावे – कुंभमेळा आयुक्त शेखर सिंह", "place": "नाशिक", "dept": "जिल्हा वार्ता", "topic": "शहरे व सुविधा", "day": -2, "time": "१८:०५", "no": "२१७५१६", "summary": "नाशिक, दि. १ : सिंहस्थ कुंभमेळा २०२७ च्या पार्श्वभूमीवर सप्तशृंग गड येथे गर्दी व्यवस्थापन, वाहतूक, पिण्याचे पाणी आणि भाविकांच्या सुविधांचे आतापासूनच सूक्ष्म नियोजन करण्याचे निर्देश.", "img": "assets/ms-217516.jpg", "cm": false},
+      {"id": "r217489", "title": "पावसाअभावी भातशेती संकटात; कुरतडे-कातळवाडी, डुगवे येथे जिल्हाधिकाऱ्यांनी केली पाहणी", "place": "रत्नागिरी", "dept": "जिल्हा वार्ता", "topic": "दुष्काळ २०२६", "day": -2, "time": "१५:२७", "no": "२१७४८९", "summary": "रत्नागिरी, दि. १ : पावसाने फिरवलेली पाठ आणि ऐन हंगामातील ऊन यामुळे संकटात आलेल्या शेतकऱ्यांना धीर देण्यासाठी जिल्हाधिकारी मनुज जिंदल थेट बांधावर पोहोचले; नुकसानीचे तातडीने पंचनामे करण्याचे आदेश.", "img": "assets/ms-217489.jpg", "cm": false}
+    ];
+  }
+  foldDays() {
+    // Approved articles per day, keyed by offset from 3 Oct 2026, in the desk's order.
+    return {
+      '0': [{"id": "f217722", "title": "आकस्मिक पाणीपुरवठ्यासाठी तात्पुरत्या उपाययोजनांचे अंदाजपत्रक तयार करण्याचे पालकमंत्री नितेश राणे यांचे निर्देश", "no": "२१७७२२", "district": "सिंधुदुर्ग", "cm": false}, {"id": "f217711", "title": "मराठी ही केवळ संवादाची भाषा नव्हे, तर संस्कृती-इतिहासाची साक्षीदार; डिजिटल युगात मराठीला ज्ञानभाषा करणार – मुख्यमंत्री देवेंद्र फडणवीस", "no": "२१७७११", "district": "मुंबई", "cm": true}, {"id": "f217707", "title": "भूकंपाच्या पार्श्वभूमीवर नांदेड प्रशासन सतर्क; जिल्ह्यात जीवित व वित्तहानी नाही, नागरिकांनी घाबरू नये, अफवांवर विश्वास ठेवू नये – पालकमंत्री अतुल सावे", "no": "२१७७०७", "district": "नांदेड", "cm": false}, {"id": "f217703", "title": "आंबा-काजू उत्पादकांना AI तंत्रज्ञानाची जोड; शेती क्षेत्रात क्रांतिकारी बदल घडवून आणणारा प्रकल्प – पालकमंत्री नितेश राणे", "no": "२१७७०३", "district": "सिंधुदुर्ग", "cm": false}, {"id": "f217699", "title": "सिंधुदुर्गच्या पाण्यासाठी आता प्रत्येकाचा हातभार! ‘सिंधुदुर्ग हे आपले कुटुंब’ मानून संभाव्य दुष्काळजन्य परिस्थितीवर मात करण्यासाठी एकत्र या – पालकमंत्री नितेश राणे", "no": "२१७६९९", "district": "सिंधुदुर्ग", "cm": false}, {"id": "f217694", "title": "ग्रामीण भागात रोजगारनिर्मिती, जलसंधारणाची कामे व्यापक प्रमाणावर राबविणार – महसूल मंत्री चंद्रशेखर बावनकुळे", "no": "२१७६९४", "district": "अकोला", "cm": false}, {"id": "f217684", "title": "हरकुळ बुद्रुक येथे वनराई बंधारा निर्मितीमध्ये पालकमंत्री नितेश राणे यांचे श्रमदान; लोकसहभागातून जलसंवर्धनाचे आवाहन", "no": "२१७६८४", "district": "सिंधुदुर्ग", "cm": false}],
+      '-1': [{"id": "f217674", "title": "वाडिया रुग्णालयामुळे मालेगावकरांना दर्जेदार आरोग्यसेवा – मंत्री दादाजी भुसे", "no": "२१७६७४", "district": "नाशिक", "cm": false}, {"id": "f217660", "title": "महसूल मंत्री चंद्रशेखर बावनकुळे यांनी केली दुष्काळी स्थितीची पाहणी", "no": "२१७६६०", "district": "छत्रपती संभाजीनगर", "cm": false}, {"id": "f217652", "title": "मुख्यमंत्री देवेंद्र फडणवीस यांचे राष्ट्रपिता महात्मा गांधी आणि लाल बहादूर शास्त्री यांना अभिवादन", "no": "२१७६५२", "district": "मुंबई", "cm": true}, {"id": "f217646", "title": "भविष्यातील सायबर गुन्ह्यांपासून संरक्षणासाठी जनजागृती हीच ‘फायरवॉल’ – मंत्री ॲड. आशिष शेलार", "no": "२१७६४६", "district": "मुंबई", "cm": false}, {"id": "f217624", "title": "‘आवडेल तेथे कोठेही प्रवास पास’, आता ऑनलाइन; एसटीचा प्रवास अधिक सुलभ", "no": "२१७६२४", "district": null, "cm": false}, {"id": "f217619", "title": "‘धारावी एक्सपिरियन्स सेंटर’मुळे धारावीकरांमध्ये विश्वासनिर्मिती होईल – मुख्यमंत्री देवेंद्र फडणवीस", "no": "२१७६१९", "district": "मुंबई", "cm": true}, {"id": "f217606", "title": "जिल्हाधिकारी एस. कार्तिकेयन यांच्याकडून मंगळवेढा-सांगोला तालुक्यात दुष्काळी परिस्थितीची पाहणी", "no": "२१७६०६", "district": "सोलापूर", "cm": false}],
+      '-2': [{"id": "f217577", "title": "महाराष्ट्र इन्व्हेस्टमेंट समिटमध्ये ८.५७ लाख कोटींचे सामंजस्य करार", "no": "२१७५७७", "district": "मुंबई", "cm": true}, {"id": "f217571", "title": "‘इन्व्हेस्ट महाराष्ट्र’च्या माध्यमातून गुंतवणुकीला नवी ओळख आणि विकासाला नवी दिशा – मुख्यमंत्री देवेंद्र फडणवीस", "no": "२१७५७१", "district": "मुंबई", "cm": true}, {"id": "f217565", "title": "वनसंपदेच्या व्यवस्थापनातून जैवविविधता संवर्धन व आर्थिक विकास साधा – सहपालकमंत्री ॲड. आशिष जयस्वाल", "no": "२१७५६५", "district": "गडचिरोली", "cm": false}, {"id": "f217559", "title": "कर्जमुक्तीच्या तिसऱ्या टप्प्यात ३ लाख २७ हजार २५० शेतकऱ्यांना ३ हजार १६० कोटी ४३ लाख रुपयांचा लाभ", "no": "२१७५५९", "district": null, "cm": true}, {"id": "f217551", "title": "महात्मा जोतिराव फुले यांच्या द्विशताब्दी वर्षानिमित्त विशेष स्मृती नाणे आणि टपाल तिकीट प्रसिद्ध होणार", "no": "२१७५५१", "district": null, "cm": false}, {"id": "f217543", "title": "शिक्षण व आरोग्य संस्थांच्या सुधारणांसाठी जिल्हानिहाय कालबद्ध अभियान राबवा – मुख्यमंत्री देवेंद्र फडणवीस", "no": "२१७५४३", "district": null, "cm": true}, {"id": "f217538", "title": "बाल्यावस्थेच्या सर्वांगीण विकासासाठी ‘पहिल्या हजार दिवसांचे मिशन’ – मुख्यमंत्री देवेंद्र फडणवीस", "no": "२१७५३८", "district": null, "cm": true}, {"id": "f217534", "title": "मुंबईत २९३ ग्राहकांना घरगुती वीज जोडणीस मंजुरी", "no": "२१७५३४", "district": "मुंबई", "cm": false}, {"id": "f217516", "title": "गर्दी व्यवस्थापन, वाहतूक, स्वच्छता व कचरा व्यवस्थापनाचे सूक्ष्म नियोजन करावे – कुंभमेळा आयुक्त शेखर सिंह", "no": "२१७५१६", "district": "नाशिक", "cm": false}, {"id": "f217489", "title": "पावसाअभावी भातशेती संकटात; कुरतडे-कातळवाडी, डुगवे येथे जिल्हाधिकाऱ्यांनी केली पाहणी", "no": "२१७४८९", "district": "रत्नागिरी", "cm": false}]
+    };
+  }
+  remember() {
+    const s = this.state;
+    if (!s.readerId && !s.palette && !s.foldOpen) this.returnTo = window.document.activeElement;
+  }
+  openReader(id) { this.remember(); this.setState({ readerId: id, palette: false }); }
+  closeReader() { this.setState({ readerId: null }); }
+  openPalette(q) { this.remember(); this.setState({ palette: true, q: q || '' }); }
+  closePalette() { this.setState({ palette: false }); }
+  pickDay(off) {
+    const ids = (this.foldDays()[String(off)] || []).map((a) => a.id);
+    const sel = {};
+    ids.forEach((id) => { sel[id] = true; });
+    clearTimeout(this.dlTimer);
+    return { off: off, order: ids, sel: sel, moving: null, dl: 'idle' };
+  }
+  openFold() { this.remember(); this.setState(Object.assign({ foldOpen: true, readerId: null, palette: false }, this.pickDay(0))); }
+  closeFold() { clearTimeout(this.dlTimer); this.setState({ foldOpen: false, dl: 'idle' }); }
+  move(order, from, to) {
+    if (to < 0 || to >= order.length) return;
+    const next = order.slice();
+    const moved = next.splice(from, 1)[0];
+    next.splice(to, 0, moved);
+    clearTimeout(this.moveTimer);
+    this.moveTimer = setTimeout(() => this.setState({ moving: null }), 400);
+    this.setState({ order: next, moving: moved, dl: 'idle' });
+  }
+  download(ids) {
+    if (!ids.length || this.state.dl === 'busy') return;
+    // In the app: GET /api/fold/<date>/docx?ids=<chosen ids, in this order>
+    clearTimeout(this.dlTimer);
+    this.setState({ dl: 'busy' });
+    this.dlTimer = setTimeout(() => this.setState({ dl: 'done' }), 1200);
+  }
+  flash(msg) {
+    clearTimeout(this.toastTimer);
+    this.setState({ toast: msg });
+    this.toastTimer = setTimeout(() => this.setState({ toast: '' }), 2600);
+  }
+  speak(r) {
+    const syn = window.speechSynthesis;
+    if (!syn || !window.SpeechSynthesisUtterance) { this.flash('या ब्राउझरमध्ये ऐकण्याची सोय उपलब्ध नाही'); return; }
+    if (this.state.speaking === r.id) { syn.cancel(); this.setState({ speaking: null }); return; }
+    syn.cancel();
+    const u = new window.SpeechSynthesisUtterance(r.title + '. ' + (r.summary || ''));
+    u.lang = 'mr-IN';
+    u.rate = 0.95;
+    const end = () => { if (this.state.speaking === r.id) this.setState({ speaking: null }); };
+    u.onend = end;
+    u.onerror = end;
+    this.setState({ speaking: r.id });
+    syn.speak(u);
+  }
+  copy(r) {
+    const text = r.title + '\n\n' + (r.summary || '') + (r.no ? '\n\nवृत्त क्र. ' + r.no : '') + '\n— माहिती व जनसंपर्क महासंचालनालय, महाराष्ट्र शासन';
+    const done = () => this.flash('बातमीचा मजकूर कॉपी झाला');
+    const fail = () => this.flash('कॉपी करता आले नाही — मजकूर निवडून कॉपी करा');
+    try {
+      const c = window.navigator.clipboard;
+      if (c && c.writeText) c.writeText(text).then(done, fail); else fail();
+    } catch (e) { fail(); }
+  }
+  trap(e, id, close) {
+    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (e.key !== 'Tab') return;
+    const d = window.document.getElementById(id);
+    if (!d) return;
+    const f = Array.prototype.filter.call(d.querySelectorAll('button, a[href], input, select'), (el) => !el.disabled);
+    if (!f.length) return;
+    const first = f[0];
+    const last = f[f.length - 1];
+    const act = window.document.activeElement;
+    if (e.shiftKey && (act === first || act === d)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && act === last) { e.preventDefault(); first.focus(); }
+  }
+  renderVals() {
+    const primary = this.props.primary ?? '#A8172C';
+    const accent = this.props.accent ?? '#E8871E';
+    const place = this.props.place ?? '#1F6B4A';
+    const dark = (hex, k) => {
+      const n = parseInt(hex.slice(1), 16);
+      return 'rgb(' + Math.round((n >> 16) * k) + ',' + Math.round(((n >> 8) & 255) * k) + ',' + Math.round((n & 255) * k) + ')';
+    };
+    const soft = (hex, a) => {
+      const n = parseInt(hex.slice(1), 16);
+      const mix = (c) => Math.round(c * a + 255 * (1 - a));
+      return 'rgb(' + mix(n >> 16) + ',' + mix((n >> 8) & 255) + ',' + mix(n & 255) + ')';
+    };
+    const digits = '०१२३४५६७८९';
+    const mr = (n) => String(n).replace(/[0-9]/g, (d) => digits[+d]);
+    const s = this.state || {};
+    const stop = (e) => { if (e && e.preventDefault) e.preventDefault(); };
+    const rgba = (hex, al) => { const n = parseInt(hex.slice(1), 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + al + ')'; };
+    const primarySoft = soft(primary, 0.1);
+    const accentSoft = soft(accent, 0.18);
+    const accentInk = dark(accent, 0.55);
+    const DATES = { '0': '३ ऑक्टो.', '-1': '२ ऑक्टो.', '-2': '१ ऑक्टो.', '-3': '३० सप्टें.' };
+    const FULL = { '0': 'शनिवार, ३ ऑक्टोबर २०२६', '-1': 'शुक्रवार, २ ऑक्टोबर २०२६', '-2': 'गुरुवार, १ ऑक्टोबर २०२६', '-3': 'बुधवार, ३० सप्टेंबर २०२६' };
+    const fs = s.fs ?? 1;
+    const scale = [0.9, 1, 1.18][fs];
+    const px = (n) => Math.round(n * scale) + 'px';
+
+    const data = this.releases();
+    const byId = {};
+    data.forEach((r) => { byId[r.id] = r; });
+    const deco = (r) => {
+      const on = s.speaking === r.id;
+      return Object.assign({}, r, {
+        dateLabel: DATES[String(r.day)],
+        dateFull: FULL[String(r.day)] + (r.time ? ', ' + r.time : ''),
+        timeLabel: r.time || '—',
+        hasNo: !!r.no,
+        noLabel: r.no || 'नाही',
+        hasSummary: !!r.summary,
+        isCm: !!r.cm,
+        imgPos: r.id === 'r217707' ? 'center 18%' : 'center',
+        imgFit: r.id === 'r217624' ? 'contain' : 'cover',
+        listenLabel: on ? 'थांबवा' : 'ऐका',
+        listenPressed: on ? 'true' : 'false',
+        listenBg: on ? accentSoft : '#FFFFFF',
+        listenBorder: on ? accent : '#DDD3C5',
+        speaking: on,
+        notSpeaking: !on,
+        wa: 'https://wa.me/?text=' + encodeURIComponent(r.title + ' — महासंवाद, माहिती व जनसंपर्क महासंचालनालय'),
+        open: (e) => { stop(e); this.openReader(r.id); },
+        listen: () => this.speak(r),
+        copy: () => this.copy(r)
+      });
+    };
+
+    const lead = deco(byId.r217711);
+    const secondary = ['r217577', 'r217559', 'r217619'].map((id, k) => Object.assign(deco(byId[id]), { first: k === 0, rest: k !== 0 }));
+    const GROUP = { '0': 'शनिवार · ३ ऑक्टोबर', '-1': 'शुक्रवार · २ ऑक्टोबर' };
+    let prevDay = null;
+    const wire = ['r217722', 'r217707', 'r217703', 'r217699', 'r217694', 'r217684', 'r217674', 'r217660', 'r217646'].map((id) => {
+      const r = deco(byId[id]);
+      const start = r.day !== prevDay;
+      prevDay = r.day;
+      return Object.assign(r, { groupStart: start, group: GROUP[String(r.day)] });
+    });
+
+    const topicKeys = ['all', 'दुष्काळ २०२६', 'शेती', 'उद्योग', 'आरोग्य व शिक्षण', 'संस्कृती', 'आपत्ती व सुरक्षा', 'शहरे व सुविधा'];
+    const topic = s.topic || 'all';
+    const topics = topicKeys.map((t) => {
+      const on = t === topic;
+      return {
+        label: t === 'all' ? 'सर्व' : t,
+        on: on ? 'true' : 'false',
+        bg: on ? primary : '#FFFFFF',
+        ink: on ? '#FFFFFF' : '#2A221D',
+        border: on ? primary : '#DDD3C5',
+        pick: () => this.setState({ topic: t })
+      };
+    });
+    const feedAll = data.filter((r) => topic === 'all' || r.topic === topic).map(deco);
+    const feedStatus = topic === 'all' ? 'नवीन प्रथम · वृत्त विभागाने मंजूर केलेली' : '“' + topic + '” — ' + mr(feedAll.length) + ' प्रसिद्धीपत्रके';
+
+    const top30 = {};
+    data.forEach((r) => { if (r.place !== 'राज्यव्यापी') top30[r.place] = (top30[r.place] || 0) + 1; });
+    const dist = s.dist || 'सिंधुदुर्ग';
+    const distItems = data.filter((r) => r.place === dist).map(deco);
+    const distN = top30[dist] ?? distItems.length;
+    const distChips = Object.keys(top30).sort((a, b) => top30[b] - top30[a]).map((name) => {
+      const on = name === dist;
+      return {
+        name: name,
+        n: mr(top30[name]),
+        on: on ? 'true' : 'false',
+        bg: on ? accent : 'rgba(255,255,255,0.1)',
+        ink: on ? '#1D1714' : '#FFFFFF',
+        nInk: on ? '#1D1714' : accent,
+        border: on ? primary : '#EBCFB8',
+        bgL: on ? primary : '#FFFFFF',
+        inkL: on ? '#FFFFFF' : '#2A221D',
+        pick: () => this.setState({ dist: name })
+      };
+    });
+
+    const sizeDefs = [{ label: 'लहान अक्षरे', size: '13px' }, { label: 'मध्यम अक्षरे', size: '16px' }, { label: 'मोठी अक्षरे', size: '20px' }];
+    const sizes = sizeDefs.map((z, k) => ({
+      label: z.label,
+      size: z.size,
+      on: k === fs ? 'true' : 'false',
+      bg: k === fs ? 'rgba(255,255,255,0.22)' : 'transparent',
+      bgLight: k === fs ? primarySoft : 'transparent',
+      pick: () => this.setState({ fs: k })
+    }));
+
+    let rd = null;
+    let related = [];
+    if (s.readerId && byId[s.readerId]) {
+      rd = deco(byId[s.readerId]);
+      const near = data.filter((x) => x.id !== rd.id && ((x.place === rd.place && rd.place !== 'राज्यव्यापी') || x.topic === rd.topic));
+      const sameDept = data.filter((x) => x.id !== rd.id && x.dept === rd.dept && near.indexOf(x) === -1);
+      related = near.concat(sameDept).slice(0, 3).map(deco);
+    }
+
+    const q = s.q || '';
+    const words = mr(q.trim()).split(/\s+/).filter(Boolean);
+    const results = words.length ? data.filter((r) => {
+      const hay = [r.title, r.place, r.dept, r.topic, r.no || ''].join(' ');
+      return words.every((w) => hay.indexOf(w) !== -1);
+    }).map(deco) : [];
+    const suggestions = ['पीक नुकसान', 'लोकसंवाद', 'यलो अलर्ट', 'चंद्रपूर', '216060'].map((t) => ({ label: t, pick: () => this.setState({ q: t }) }));
+
+    // Fold
+    const MON = ['जानेवारी', 'फेब्रुवारी', 'मार्च', 'एप्रिल', 'मे', 'जून', 'जुलै', 'ऑगस्ट', 'सप्टेंबर', 'ऑक्टोबर', 'नोव्हेंबर', 'डिसेंबर'];
+    const WEEK = ['रविवार', 'सोमवार', 'मंगळवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+    const days = this.foldDays();
+    const off = s.off || 0;
+    const dt = new Date(2026, 9, 3 + off);
+    const p2 = (v) => String(v).padStart(2, '0');
+    const iso = dt.getFullYear() + '-' + p2(dt.getMonth() + 1) + '-' + p2(dt.getDate());
+    const dayLine = WEEK[dt.getDay()] + ', दि. ' + mr(dt.getDate()) + ' ' + MON[dt.getMonth()] + ', ' + mr(dt.getFullYear());
+    const districtsIn = (list) => {
+      const seen = {};
+      list.forEach((a) => { if (a.district) seen[a.district] = true; });
+      return Object.keys(seen).length;
+    };
+    const today = days['0'];
+    const dayList = days[String(off)] || [];
+    const fById = {};
+    dayList.forEach((a) => { fById[a.id] = a; });
+    const kept = (s.order || []).filter((id) => fById[id]);
+    const order = kept.length === dayList.length ? kept : dayList.map((a) => a.id);
+    const sel = s.sel || {};
+    const pickedIds = order.filter((id) => sel[id]);
+    const picked = pickedIds.map((id) => fById[id]);
+    const total = dayList.length;
+    const n = picked.length;
+    const allOn = total > 0 && n === total;
+    const dl = s.dl || 'idle';
+    const busy = dl === 'busy';
+    let pos = 0;
+    const foldRows = order.map((id, k) => {
+      const a = fById[id];
+      const on = !!sel[id];
+      if (on) pos += 1;
+      const last = k === order.length - 1;
+      return {
+        title: a.title,
+        no: a.no || '',
+        hasNo: !!a.no,
+        noMissing: !a.no,
+        cm: !!a.cm,
+        district: a.district || 'राज्यव्यापी',
+        checked: on,
+        num: on ? mr(pos) : '–',
+        numInk: on ? '#1D1714' : '#8F857B',
+        op: on ? '1' : '0.5',
+        rowBg: s.moving === id ? primarySoft : '#FFFFFF',
+        checkLabel: a.title + ' — फोल्डमध्ये समाविष्ट करा',
+        upLabel: a.title + ' — वर सरकवा',
+        downLabel: a.title + ' — खाली सरकवा',
+        upDisabled: k === 0,
+        downDisabled: last,
+        upOp: k === 0 ? '0.3' : '1',
+        downOp: last ? '0.3' : '1',
+        toggle: () => {
+          const nx = Object.assign({}, this.state.sel);
+          nx[id] = !nx[id];
+          this.setState({ sel: nx, dl: 'idle' });
+        },
+        up: () => this.move(order, k, k - 1),
+        down: () => this.move(order, k, k + 1)
+      };
+    });
+    let dlLabel = 'फोल्ड डाउनलोड करा · ' + mr(n) + ' लेख';
+    if (total === 0) dlLabel = 'फोल्ड डाउनलोड करा';
+    else if (n === 0) dlLabel = 'किमान एक लेख निवडा';
+    else if (busy) dlLabel = 'फोल्ड तयार होत आहे…';
+    else if (allOn) dlLabel = 'पूर्ण फोल्ड डाउनलोड करा · ' + mr(n) + ' लेख';
+
+    // Fact check
+    const fc = s.fcRes;
+    const fcKind = fc ? fc.kind : '';
+    const fcCards = fc && fc.ids ? fc.ids.map((id) => deco(byId[id])) : [];
+    const FC_HEAD = {
+      match: 'अधिकृत — हा मजकूर मंजूर प्रसिद्धीपत्रकाशी जुळतो',
+      partial: 'अंशतः जुळतो — मिळतेजुळते अधिकृत प्रसिद्धीपत्रक आहे',
+      none: 'अधिकृत नोंदीत सापडले नाही'
+    };
+    const FC_BODY = {
+      match: 'संदेशात बदल केलेला असू शकतो — शंका असल्यास खालील मूळ प्रत वाचून शब्दशः तुलना करा.',
+      partial: 'संदेश तंतोतंत जुळत नाही. आकडे, तारखा आणि नावे मूळ प्रसिद्धीपत्रकाशी तुलना करा.',
+      none: (fc && fc.no ? 'वृत्त क्र. ' + fc.no + ' मंजूर नोंदीत नाही. ' : '') + 'शासनाने असे प्रसिद्धीपत्रक दिलेले नाही. पुढे पाठवण्यापूर्वी थांबा — हवे तर आमच्या फॅक्ट-चेक टीमकडे पडताळणीसाठी पाठवा.'
+    };
+    const FC_TONE = { match: ['#E3F1EA', '#1F6B4A'], partial: ['#FCEFD9', '#7A4A08'], none: ['#FBE6E3', '#8E2A1E'] };
+    const verdicts = [
+      { label: 'खोटे', bg: '#8E2A1E', ink: '#FFFFFF' },
+      { label: 'दिशाभूल करणारे', bg: '#F3C77A', ink: '#1D1714' },
+      { label: 'खरे', bg: '#1F6B4A', ink: '#FFFFFF' }
+    ];
+    const fcSamples = [
+      { label: 'उदाहरण: फॉरवर्ड केलेली खरी बातमी', text: '*आनंदाची बातमी* कर्जमुक्तीच्या तिसऱ्या टप्प्यात ३ लाख २७ हजार २५० शेतकऱ्यांना ३ हजार १६० कोटी रुपयांचा लाभ. सर्वांना पाठवा!' },
+      { label: 'उदाहरण: संशयास्पद संदेश', text: 'सर्व शेतकऱ्यांच्या खात्यात थेट ५०,००० रुपये जमा होणार — आजच लिंकवर नोंदणी करा!' }
+    ].map((x) => ({ label: x.label, pick: () => this.setState({ fcText: x.text, fcRes: this.verify(x.text), fcSent: false }) }));
+
+    // Chat
+    const msgs = (s.msgs || []).map((m) => ({
+      mine: m.from === 'me',
+      bot: m.from !== 'me',
+      text: m.text,
+      cites: (m.cites || []).slice(0, 3).map((id) => deco(byId[id])),
+      hasCites: (m.cites || []).length > 0,
+      fc: !!m.fc,
+      openFc: () => this.goFactCheck('')
+    }));
+    const chatChips = ['आज काय मंजूर झाले?', 'दुष्काळासाठी शासन काय करत आहे?', 'कर्जमुक्तीचा लाभ किती शेतकऱ्यांना?', 'सिंधुदुर्गच्या बातम्या', 'हा मेसेज खरा आहे का?'].map((t) => ({ label: t, pick: () => this.sendChat(t) }));
+
+    // Lead carousel
+    const leadIds = ['r217711', 'r217577', 'r217559', 'r217619', 'r217543'];
+    const KICK = { r217711: ['अभिजात मराठी भाषा सप्ताह', 'मराठी भाषा', 'मराठीला ज्ञानभाषा करणार'], r217577: ['इन्व्हेस्ट महाराष्ट्र', 'गुंतवणूक', '८.५७ लाख कोटींचे करार'], r217559: ['कर्जमुक्ती २०२६', 'कर्जमुक्ती', '३.२७ लाख शेतकऱ्यांना लाभ'], r217619: ['धारावी पुनर्विकास', 'धारावी', 'धारावी एक्सपिरियन्स सेंटर'], r217543: ['शिक्षण व आरोग्य', 'अभियान', 'जिल्हानिहाय कालबद्ध अभियान'] };
+    const ci = s.i || 0;
+    const cPaused = !!s.paused || this.props.autoplay === false;
+    const held = !!s.hold || !!s.foldOpen || !!s.readerId || !!s.palette;
+    const go = (n, focus) => {
+      const k = (n + 5) % 5;
+      this.setState({ i: k, paused: true }, () => {
+        if (!focus) return;
+        const tb = window.document.getElementById('hero-tab-' + k);
+        if (tb) tb.focus();
+      });
+    };
+    const slides = leadIds.map((id, k) => Object.assign(deco(byId[id]), {
+      kicker: KICK[id][0], kickerShort: KICK[id][1], short: KICK[id][2],
+      dashW: k === ci ? '56px' : '22px', dashFlex: k === ci ? '3 1 0' : '1 1 0',
+      label: mr(k + 1) + ' / ५', hidden: k === ci ? 'false' : 'true', op: k === ci ? '1' : '0', vis: k === ci ? 'visible' : 'hidden', zoom: k === ci ? '1.04' : '1',
+      num: mr(k + 1), tabId: 'hero-tab-' + k, tabSel: k === ci ? 'true' : 'false', tabIndex: k === ci ? '0' : '-1', tabBg: k === ci ? '#FDF1E6' : 'transparent',
+      done: k < ci, activeRun: k === ci && !cPaused, activeHold: k === ci && cPaused,
+      weight: k === ci ? '700' : '500', ink: k === ci ? '#2B1A1C' : '#5C4344', numInk: k === ci ? primary : '#7A5F60',
+      pick: () => go(k, false)
+    }));
+    const latestAll = data.filter((r) => leadIds.indexOf(r.id) === -1).map(deco);
+    const trending = [['दुष्काळ २०२६', 'दुष्काळ'], ['कर्जमुक्ती २०२६', 'कर्जमुक्ती'], ['अभिजात मराठी भाषा सप्ताह', 'मराठी'], ['गांधी जयंती', 'गांधी'], ['इन्व्हेस्ट महाराष्ट्र', 'इन्व्हेस्ट'], ['भूकंप — नांदेड', 'भूकंप'], ['कुंभमेळा २०२७', 'कुंभमेळा']].map((x) => ({ label: x[0], pick: () => this.openPalette(x[1]) }));
+    const drought = ['r217660', 'r217606', 'r217489', 'r217684'].map((id) => deco(byId[id]));
+
+    return {
+      slides: slides,
+      curPos: mr(ci + 1),
+      paused: cPaused,
+      playing: !cPaused,
+      liveMode: cPaused ? 'polite' : 'off',
+      pauseLabel: cPaused ? 'कॅरोसेल सुरू करा' : 'कॅरोसेल थांबवा',
+      prev: () => go(ci - 1, false),
+      next: () => go(ci + 1, false),
+      togglePause: () => this.setState({ paused: !this.state.paused }),
+      advance: () => this.setState({ i: (ci + 1) % 5 }),
+      animState: held ? 'paused' : 'running',
+      holdOn: () => { if (!this.state.hold) this.setState({ hold: true }); },
+      holdOff: () => { if (this.state.hold) this.setState({ hold: false }); },
+      tabKey: (e) => {
+        if (e.key === 'ArrowRight') { e.preventDefault(); go(ci + 1, true); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); go(ci - 1, true); }
+        else if (e.key === 'Home') { e.preventDefault(); go(0, true); }
+        else if (e.key === 'End') { e.preventDefault(); go(4, true); }
+      },
+      latest: latestAll.slice(0, 6),
+      latestHero: latestAll.slice(0, 5),
+      heroTintA: rgba(primary, 0.94), heroTintB: rgba(primary, 0.72), heroTintC: rgba(primary, 0.22),
+      cycleFs: () => this.setState({ fs: ((this.state.fs ?? 1) + 1) % 3 }),
+      latestM: latestAll.slice(0, 5),
+      trending: trending,
+      drought: drought,
+      droughtAll: () => this.setState({ topic: 'दुष्काळ २०२६' }, () => {
+        const el = window.document.getElementById('releases');
+        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }),
+      fcText: s.fcText || '',
+      onFcText: (e) => this.setState({ fcText: e.target.value, fcRes: null, fcSent: false }),
+      fcCheck: (e) => { stop(e); this.setState({ fcRes: this.verify(this.state.fcText), fcSent: false }); },
+      fcEmpty: !(s.fcText || '').trim(),
+      fcHas: !!fc,
+      fcHead: fc ? FC_HEAD[fcKind] : '',
+      fcBody: fc ? FC_BODY[fcKind] : '',
+      fcBg: fc ? FC_TONE[fcKind][0] : '#FFFFFF',
+      fcInk: fc ? FC_TONE[fcKind][1] : '#1D1714',
+      fcMatchIcon: fcKind === 'match',
+      fcWarnIcon: fcKind === 'partial',
+      fcNoneIcon: fcKind === 'none',
+      fcCards: fcCards,
+      fcHasCards: fcCards.length > 0,
+      fcCanSend: fcKind === 'none' && !s.fcSent,
+      fcSent: !!s.fcSent,
+      fcSend: () => { this.setState({ fcSent: true }); this.flash('पडताळणीसाठी पाठवले'); },
+      fcClear: () => this.setState({ fcText: '', fcRes: null, fcSent: false }),
+      fcSamples: fcSamples,
+      verdicts: verdicts,
+      chatOpen: !!s.chatOpen,
+      chatClosed: !s.chatOpen,
+      toggleChat: () => this.setState({ chatOpen: !this.state.chatOpen }),
+      closeChat: () => this.setState({ chatOpen: false }),
+      chatKey: (e) => { if (e.key === 'Escape') { e.preventDefault(); this.setState({ chatOpen: false }); } },
+      chatIn: s.chatIn || '',
+      onChatIn: (e) => this.setState({ chatIn: e.target.value }),
+      chatSend: (e) => { stop(e); this.sendChat(this.state.chatIn); },
+      chatBusy: !!s.typing,
+      msgs: msgs,
+      chatChips: chatChips,
+      chatFresh: (s.msgs || []).length <= 1,
+      askChat: () => this.openChat(this.state.q),
+      primary: primary,
+      primaryDeep: dark(primary, 0.62),
+      primarySoft: primarySoft,
+      accent: accent,
+      accentSoft: accentSoft,
+      accentInk: accentInk,
+      place: place,
+      placeSoft: soft(place, 0.12),
+      fsHead: px(24),
+      fsBody: px(16),
+      fsHeadM: px(21),
+      fsBodyM: px(15),
+      readerHead: px(36),
+      readerHeadM: px(27),
+      readerBody: px(19),
+      readerBodyM: px(17),
+      sizes: sizes,
+      lead: lead,
+      secondary: secondary,
+      wire: wire,
+      wireM: wire.slice(0, 5),
+      topics: topics,
+      feed: feedAll.slice(0, 6),
+      feedM: feedAll.slice(0, 4),
+      feedStatus: feedStatus,
+      dist: dist,
+      onDist: (e) => this.setState({ dist: e.target.value }),
+      distItems: distItems.slice(0, 4),
+      distHas: distItems.length > 0,
+      distEmpty: distItems.length === 0,
+      distCountLine: distN ? 'मागील ४ दिवसांत ' + mr(distN) + ' प्रसिद्धीपत्रके' : 'मागील ४ दिवसांत प्रसिद्धीपत्रक नाही',
+      distChips: distChips,
+      todayCount: mr(today.length),
+      readerOpen: !!rd,
+      rd: rd || deco(data[0]),
+      related: related,
+      hasRelated: related.length > 0,
+      closeReader: () => this.closeReader(),
+      readerKey: (e) => this.trap(e, 'reader', () => this.closeReader()),
+      palOpen: !!s.palette,
+      openPalette: () => this.openPalette(''),
+      closePalette: () => this.closePalette(),
+      q: q,
+      onQ: (e) => this.setState({ q: e.target.value }),
+      qEmpty: !words.length,
+      qHas: words.length > 0,
+      results: results,
+      noResults: words.length > 0 && results.length === 0,
+      resultLine: results.length ? mr(results.length) + ' निकाल · Enter दाबल्यास पहिला उघडतो' : '',
+      suggestions: suggestions,
+      recent: data.slice(0, 4).map(deco),
+      palKey: (e) => {
+        if (e.key === 'Enter' && e.target && e.target.id === 'pal-q') {
+          e.preventDefault();
+          if (results[0]) this.openReader(results[0].id);
+          return;
+        }
+        this.trap(e, 'palette', () => this.closePalette());
+      },
+      noQ: s.noQ || '',
+      onNoQ: (e) => this.setState({ noQ: e.target.value }),
+      byNo: (e) => { stop(e); this.openPalette(this.state.noQ || ''); },
+      hasToast: !!s.toast,
+      toast: s.toast || '',
+      foldOpen: !!s.foldOpen,
+      openFold: () => this.openFold(),
+      closeFold: () => this.closeFold(),
+      trapKey: (e) => this.trap(e, 'fold-dialog', () => this.closeFold()),
+      iso: iso,
+      dayLine: dayLine,
+      notToday: off !== 0,
+      prevDay: () => this.setState(this.pickDay(off - 1)),
+      nextDay: () => this.setState(this.pickDay(off + 1)),
+      goToday: () => this.setState(this.pickDay(0)),
+      onDate: (e) => {
+        const v = e.target.value;
+        if (!v) return;
+        const qd = v.split('-').map(Number);
+        const d2 = new Date(qd[0], qd[1] - 1, qd[2]);
+        this.setState(this.pickDay(Math.round((d2 - new Date(2026, 9, 3)) / 86400000)));
+      },
+      hasFold: total > 0,
+      noFold: total === 0,
+      foldRows: foldRows,
+      allOn: allOn,
+      toggleAll: () => {
+        const nx = {};
+        if (!allOn) order.forEach((id) => { nx[id] = true; });
+        this.setState({ sel: nx, dl: 'idle' });
+      },
+      selCountMr: mr(n),
+      totalMr: mr(total),
+      selCmMr: mr(picked.filter((a) => a.cm).length),
+      selDistMr: mr(districtsIn(picked)),
+      reordered: order.join(',') !== dayList.map((a) => a.id).join(','),
+      resetOrder: () => this.setState({ order: dayList.map((a) => a.id), dl: 'idle' }),
+      download: () => this.download(pickedIds),
+      dlDisabled: n === 0 || busy,
+      dlBusy: busy,
+      dlIdle: !busy,
+      dlBusyAttr: busy ? 'true' : 'false',
+      dlBg: n === 0 ? '#E7E0D5' : primary,
+      dlInk: n === 0 ? '#6B615A' : '#FFFFFF',
+      dlLabel: dlLabel,
+      dlDone: dl === 'done',
+      dlNotDone: dl !== 'done',
+      doneText: 'Dgipr-News-Fold-' + iso + '.docx डाउनलोड झाले · ' + mr(n) + ' लेख'
+    };
+  }
+}
+</script>
+</body>
+</html>

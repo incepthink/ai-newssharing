@@ -169,3 +169,59 @@ ${context.body.join('\n\n')}
 
   return (res.choices[0]?.message?.content ?? '').trim()
 }
+
+/* --- The public news assistant (/news) ------------------------------------ */
+
+export interface SourceRelease {
+  title: string
+  place: string
+  date: string
+  releaseNo: string | null
+  text: string
+}
+
+const ANSWER_FROM_RELEASES = `You are महासंवाद सहाय्यक, the assistant on the public news page of the Maharashtra Directorate General of Information and Public Relations (DGIPR).
+
+You are given numbered government press releases that the news desk has approved. A citizen asks a question.
+
+Rules, in order of importance:
+- Answer ONLY from the numbered releases below. If they do not answer the question, say plainly in Marathi that the approved releases do not contain this, and cite nothing. Never use general knowledge, never guess.
+- Always reply in Marathi (मराठी). Use Devanagari numerals. Keep names, designations, scheme names, figures and dates exactly as the releases write them.
+- At most 90 words. Plain sentences, no markdown, no headings.
+- You are not an official channel: do not promise eligibility, approve anything, or invent helpline numbers, dates or web addresses.
+
+Return JSON only: {"answer": "<Marathi text>", "sources": [<numbers of the releases you used>]}`
+
+/**
+ * One turn of the news assistant: an answer grounded in the releases the
+ * caller retrieved, and the numbers of the ones it used. Sources the model
+ * names that were not offered are dropped by the caller.
+ */
+export async function answerFromReleases(
+  question: string,
+  releases: SourceRelease[],
+  history: AskTurn[] = [],
+): Promise<{ answer: string; sources: number[] }> {
+  const context = releases
+    .map(
+      (r, i) =>
+        `[${i + 1}] ${r.title}\nठिकाण: ${r.place} · दिनांक: ${r.date}${r.releaseNo ? ` · वृत्त क्र. ${r.releaseNo}` : ''}\n${r.text.slice(0, 1800)}`,
+    )
+    .join('\n\n')
+
+  const res = await client().chat.completions.create({
+    model: MODEL,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: `${ANSWER_FROM_RELEASES}\n\n--- मंजूर प्रसिद्धीपत्रके ---\n${context}\n--- समाप्त ---`.slice(0, 24000) },
+      ...history.slice(-6).map((t) => ({ role: t.role, content: t.content.slice(0, 1200) })),
+      { role: 'user', content: question.slice(0, 1500) },
+    ],
+  })
+
+  const parsed = JSON.parse(res.choices[0]?.message?.content ?? '{}')
+  return {
+    answer: typeof parsed.answer === 'string' ? parsed.answer.trim() : '',
+    sources: Array.isArray(parsed.sources) ? parsed.sources.map(Number).filter(Number.isInteger) : [],
+  }
+}

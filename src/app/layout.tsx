@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { JetBrains_Mono, Manrope, Poppins } from 'next/font/google'
+import { JetBrains_Mono, Manrope, Mukta, Poppins } from 'next/font/google'
 import { Shell } from '@/components/Shell'
 import './globals.css'
 
@@ -15,10 +15,19 @@ import './globals.css'
 const manrope = Manrope({ subsets: ['latin'], display: 'swap', variable: '--font-manrope' })
 
 const poppins = Poppins({
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
   subsets: ['devanagari', 'latin'],
   display: 'swap',
   variable: '--font-poppins',
+})
+
+/* The public news page's body face (headings are Poppins). Mukta is drawn for
+   Devanagari first, so a Marathi summary sets as evenly as its Latin digits. */
+const mukta = Mukta({
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['devanagari', 'latin'],
+  display: 'swap',
+  variable: '--font-mukta',
 })
 
 const jetbrainsMono = JetBrains_Mono({
@@ -43,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="mr"
-      className={`${manrope.variable} ${poppins.variable} ${jetbrainsMono.variable}`}
+      className={`${manrope.variable} ${poppins.variable} ${mukta.variable} ${jetbrainsMono.variable}`}
     >
       <body className="flex min-h-screen flex-col">
         <Shell>{children}</Shell>

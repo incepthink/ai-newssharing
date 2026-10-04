@@ -90,7 +90,9 @@ export function FoldDownload({ today, items }: { today: string; items: FoldItem[
   )
 }
 
-function FoldDialog({ today, todayItems, onClose }: { today: string; todayItems: FoldItem[]; onClose: () => void }) {
+/** The dialog alone, for pages that open it from their own buttons — the
+ *  redesigned `/news` has three (masthead, journalists' card, bottom bar). */
+export function FoldDialog({ today, todayItems, onClose }: { today: string; todayItems: FoldItem[]; onClose: () => void }) {
   /* Days already fetched, today's from the server. */
   const cache = useRef(new Map<string, FoldItem[]>([[today, todayItems]]))
   const current = useRef(today)
