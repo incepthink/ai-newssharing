@@ -70,6 +70,7 @@ export function toNewsItem(row: Row, meta: Meta): NewsItem {
     credit: r.posterCreditMr ?? null,
     video: r.videoUrl ?? null,
     cm: r.featured,
+    ministers: row.ministers,
     language: meta.language,
     feature: isFeature(r.titleMr, r.datelineMr, r.summaryMr),
   }

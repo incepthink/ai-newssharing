@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-export type MainNavItem = { label: string; href: string; highlight?: boolean; phone?: boolean }
+export type MainNavItem = { label: string; href: string; phone?: boolean }
 
 /** How far below the window's top a section must start to count as the one
  *  being read — clear of the sticky masthead. */
@@ -28,8 +28,8 @@ export function MainNav({ items }: { items: MainNavItem[] }) {
   }
 
   useEffect(() => {
-    /* Land on the item the URL already names: the full link first (कर्जमुक्ती
-       carries a search), then its section. */
+    /* Land on the item the URL already names: a full link first (an item
+       may carry a search), then its section. */
     const here = `${window.location.search}${window.location.hash}`
     const byFull = items.findIndex((n) => n.href.startsWith('/') && n.href.endsWith(here) && here.includes('?'))
     const byHash = window.location.hash ? items.findIndex((n) => n.href === window.location.hash) : -1
@@ -51,8 +51,8 @@ export function MainNav({ items }: { items: MainNavItem[] }) {
         }
       }
       const hash = `#${current?.id ?? 'top'}`
-      /* Two items can share a section (जय महाराष्ट्र, लोकराज्य): keep the
-         one already lit if it points there. */
+      /* Two items can share a section: keep the one already lit if it
+         points there. */
       if (items[activeRef.current]?.href.endsWith(hash)) return
       const i = items.findIndex((n) => n.href === hash)
       if (i >= 0) select(i)
@@ -86,7 +86,7 @@ export function MainNav({ items }: { items: MainNavItem[] }) {
     <nav aria-label="मुख्य विभाग" className="lg:border-t lg:border-[#F3E2D2]">
       <div
         ref={rowRef}
-        className="nr-scroll mx-auto flex max-w-[1328px] gap-1 overflow-x-auto px-2.5 pb-2.5 text-[0.90625rem] lg:h-[50px] lg:items-center lg:justify-center lg:px-6 lg:pb-0 lg:text-[0.96875rem]"
+        className="nr-scroll mx-auto flex max-w-[1328px] gap-1 overflow-x-auto px-2.5 pb-2.5 text-[0.90625rem] lg:h-[44px] lg:items-center lg:justify-center lg:px-6 lg:pb-0 lg:text-[0.96875rem]"
       >
         {items.map((n, i) => {
           const on = i === active
@@ -100,11 +100,7 @@ export function MainNav({ items }: { items: MainNavItem[] }) {
                 select(i)
               }}
               className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 transition-colors ${n.phone ? '' : 'max-lg:hidden'} ${
-                on
-                  ? 'bg-nr-primary font-bold text-white'
-                  : n.highlight
-                    ? 'bg-nr-blush font-bold text-nr-primary hover:bg-nr-peach'
-                    : 'font-semibold text-[#4A2E30] hover:bg-nr-peach'
+                on ? 'bg-nr-primary font-bold text-white' : 'font-semibold text-[#4A2E30] hover:bg-nr-peach'
               }`}
             >
               {n.label}

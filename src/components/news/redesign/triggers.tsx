@@ -1,10 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useId, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { NewsItem } from '@/lib/news/public'
-import { IArchive, IChat, ICopy, IDownload, IHome, IPin, ISearch, IShield, ISpeaker } from './icons'
-import { FS_LABELS, plainClick, useNewsUi } from './ui'
+import { IChat, IDownload, IHome, IPin, ISearch, IShield, IVideo } from './icons'
+import { plainClick, useNewsUi } from './ui'
 
 /**
  * The server page's buttons that need the browser. Each degrades to something
@@ -45,47 +45,6 @@ export function ReadLink({
   )
 }
 
-export function ListenButton({ item, className = '' }: { item: NewsItem; className?: string }) {
-  const { speak, speaking } = useNewsUi()
-  const on = speaking === item.id
-  return (
-    <button
-      type="button"
-      onClick={() => speak(item)}
-      aria-pressed={on}
-      aria-label={`${on ? 'थांबवा' : 'ऐका'} — ${item.title}`}
-      className={`${className} ${on ? 'border-nr-accent bg-nr-accent-soft' : 'border-nr-line2 bg-white'}`}
-    >
-      <ISpeaker size={16} /> {on ? 'थांबवा' : 'ऐका'}
-    </button>
-  )
-}
-
-/** The hero's listen pill, on a photograph. */
-export function HeroListen({ item }: { item: NewsItem }) {
-  const { speak, speaking } = useNewsUi()
-  const on = speaking === item.id
-  return (
-    <button
-      type="button"
-      onClick={() => speak(item)}
-      aria-pressed={on}
-      className="flex h-[50px] items-center gap-2 rounded-full border-[1.5px] border-white/[0.55] bg-white/10 px-5 text-base font-bold text-white sm:h-[54px]"
-    >
-      <ISpeaker size={18} /> {on ? 'थांबवा' : 'ऐका'}
-    </button>
-  )
-}
-
-export function CopyButton({ item, className = '' }: { item: NewsItem; className?: string }) {
-  const { copy } = useNewsUi()
-  return (
-    <button type="button" onClick={() => copy(item)} aria-label={`कॉपी — ${item.title}`} className={className}>
-      <ICopy size={15} /> कॉपी
-    </button>
-  )
-}
-
 export function FoldButton({ className, children, label }: { className: string; children: ReactNode; label?: string }) {
   const { openFold } = useNewsUi()
   return (
@@ -101,6 +60,35 @@ export function SearchButton({ className, children, label, query }: { className:
     <button type="button" onClick={() => openSearch(query)} aria-haspopup="dialog" aria-label={label} className={className}>
       {children}
     </button>
+  )
+}
+
+/** The search box in सर्व मंजूर प्रसिद्धीपत्रके (`ReleasesBrowser`). */
+export const RELEASE_SEARCH_ID = 'rel-search'
+
+/**
+ * "शोधा" in the masthead and the bottom bar: brings the releases' search box
+ * into view and puts the cursor in it, so the reader searches the list itself.
+ * Without JS it is a plain jump to the section.
+ */
+export function ReleaseSearchLink({ className, children, label }: { className: string; children: ReactNode; label?: string }) {
+  return (
+    <a
+      href="#releases"
+      aria-label={label}
+      onClick={(e) => {
+        const input = document.getElementById(RELEASE_SEARCH_ID)
+        if (!plainClick(e) || !(input instanceof HTMLInputElement)) return
+        e.preventDefault()
+        const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        input.scrollIntoView({ block: 'center', behavior: smooth ? 'smooth' : 'auto' })
+        input.focus({ preventScroll: true })
+        input.select()
+      }}
+      className={className}
+    >
+      {children}
+    </a>
   )
 }
 
@@ -163,61 +151,6 @@ export function ByNumberForm() {
 }
 
 /**
- * माझा जिल्हा. Remembered in a cookie the server reads, so the district
- * section opens on the reader's own district next time too, and carried in
- * `?d=` so the view is a link like every other.
- */
-export function DistrictPicker({
-  value,
-  options,
-  base,
-  className,
-  selectClassName,
-}: {
-  value: string
-  options: Array<{ key: string; name: string }>
-  /** The page's current query string without `d`. */
-  base: string
-  className: string
-  selectClassName: string
-}) {
-  const router = useRouter()
-  const id = useId()
-  return (
-    <form action="/news#districts" method="get" className={className}>
-      <IPin size={18} strokeWidth={2} className="shrink-0 text-nr-place" />
-      <label htmlFor={id} className="sr-only">
-        माझा जिल्हा
-      </label>
-      <select
-        id={id}
-        name="d"
-        defaultValue={value}
-        onChange={(e) => {
-          const d = e.target.value
-          document.cookie = `nr_district=${d}; path=/; max-age=31536000; samesite=lax`
-          const qs = new URLSearchParams(base)
-          qs.set('d', d)
-          router.push(`/news?${qs.toString()}#districts`)
-        }}
-        className={selectClassName}
-      >
-        {options.map((o) => (
-          <option key={o.key} value={o.key}>
-            {o.name}
-          </option>
-        ))}
-      </select>
-      <noscript>
-        <button type="submit" className="rounded-full px-2 text-sm font-bold text-nr-primary">
-          पहा
-        </button>
-      </noscript>
-    </form>
-  )
-}
-
-/**
  * भाषा. It leads to real releases in that language or says there are none —
  * it never implies a translation of this page that does not exist.
  */
@@ -252,28 +185,18 @@ export function LanguageSelect({
   )
 }
 
-/** The round अ button that steps through the three sizes. */
-export function TextSizeCycle({ className }: { className: string }) {
-  const { fs, setFs } = useNewsUi()
-  const next = ((fs + 1) % 3) as 0 | 1 | 2
-  return (
-    <button type="button" onClick={() => setFs(next)} aria-label={`अक्षरांचा आकार बदला — आत्ता ${FS_LABELS[fs]}`} className={className}>
-      अ
-    </button>
-  )
-}
-
 /* ---------------------------------------------------------------- bottom bar */
 
 const cell =
   'flex h-[60px] flex-col items-center justify-center gap-0.5 border-0 bg-transparent text-[0.78rem] font-bold text-nr-primary'
 
 /**
- * The floating pill at the bottom: the page's seven jumps on a desk, five on a
- * phone, either side of the raised "विचारा" button that opens the assistant.
+ * The floating pill at the bottom: six jumps on a desk and four on a phone,
+ * split evenly either side of the raised "विचारा" button that opens the
+ * assistant.
  */
 export function BottomNav() {
-  const { openSearch, openFold, openChat } = useNewsUi()
+  const { openFold, openChat } = useNewsUi()
   const label = (t: string) => <span className="text-[#4A2E30]">{t}</span>
   return (
     <nav
@@ -284,13 +207,13 @@ export function BottomNav() {
         <IHome size={21} />
         {label('मुख्यपृष्ठ')}
       </a>
-      <button type="button" onClick={() => openSearch()} aria-haspopup="dialog" className={cell}>
+      <ReleaseSearchLink className={cell}>
         <ISearch size={21} />
         {label('शोधा')}
-      </button>
-      <a href="#districts" className={`${cell} max-sm:hidden`}>
-        <IPin size={21} />
-        {label('जिल्हा')}
+      </ReleaseSearchLink>
+      <a href="#media" className={`${cell} max-sm:hidden`}>
+        <IVideo size={21} />
+        {label('व्हिडिओ')}
       </a>
       <span className="flex flex-col items-center">
         <button
@@ -307,7 +230,7 @@ export function BottomNav() {
           विचारा
         </span>
       </span>
-      <a href="#districts" className={`${cell} sm:hidden`}>
+      <a href="#releases" className={cell}>
         <IPin size={21} />
         {label('जिल्हा')}
       </a>
@@ -319,10 +242,6 @@ export function BottomNav() {
         <IDownload size={21} />
         {label('फोल्ड')}
       </button>
-      <a href="#archive" className={`${cell} max-sm:hidden`}>
-        <IArchive size={21} />
-        {label('संग्रह')}
-      </a>
     </nav>
   )
 }

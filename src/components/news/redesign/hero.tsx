@@ -4,7 +4,7 @@ import { useCallback, useState, type AnimationEvent, type KeyboardEvent, type Re
 import { StoryPhoto } from '@/components/news/story-photo'
 import { mrDigits, type NewsItem } from '@/lib/news/public'
 import { IArrowLeft, IArrowRight, IPause, IPlay } from './icons'
-import { HeroListen, ReadLink } from './triggers'
+import { ReadLink } from './triggers'
 import { useNewsUi } from './ui'
 
 export type HeroSlide = {
@@ -29,7 +29,7 @@ export type HeroSlide = {
  *  - arrow keys, Home and End on the dashes.
  *
  * The active dash's fill is what advances it (`.nr-fill`), so the bar the
- * reader watches is exactly the time left. `aside` is the ताज्या बातम्या card,
+ * reader watches is exactly the time left. `aside` is the social accounts card,
  * drawn inside the hero on a wide screen.
  */
 export function HeroCarousel({ slides, aside }: { slides: HeroSlide[]; aside?: ReactNode }) {
@@ -133,9 +133,6 @@ export function HeroCarousel({ slides, aside }: { slides: HeroSlide[]; aside?: R
                     </span>
                     संपूर्ण बातमी वाचा
                   </ReadLink>
-                  <span className="max-sm:hidden">
-                    <HeroListen item={s.item} />
-                  </span>
                 </div>
               </div>
             </div>

@@ -28,12 +28,6 @@ function G({ size = 18, strokeWidth = 1.9, children, ...rest }: P & { children: 
   )
 }
 
-export const ISpeaker = (p: P) => (
-  <G {...p}><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" /><path d="M15.5 9a4 4 0 0 1 0 6" /><path d="M18 6.5a7.5 7.5 0 0 1 0 11" /></G>
-)
-export const ICopy = (p: P) => (
-  <G {...p}><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2" /><path d="M15.5 8.5V5.5a1.5 1.5 0 0 0-1.5-1.5H5.5A1.5 1.5 0 0 0 4 5.5V14a1.5 1.5 0 0 0 1.5 1.5h3" /></G>
-)
 export const IShare = (p: P) => (
   <G {...p}><circle cx="18" cy="5.5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="18.5" r="2.5" /><path d="m8.2 10.8 7.6-4.1M8.2 13.2l7.6 4.1" /></G>
 )
@@ -54,6 +48,9 @@ export const IHome = (p: P) => (
 )
 export const IShield = (p: P) => (
   <G {...p}><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6z" /><path d="m8.8 12.2 2.3 2.3 4.3-4.6" /></G>
+)
+export const IVideo = (p: P) => (
+  <G {...p}><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m10 9 5 3-5 3z" /></G>
 )
 export const IChat = (p: P) => (
   <G {...p}><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.1A8 8 0 1 1 20 12z" /><path d="M8.5 11h7M8.5 14h4.5" /></G>

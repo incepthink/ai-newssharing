@@ -11,13 +11,20 @@ function makePool(): Pool {
   if (!connectionString) {
     throw new Error('DATABASE_URL is not set — point it at your Postgres/RDS instance.')
   }
-  return new Pool({
+  const p = new Pool({
     connectionString,
     max: Number(process.env.PG_POOL_MAX ?? 3),
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 10_000,
+    // Without keepalives a NAT or the server can drop an idle socket silently,
+    // and the next query on it dies with "Connection terminated unexpectedly".
+    keepAlive: true,
     ssl: sslConfig(),
   })
+  // An idle client whose socket dies is evicted by the pool, but the error is
+  // still emitted here — and an unhandled 'error' event takes the process down.
+  p.on('error', (err) => console.warn('[db] idle client dropped:', err.message))
+  return p
 }
 
 /**
@@ -61,8 +68,37 @@ function bind(sql: string, params: Record<string, unknown>): [string, unknown[]]
 async function all<T = Row>(sql: string, params: Record<string, unknown> = {}): Promise<T[]> {
   await ensureSchema()
   const [text, values] = bind(sql, params)
-  const res = await pool().query(text, values)
-  return res.rows as T[]
+  const readOnly = /^\s*(SELECT|WITH)\b/i.test(text)
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await pool().query(text, values)
+      return res.rows as T[]
+    } catch (err) {
+      if (attempt >= QUERY_ATTEMPTS || !retryable(err, readOnly)) throw err
+      await new Promise((r) => setTimeout(r, 200 * attempt))
+    }
+  }
+}
+
+const QUERY_ATTEMPTS = 3
+
+/**
+ * A remote database drops the odd connection: a cold connect times out, or a
+ * pooled socket turns out to be dead. Failing to *connect* never reached the
+ * server, so any statement can be retried. A connection lost *mid-query* may
+ * have run it, so only reads are retried then — never a write twice.
+ */
+function retryable(err: unknown, readOnly: boolean): boolean {
+  const e = err as { message?: string; code?: string }
+  const msg = e?.message ?? ''
+  const neverConnected =
+    /timeout exceeded when trying to connect|connection timeout/i.test(msg) ||
+    ['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT'].includes(e?.code ?? '')
+  if (neverConnected) return true
+  const lost =
+    /Connection terminated|Client has encountered a connection error|Connection ended/i.test(msg) ||
+    ['ECONNRESET', 'EPIPE', '57P01'].includes(e?.code ?? '')
+  return lost && readOnly
 }
 
 async function one<T = Row>(sql: string, params: Record<string, unknown> = {}): Promise<T | null> {

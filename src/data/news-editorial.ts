@@ -17,33 +17,53 @@ export type SpecialCoverage = {
   anchor: string
   kicker: string
   title: string
-  /** The releases in it are the ones this topic rule picks out. */
-  topic: TopicId
-  /** Headline figures, each with the वृत्त क्र. it was taken from. */
+  /** The releases in it: the ones a topic rule picks out, or — for a story
+   *  no topic covers — the ones a search of the approved corpus finds. */
+  select: { topic: TopicId } | { query: string }
+  /** Headline figures, each with the वृत्त क्र. it was taken from. Empty
+   *  until an approved release states them. */
   figures: Array<{ value: string; label: string; source: string }>
   /** Key decisions; each opens a search of the approved corpus. */
   decisions: Array<{ label: string; query: string }>
   allLabel: string
 }
 
-/** दुष्काळ २०२६ — figures from releases 217495 and 217547. */
-export const SPECIAL_COVERAGE: SpecialCoverage = {
-  anchor: 'drought',
-  kicker: 'विशेष वृत्तांकन',
-  title: 'दुष्काळ २०२६ : शासन काय करत आहे',
-  topic: 'drought',
-  figures: [
-    { value: '२६५', label: 'दुष्काळसदृश तालुके', source: '२१७४९५' },
-    { value: '१२', label: 'उपाययोजना सुरू', source: '२१७४९५' },
-    { value: '१९', label: 'तालुक्यांत सर्वेक्षण', source: '२१७५४७' },
-  ],
-  decisions: [
-    { label: 'पीक कर्जाचे मध्यम मुदतीच्या कर्जात पुनर्गठन; वसुलीला स्थगिती', query: 'पुनर्गठन' },
-    { label: 'विद्यार्थ्यांच्या परीक्षा शुल्क माफीसह इतर मदत', query: 'परीक्षा शुल्क' },
-    { label: 'वैरण विकास कार्यक्रम — चारा सुरक्षा', query: 'वैरण' },
-  ],
-  allLabel: 'दुष्काळ २०२६ — सर्व बातम्या',
-}
+/** The special coverage bands, in page order. */
+export const SPECIAL_COVERAGE: SpecialCoverage[] = [
+  /* दुष्काळ २०२६ — figures from releases 217495 and 217547. */
+  {
+    anchor: 'drought',
+    kicker: 'विशेष वृत्तांकन',
+    title: 'दुष्काळ २०२६ : शासन काय करत आहे',
+    select: { topic: 'drought' },
+    figures: [
+      { value: '२६५', label: 'दुष्काळसदृश तालुके', source: '२१७४९५' },
+      { value: '१२', label: 'उपाययोजना सुरू', source: '२१७४९५' },
+      { value: '१९', label: 'तालुक्यांत सर्वेक्षण', source: '२१७५४७' },
+    ],
+    decisions: [
+      { label: 'पीक कर्जाचे मध्यम मुदतीच्या कर्जात पुनर्गठन; वसुलीला स्थगिती', query: 'पुनर्गठन' },
+      { label: 'विद्यार्थ्यांच्या परीक्षा शुल्क माफीसह इतर मदत', query: 'परीक्षा शुल्क' },
+      { label: 'वैरण विकास कार्यक्रम — चारा सुरक्षा', query: 'वैरण' },
+    ],
+    allLabel: 'दुष्काळ २०२६ — सर्व बातम्या',
+  },
+  /* कर्जमुक्ती २०२६ — no topic rule covers it (शेती holds the word), so its
+     releases are the ones a search for it finds. No approved release yet
+     states the scheme's headline figures; the band leads without them. */
+  {
+    anchor: 'karjmukti',
+    kicker: 'विशेष वृत्तांकन',
+    title: 'कर्जमुक्ती २०२६ : शेतकऱ्यांसाठी शासन काय करत आहे',
+    select: { query: 'कर्जमुक्ती' },
+    figures: [],
+    decisions: [
+      { label: 'पुण्यश्लोक अहिल्यादेवी होळकर शेतकरी कर्जमुक्ती योजना', query: 'अहिल्यादेवी होळकर' },
+      { label: 'सावकारीविरोधात जनजागृती — महाराष्ट्र सावकारी (नियमन) अधिनियम, २०१४', query: 'सावकारी' },
+    ],
+    allLabel: 'कर्जमुक्ती २०२६ — सर्व बातम्या',
+  },
+]
 
 /** सध्या चर्चेत — label and the search it opens. A chip whose search finds
  *  nothing in the approved corpus is not shown. */
@@ -63,17 +83,14 @@ export const TRENDING: Array<{ label: string; query: string }> = [
   { label: 'भरती परीक्षा सुधारणा', query: 'भरती परीक्षा' },
 ]
 
-/** The masthead's pill navigation. `query` items open the release list
- *  searched; the rest are anchors on the page. */
-export const MAIN_NAV: Array<{ label: string; href: string; highlight?: boolean; phone?: boolean }> = [
+/** The masthead's pill navigation: anchors on the page. */
+export const MAIN_NAV: Array<{ label: string; href: string; phone?: boolean }> = [
   { label: 'मुख्यपृष्ठ', href: '#top', phone: true },
   { label: 'वृत्त विशेष', href: '#releases', phone: true },
-  { label: 'जिल्हा वार्ता', href: '#districts', phone: true },
-  { label: 'दुष्काळ २०२६', href: '#drought', highlight: true, phone: true },
-  { label: 'कर्जमुक्ती २०२६', href: `/news?q=${encodeURIComponent('कर्जमुक्ती')}#releases` },
-  { label: 'विशेष लेख', href: '#features', phone: true },
+  { label: 'दुष्काळ २०२६', href: '#drought', phone: true },
+  { label: 'कर्जमुक्ती २०२६', href: '#karjmukti' },
   { label: 'जय महाराष्ट्र', href: '#media' },
-  { label: 'लोकराज्य', href: '#media' },
+  { label: 'दिलखुलास', href: '#dilkhulas' },
   { label: 'फॅक्ट चेक', href: '#factcheck', phone: true },
 ]
 

@@ -5,8 +5,8 @@ import { Overlay } from '@/components/articles/Overlay'
 import { FoldDialog } from '@/components/news/fold-download'
 import { StoryPhoto } from '@/components/news/story-photo'
 import type { FoldItem } from '@/lib/news/fold-item'
-import { AUTHORITY_MR, copyText, mrDigits, type NewsItem } from '@/lib/news/public'
-import { IArrowRight, IChat, IClose, ICopy, IDownload, ISearch, ISend, IShare, ISpeaker } from './icons'
+import { AUTHORITY_MR, mrDigits, type NewsItem } from '@/lib/news/public'
+import { IArrowRight, IChat, IClose, IDownload, ISearch, ISend, IShare } from './icons'
 
 /**
  * Everything on `/news` that floats above the page, and the one place that
@@ -18,14 +18,8 @@ import { IArrowRight, IChat, IClose, ICopy, IDownload, ISearch, ISend, IShare, I
  * navigating, the search icon opens a palette that searches as you type, and
  * the centre button opens the assistant. The carousel reads `busy` from here so
  * it holds still while any of them is open.
- *
- * Listening, copying and the text size live here too, because a release can be
- * listened to from the hero, the list and the panel, and only one may speak.
- */
 
-type Fs = 0 | 1 | 2
-const FS_SCALE = ['90%', '100%', '118%'] as const
-export const FS_LABELS = ['लहान अक्षरे', 'मध्यम अक्षरे', 'मोठी अक्षरे'] as const
+ */
 
 type Ui = {
   openReader: (item: NewsItem) => void
@@ -33,11 +27,6 @@ type Ui = {
   openFold: () => void
   openChat: (q?: string) => void
   flash: (msg: string) => void
-  speak: (item: Pick<NewsItem, 'id' | 'title' | 'summary'>) => void
-  copy: (item: Pick<NewsItem, 'title' | 'summary' | 'no'>) => void
-  speaking: string | null
-  fs: Fs
-  setFs: (fs: Fs) => void
   /** A dialog is open: the carousel holds. */
   busy: boolean
   origin: string
@@ -73,32 +62,7 @@ export function NewsUiProvider({
   const [fold, setFold] = useState(false)
   const [chat, setChat] = useState<{ open: boolean; ask: string | null }>({ open: false, ask: null })
   const [toast, setToast] = useState('')
-  const [speaking, setSpeaking] = useState<string | null>(null)
-  const [fs, setFsState] = useState<Fs>(1)
   const toastTimer = useRef<number | undefined>(undefined)
-  const speakingRef = useRef<string | null>(null)
-
-  /* Text size: the whole page is set in rem, so one root size scales every
-     line of it. Remembered per reader; the root goes back on leaving. */
-  useEffect(() => {
-    try {
-      const saved = Number(window.localStorage.getItem('nr-fs'))
-      if (saved === 0 || saved === 2) setFsState(saved)
-    } catch {}
-  }, [])
-  useEffect(() => {
-    const root = document.documentElement
-    root.style.fontSize = FS_SCALE[fs]
-    return () => {
-      root.style.fontSize = ''
-    }
-  }, [fs])
-  const setFs = useCallback((next: Fs) => {
-    setFsState(next)
-    try {
-      window.localStorage.setItem('nr-fs', String(next))
-    } catch {}
-  }, [])
 
   const flash = useCallback((msg: string) => {
     window.clearTimeout(toastTimer.current)
@@ -106,60 +70,7 @@ export function NewsUiProvider({
     toastTimer.current = window.setTimeout(() => setToast(''), 2600)
   }, [])
 
-  const speak = useCallback(
-    (r: Pick<NewsItem, 'id' | 'title' | 'summary'>) => {
-      const syn = window.speechSynthesis
-      if (!syn || !window.SpeechSynthesisUtterance) {
-        flash('या ब्राउझरमध्ये ऐकण्याची सोय उपलब्ध नाही')
-        return
-      }
-      if (speakingRef.current === r.id) {
-        syn.cancel()
-        speakingRef.current = null
-        setSpeaking(null)
-        return
-      }
-      syn.cancel()
-      const u = new window.SpeechSynthesisUtterance(`${r.title}. ${r.summary ?? ''}`)
-      u.lang = 'mr-IN'
-      u.rate = 0.95
-      const end = () => {
-        if (speakingRef.current === r.id) {
-          speakingRef.current = null
-          setSpeaking(null)
-        }
-      }
-      u.onend = end
-      u.onerror = end
-      speakingRef.current = r.id
-      setSpeaking(r.id)
-      syn.speak(u)
-    },
-    [flash],
-  )
-
-  useEffect(
-    () => () => {
-      window.clearTimeout(toastTimer.current)
-      window.speechSynthesis?.cancel()
-    },
-    [],
-  )
-
-  const copy = useCallback(
-    (r: Pick<NewsItem, 'title' | 'summary' | 'no'>) => {
-      const done = () => flash('बातमीचा मजकूर कॉपी झाला')
-      const fail = () => flash('कॉपी करता आले नाही — मजकूर निवडून कॉपी करा')
-      try {
-        const c = navigator.clipboard
-        if (c?.writeText) c.writeText(copyText(r)).then(done, fail)
-        else fail()
-      } catch {
-        fail()
-      }
-    },
-    [flash],
-  )
+  useEffect(() => () => window.clearTimeout(toastTimer.current), [])
 
   const ui = useMemo<Ui>(
     () => ({
@@ -178,15 +89,10 @@ export function NewsUiProvider({
         setChat({ open: true, ask: q?.trim() || null })
       },
       flash,
-      speak,
-      copy,
-      speaking,
-      fs,
-      setFs,
       busy: Boolean(reader || search !== null || fold || chat.open),
       origin,
     }),
-    [flash, speak, copy, speaking, fs, setFs, reader, search, fold, chat.open, origin],
+    [flash, reader, search, fold, chat.open, origin],
   )
 
   return (
@@ -243,9 +149,6 @@ function ReaderPanel({ item, onClose }: { item: NewsItem; onClose: () => void })
     }
   }, [item.id])
 
-  const on = ui.speaking === item.id
-  const head = ['text-[1.6875rem]', 'text-[1.875rem] sm:text-[2.25rem]', 'text-[2.125rem] sm:text-[2.625rem]'][ui.fs]
-
   return (
     <Overlay
       onClose={onClose}
@@ -257,19 +160,7 @@ function ReaderPanel({ item, onClose }: { item: NewsItem; onClose: () => void })
         <button type="button" onClick={onClose} aria-label="बंद करा" className="grid h-11 w-11 place-items-center rounded-full bg-[#F4EFE7]">
           <IClose size={18} strokeWidth={2} />
         </button>
-        <TextSizeGroup tone="light" className="mr-auto" />
-        <button
-          type="button"
-          onClick={() => ui.speak(item)}
-          aria-pressed={on}
-          className={`${pill} ${on ? 'border-nr-accent bg-nr-accent-soft' : 'border-[#DDD3C5]'}`}
-        >
-          <ISpeaker size={16} /> {on ? 'थांबवा' : 'ऐका'}
-        </button>
-        <button type="button" onClick={() => ui.copy(item)} aria-label="मजकूर कॉपी करा" className={`${pill} border-[#DDD3C5]`}>
-          <ICopy size={15} /> कॉपी
-        </button>
-        <a href={waHref(item, ui.origin)} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp वर पाठवा" className={`${pill} border-[#DDD3C5]`}>
+        <a href={waHref(item, ui.origin)} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp वर पाठवा" className={`${pill} ml-auto border-[#DDD3C5]`}>
           <IShare size={15} /> शेअर
         </a>
       </div>
@@ -279,7 +170,7 @@ function ReaderPanel({ item, onClose }: { item: NewsItem; onClose: () => void })
           <span className="rounded-full bg-nr-place-soft px-3 py-[3px] font-bold text-nr-place">{item.place}</span>
           <span className="rounded-full bg-[#EFE8DD] px-3 py-[3px] font-semibold text-[#2A221D]">{item.topicLabel}</span>
         </div>
-        <h2 id="nr-reader-title" className={`nr-h m-0 font-bold leading-[1.36] ${head}`}>
+        <h2 id="nr-reader-title" className="nr-h m-0 text-[1.875rem] font-bold leading-[1.36] sm:text-[2.25rem]">
           {item.title}
         </h2>
         <dl className="m-0 flex flex-wrap gap-x-[22px] gap-y-1.5 text-sm text-[#4A403A]">
@@ -397,36 +288,6 @@ function ReaderPanel({ item, onClose }: { item: NewsItem; onClose: () => void })
  *  behaviour, so a new tab still opens the release's page. */
 export function plainClick(e: React.MouseEvent): boolean {
   return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && !e.defaultPrevented
-}
-
-/** The three अ buttons — in the utility strip (on crimson) and in the reading
- *  panel (on white). */
-export function TextSizeGroup({ tone, className = '' }: { tone: 'dark' | 'light'; className?: string }) {
-  const { fs, setFs } = useNewsUi()
-  const sizes = ['text-[13px]', 'text-base', 'text-xl']
-  return (
-    <div role="group" aria-label="अक्षरांचा आकार" className={`flex gap-1 ${className}`}>
-      {FS_LABELS.map((label, k) => {
-        const on = k === fs
-        return (
-          <button
-            key={label}
-            type="button"
-            onClick={() => setFs(k as Fs)}
-            aria-pressed={on}
-            aria-label={label}
-            className={
-              tone === 'dark'
-                ? `grid h-[34px] w-9 place-items-center rounded-full border border-white/[0.28] font-bold text-white ${sizes[k]} ${on ? 'bg-white/[0.22]' : 'bg-transparent'}`
-                : `grid h-11 w-10 place-items-center rounded-full font-bold text-nr-primary ${sizes[k]} ${on ? 'bg-nr-primary-soft' : 'bg-transparent'}`
-            }
-          >
-            अ
-          </button>
-        )
-      })}
-    </div>
-  )
 }
 
 /* ------------------------------------------------------------ search palette */

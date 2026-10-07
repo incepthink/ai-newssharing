@@ -43,6 +43,8 @@ export type NewsItem = {
   credit: string | null
   video: string | null
   cm: boolean
+  /** Roster ids (`data/ministers.ts`) the attribution or headline names. */
+  ministers: string[]
   language: 'mr' | 'hi' | 'en'
   /** A long-form piece (विशेष लेख) rather than a datelined release. */
   feature: boolean
@@ -318,9 +320,5 @@ export function ruleAnswer(items: NewsItem[], question: string, today: string): 
 export const NOTHING_FOUND =
   'याबद्दल मंजूर प्रसिद्धीपत्रकांमध्ये माहिती सापडली नाही. मी फक्त महासंचालनालयाने मंजूर केलेल्या बातम्यांवरून उत्तर देतो — अंदाज करत नाही. जिल्हा, योजना किंवा वृत्त क्रमांक लिहून पाहा.'
 
-/** The issuing line every copy and every assistant citation carries. */
+/** The issuing line every assistant citation carries. */
 export const AUTHORITY_MR = 'माहिती व जनसंपर्क महासंचालनालय, महाराष्ट्र शासन'
-
-export function copyText(r: Pick<NewsItem, 'title' | 'summary' | 'no'>): string {
-  return `${r.title}\n\n${r.summary ?? ''}${r.no ? `\n\nवृत्त क्र. ${r.no}` : ''}\n— ${AUTHORITY_MR}`
-}
