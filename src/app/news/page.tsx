@@ -179,8 +179,20 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
   }))
 
   /* --- the rest --------------------------------------------------------- */
-  const jaiMaharashtra = items.filter((i) => i.title.includes('जय महाराष्ट्र'))
-  const dilkhulas = items.filter((i) => i.title.includes('दिलखुलास'))
+  /* An episode is the directorate's announcement of the programme's interview
+     — its headline names the programme and says मुलाखत. A story that only
+     quotes the slogan ("…‘जय महाराष्ट्र’चा निनाद") is not one. */
+  const episodesOf = (name: string) => items.filter((i) => i.title.includes(name) && i.title.includes('मुलाखत'))
+  const jaiMaharashtra = episodesOf('जय महाराष्ट्र')
+  /* Most interviews air on both programmes under one joint release, whose
+     photograph is the जय महाराष्ट्र card. So दिलखुलास leads with its newest
+     episode of its own, else one the band above is not already leading. */
+  const dilkhulasAll = episodesOf('दिलखुलास')
+  const dilkhulasLead =
+    dilkhulasAll.find((i) => !i.title.includes('जय महाराष्ट्र')) ??
+    dilkhulasAll.find((i) => i.id !== jaiMaharashtra[0]?.id) ??
+    dilkhulasAll[0]
+  const dilkhulas = dilkhulasLead ? [dilkhulasLead, ...dilkhulasAll.filter((i) => i !== dilkhulasLead)] : []
   const pictured = items.filter((i) => i.img)
   const ytItem = jaiMaharashtra[0] ?? dilkhulas[0] ?? items.find((i) => i.video) ?? null
 

@@ -49,16 +49,22 @@ export const SPECIAL_COVERAGE: SpecialCoverage[] = [
     allLabel: 'दुष्काळ २०२६ — सर्व बातम्या',
   },
   /* कर्जमुक्ती २०२६ — no topic rule covers it (शेती holds the word), so its
-     releases are the ones a search for it finds. No approved release yet
-     states the scheme's headline figures; the band leads without them. */
+     releases are the ones a search for it finds. Figures from release 217559
+     (१ ऑक्टोबर): the third phase, and the running total of all three. */
   {
     anchor: 'karjmukti',
     kicker: 'विशेष वृत्तांकन',
     title: 'कर्जमुक्ती २०२६ : शेतकऱ्यांसाठी शासन काय करत आहे',
     select: { query: 'कर्जमुक्ती' },
-    figures: [],
+    figures: [
+      { value: '१५.८५ लाख', label: 'शेतकऱ्यांना लाभ (तीन टप्पे)', source: '२१७५५९' },
+      { value: '१३,२७५', label: 'कोटी रुपये वितरित', source: '२१७५५९' },
+      { value: '३.२७ लाख', label: 'तिसऱ्या टप्प्यातील शेतकरी', source: '२१७५५९' },
+    ],
     decisions: [
       { label: 'पुण्यश्लोक अहिल्यादेवी होळकर शेतकरी कर्जमुक्ती योजना', query: 'अहिल्यादेवी होळकर' },
+      { label: 'तिसऱ्या टप्प्यात ३,१६० कोटी रुपयांचे वितरण', query: 'तिसऱ्या टप्प्यात' },
+      { label: 'पात्र शेतकऱ्यांसाठी आधार प्रमाणीकरण', query: 'आधार प्रमाणीकरण' },
       { label: 'सावकारीविरोधात जनजागृती — महाराष्ट्र सावकारी (नियमन) अधिनियम, २०१४', query: 'सावकारी' },
     ],
     allLabel: 'कर्जमुक्ती २०२६ — सर्व बातम्या',

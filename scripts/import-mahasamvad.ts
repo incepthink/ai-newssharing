@@ -2,8 +2,18 @@
  * Import real recent articles with actual photos from Mahasamvad WordPress REST API
  * into PostgreSQL articles table.
  *
+ * Two passes:
+ *   1. Every post from today and the `--days` before it (default 7), in full.
+ *   2. A backfill over the `--backfill-days` before that (default 60) for the
+ *      page's thin bands only: कर्जमुक्ती releases and the जय महाराष्ट्र /
+ *      दिलखुलास interview announcements, so those bands have past episodes.
+ *
+ * Idempotent: a post already imported (same source_url) is refreshed, not
+ * duplicated, so it can be re-run through the day as Mahasamvad publishes.
+ *
  * Usage:
- *   npm exec tsx scripts/import-mahasamvad.ts
+ *   npm run import:mahasamvad
+ *   npm run import:mahasamvad -- --days 7 --backfill-days 60
  */
 import { loadEnvConfig } from '@next/env'
 import { createArticle, ensureSchema, getArticleBySourceUrl, pool, updateArticle } from '../src/lib/db'
@@ -13,7 +23,78 @@ import type { Category } from '../src/lib/types'
 // Load environment variables without logging credentials
 loadEnvConfig(process.cwd())
 
-const MAHASAMVAD_API_URL = 'https://mahasamvad.in/wp-json/wp/v2/posts?per_page=50&_embed=1'
+const MAHASAMVAD_API = 'https://mahasamvad.in/wp-json/wp/v2/posts'
+const PAGE_SIZE = 50
+
+/** Titles the backfill pass keeps: the scheme, and the programmes' episode
+ *  announcements (which always say मुलाखत — a story that merely quotes the
+ *  slogan "जय महाराष्ट्र" is not an episode). */
+const BACKFILL_TITLES = [/कर्जमुक्ती/, /(जय महाराष्ट्र|दिलखुलास)[\s\S]*मुलाखत/]
+
+function arg(name: string, fallback: number): number {
+  const i = process.argv.indexOf(`--${name}`)
+  const n = i === -1 ? NaN : Number(process.argv[i + 1])
+  return Number.isInteger(n) && n >= 0 ? n : fallback
+}
+
+/** `YYYY-MM-DD`, `n` days before today in India time — the site's own clock,
+ *  which is what the API's `after`/`before` and a post's `date` are in. */
+function istDaysAgo(n: number): string {
+  const ist = new Date(Date.now() + 5.5 * 3_600_000 - n * 86_400_000)
+  return ist.toISOString().slice(0, 10)
+}
+
+async function getJson<T>(url: string): Promise<T> {
+  let last: unknown
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Accept: 'application/json',
+        },
+      })
+      // Past the last page WordPress answers 400 rest_post_invalid_page_number.
+      if (response.status === 400) return [] as T
+      if (!response.ok) throw new Error(`Mahasamvad API returned HTTP ${response.status}: ${response.statusText}`)
+      return (await response.json()) as T
+    } catch (err) {
+      last = err
+      await new Promise((r) => setTimeout(r, attempt * 3000))
+    }
+  }
+  throw last
+}
+
+/** Every post in a window, newest first, paged until the API runs out. */
+async function fetchWindow(params: Record<string, string>): Promise<WpPost[]> {
+  const out: WpPost[] = []
+  for (let page = 1; ; page++) {
+    const qs = new URLSearchParams({ ...params, per_page: String(PAGE_SIZE), page: String(page) })
+    const batch = await getJson<WpPost[]>(`${MAHASAMVAD_API}?${qs}`)
+    out.push(...batch)
+    if (batch.length < PAGE_SIZE) return out
+  }
+}
+
+async function fetchPosts(days: number, backfillDays: number): Promise<WpPost[]> {
+  const since = istDaysAgo(days)
+  console.log(`Fetching every post since ${since}...`)
+  const recent = await fetchWindow({ after: `${since}T00:00:00`, _embed: '1' })
+  console.log(`  ${recent.length} posts.`)
+
+  if (!backfillDays) return recent
+  const from = istDaysAgo(days + backfillDays)
+  console.log(`Backfilling कर्जमुक्ती / जय महाराष्ट्र / दिलखुलास from ${from}...`)
+  const titles = await fetchWindow({ after: `${from}T00:00:00`, before: `${since}T00:00:00`, _fields: 'id,title' })
+  const ids = titles
+    .filter((p) => BACKFILL_TITLES.some((re) => re.test(decodeHtmlEntities(p.title?.rendered ?? ''))))
+    .map((p) => p.id)
+  const older = ids.length ? await fetchWindow({ include: ids.join(','), _embed: '1' }) : []
+  console.log(`  ${older.length} of ${titles.length} older posts.`)
+
+  return [...recent, ...older]
+}
 
 function decodeHtmlEntities(str: string): string {
   if (!str) return ''
@@ -60,6 +141,7 @@ function extractBullets(html: string): string[] {
 interface WpPost {
   id: number
   date: string
+  date_gmt?: string
   link: string
   title?: { rendered: string }
   content?: { rendered: string }
@@ -100,19 +182,7 @@ export interface ImportSummary {
 export async function importMahasamvad(): Promise<ImportSummary> {
   await ensureSchema()
 
-  console.log(`Fetching articles from ${MAHASAMVAD_API_URL}...`)
-  const response = await fetch(MAHASAMVAD_API_URL, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      Accept: 'application/json',
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(`Mahasamvad API returned HTTP ${response.status}: ${response.statusText}`)
-  }
-
-  const posts = (await response.json()) as WpPost[]
+  const posts = await fetchPosts(arg('days', 7), arg('backfill-days', 60))
   console.log(`Fetched ${posts.length} posts from Mahasamvad API.`)
 
   let importedCount = 0
@@ -131,6 +201,13 @@ export async function importMahasamvad(): Promise<ImportSummary> {
     const bullets = extractBullets(rawContent)
     const canonicalUrl = post.link?.trim() ?? ''
     const foldDate = post.date ? post.date.slice(0, 10) : new Date().toISOString().slice(0, 10)
+    /* `date` is India time with no offset; `date_gmt` is the same instant in
+       UTC. Parsing `date` bare would read it in this machine's zone. */
+    const publishedAt = post.date_gmt
+      ? new Date(`${post.date_gmt}Z`).toISOString()
+      : post.date
+        ? new Date(`${post.date}+05:30`).toISOString()
+        : new Date().toISOString()
 
     // Extract actual featured photo
     let posterUrl: string | null = null
@@ -183,8 +260,9 @@ export async function importMahasamvad(): Promise<ImportSummary> {
       districtMapped++
     }
 
-    // Infer department/attribution
-    const isCm = /मुख्यमंत्री|मंत्रिमंडळ/.test(`${title} ${body}`)
+    // Infer department/attribution from the headline: nearly every release
+    // mentions a मुख्यमंत्री scheme somewhere in its body.
+    const isCm = /मुख्यमंत्री|मंत्रिमंडळ/.test(title)
     const category: Category = isCm ? 'cm' : 'general'
 
     // Dateline
@@ -207,7 +285,9 @@ export async function importMahasamvad(): Promise<ImportSummary> {
         category,
         bullets: bullets.length > 0 ? bullets : existing.bullets,
         dateline: dateline ?? existing.dateline,
-        status: 'approved',
+        // Setting status re-stamps approved_at with now; leave an approved
+        // row's publish time alone.
+        ...(existing.status === 'approved' ? {} : { status: 'approved' as const }),
       })
       updatedCount++
       skippedDuplicates++
@@ -228,8 +308,8 @@ export async function importMahasamvad(): Promise<ImportSummary> {
         byline: 'महासंवाद वृत्त',
         status: 'approved',
         submitted_by: 'mahasamvad',
-        submitted_at: post.date ? new Date(post.date).toISOString() : new Date().toISOString(),
-        approved_at: post.date ? new Date(post.date).toISOString() : new Date().toISOString(),
+        submitted_at: publishedAt,
+        approved_at: publishedAt,
         fold_date: foldDate,
         poster_url: posterUrl,
         source_url: canonicalUrl,

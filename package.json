@@ -9,7 +9,8 @@
     "lint": "next lint",
     "seed": "node scripts/with-system-ca.mjs tsx scripts/seed.ts",
     "reanchor": "node scripts/with-system-ca.mjs tsx scripts/reanchor-dates.ts",
-    "backfill:images": "node scripts/with-system-ca.mjs tsx scripts/backfill-images.ts"
+    "backfill:images": "node scripts/with-system-ca.mjs tsx scripts/backfill-images.ts",
+    "import:mahasamvad": "node scripts/with-system-ca.mjs tsx scripts/import-mahasamvad.ts"
   },
   "dependencies": {
     "d3-geo": "^3.1.1",
