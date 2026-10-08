@@ -21,22 +21,22 @@ import { FactCheck } from '@/components/news/redesign/fact-check'
 import { HeroCarousel, type HeroSlide } from '@/components/news/redesign/hero'
 import { MainNav } from '@/components/news/redesign/main-nav'
 import { IDownload, IPlay, ISearch } from '@/components/news/redesign/icons'
-import { ReleasesBrowser, type DistrictOption, type MinisterOption } from '@/components/news/redesign/releases'
+import { DistrictMap, ReleasesBrowser, type DistrictOption, type MinisterOption, type ReleasesMap } from '@/components/news/redesign/releases'
 import {
-  BottomNav,
+  ChatButton,
   FoldButton,
   ReadLink,
   ReleaseSearchLink,
   SearchChip,
 } from '@/components/news/redesign/triggers'
 import { NewsUiProvider } from '@/components/news/redesign/ui'
-import { IconFacebookF, IconInstagram, IconX, IconYouTube } from '@/components/ui'
+import { IconFacebookF, IconInstagram, IconTelegram, IconX, IconYouTube } from '@/components/ui'
 
 /**
  * News — the public front door, to the "नवी रचना — प्रस्ताव" redesign
  * (`docs/design/news-redesign`): a cream ground, the Mahasamvad logo (which
- * carries the emblem), a red-tinted full-bleed hero with the directorate's
- * social accounts beside it, and a floating pill bar at the bottom.
+ * carries the emblem), a red-tinted full-bleed hero with the district news map
+ * beside it, and the assistant's button at the bottom right.
  *
  * ONE CORPUS. Every headline, count, photograph and shade here is a row in
  * `articles` with `status = 'approved'`, read through `loadCorpus` — the same
@@ -73,7 +73,7 @@ const LEAD_COUNT = 5
  *  edge below that. */
 const WRAP = 'mx-auto w-full max-w-[1328px] px-4 sm:px-6'
 /** Anchored sections clear the sticky masthead. */
-const ANCHOR = 'scroll-mt-[126px] lg:scroll-mt-[148px]'
+const ANCHOR = 'scroll-mt-[118px] lg:scroll-mt-[124px]'
 
 /**
  * DGIPR's social channels — the four official accounts confirmed by DGIPR.
@@ -92,6 +92,18 @@ const SOCIAL = [
   },
   { id: 'youtube', name: 'YouTube', handle: '@MAHARASHTRADGIPR', glyph: <IconYouTube size={20} />, tile: '#FF0000', url: 'https://www.youtube.com/@MAHARASHTRADGIPR' },
 ] as const
+
+/** The masthead's row of the same accounts, plus the Telegram channel, each
+ *  on its platform's own colour. */
+const NAV_SOCIAL = [
+  ...SOCIAL.map((s) => ({
+    name: s.name,
+    url: s.url,
+    tile: s.tile,
+    glyph: s.id === 'x' ? <IconX size={13} /> : s.id === 'instagram' ? <IconInstagram size={16} /> : s.id === 'youtube' ? <IconYouTube size={16} /> : <IconFacebookF size={17} />,
+  })),
+  { name: 'Telegram', url: 'https://t.me/MahaDGIPR', tile: '#229ED9', glyph: <IconTelegram size={16} /> },
+]
 
 type Href = (patch: Partial<Filters>, hash?: string) => string
 
@@ -148,6 +160,14 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
      than three districts filed, and the count line names the window it
      settled on. */
   const map = buildNewsMap(corpus, '7d', null, now)
+  const mapData: ReleasesMap = {
+    viewBox: geometry.viewBox,
+    shapes: geometry.districts.map(({ id, nameMr, d }) => ({ id, nameMr, d })),
+    counts: Object.fromEntries(Object.entries(map.districts).map(([id, v]) => [id, v.count])),
+    ceiling: map.ceiling,
+    windowLabel: map.window.labelMr,
+    widened: map.widened,
+  }
   /* The dropdown lists every district, busiest or not, by name, each with
      the rows it will show; राज्यव्यापी first. */
   const perDistrict = new Map<string, number>()
@@ -214,7 +234,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
       suggestions={trending.slice(0, 5)}
       origin={origin}
     >
-      <div className="nr flex min-h-screen flex-col pb-24 sm:pb-28">
+      <div className="nr flex min-h-screen flex-col">
         <a
           href="#releases"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg"
@@ -225,12 +245,12 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
 
         {/* 2 ─ Masthead (sticky)--------------------------------------- */}
         <header className="sticky top-0 z-30 border-b border-nr-line bg-[rgba(255,248,238,0.97)]">
-          <div className={`${WRAP} flex h-[64px] items-center justify-between gap-2 lg:h-[88px] lg:gap-6`}>
+          <div className={`${WRAP} flex h-[56px] items-center justify-between gap-2 lg:h-[64px] lg:gap-6`}>
             <a href="#top" aria-label="महासंवाद — मुखपृष्ठ" className="min-w-0 shrink-0">
-              <Image src="/mahasamvad-logo.png" alt="महासंवाद" width={292} height={100} priority className="h-[40px] w-auto lg:h-[62px]" />
+              <Image src="/mahasamvad-logo.png" alt="महासंवाद" width={292} height={100} priority className="h-[36px] w-auto lg:h-[46px]" />
             </a>
             <div className="flex shrink-0 items-center gap-2.5">
-              <ReleaseSearchLink className="flex h-12 items-center gap-2 rounded-full border-[1.5px] border-nr-primary bg-white px-[18px] text-[0.9375rem] font-bold text-nr-primary max-lg:hidden">
+              <ReleaseSearchLink className="flex h-11 items-center gap-2 rounded-full border-[1.5px] border-nr-primary bg-white px-[18px] text-[0.9375rem] font-bold text-nr-primary max-lg:hidden">
                 <ISearch size={18} strokeWidth={2.2} />
                 शोधा
               </ReleaseSearchLink>
@@ -240,9 +260,9 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               >
                 <ISearch size={18} strokeWidth={2.2} />
               </ReleaseSearchLink>
-              <FoldButton className="flex h-12 items-center gap-2.5 rounded-full bg-nr-primary pl-[18px] pr-2 text-[0.9375rem] font-bold text-white shadow-[0_10px_22px_-12px_var(--nr-primary)] max-lg:hidden">
+              <FoldButton className="flex h-11 items-center gap-2.5 rounded-full bg-nr-primary pl-[18px] pr-1.5 text-[0.9375rem] font-bold text-white shadow-[0_10px_22px_-12px_var(--nr-primary)] max-lg:hidden">
                 आजचा फोल्ड
-                <span className="grid h-[34px] w-[34px] place-items-center rounded-full bg-white text-nr-primary">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-nr-primary">
                   <IDownload size={16} strokeWidth={2.4} />
                 </span>
               </FoldButton>
@@ -251,26 +271,19 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               </FoldButton>
             </div>
           </div>
-          <MainNav items={MAIN_NAV} />
+          <MainNav items={MAIN_NAV} social={NAV_SOCIAL} />
         </header>
 
-        {/* 3 ─ Hero carousel + सोशल मीडिया ----------------------------- */}
+        {/* 3 ─ Hero carousel + बातम्या नकाशा ------------------------------ */}
         {slides.length ? (
           <HeroCarousel
             slides={slides}
             aside={
               <aside
-                aria-labelledby="follow-h"
-                className="absolute bottom-12 right-[max(1.5rem,calc((100vw-1280px)/2))] top-12 hidden w-[400px] flex-col rounded-[22px] bg-[rgba(255,248,238,0.95)] px-[22px] pb-[18px] pt-[22px] shadow-[0_30px_60px_-24px_rgba(40,6,10,0.55)] xl:flex"
+                aria-label="महाराष्ट्राचा बातम्या नकाशा"
+                className="absolute bottom-12 right-[max(1.5rem,calc((100vw-1280px)/2))] top-12 hidden w-[440px] flex-col justify-center rounded-[22px] bg-[rgba(255,248,238,0.95)] p-[22px] shadow-[0_30px_60px_-24px_rgba(40,6,10,0.55)] xl:flex"
               >
-                <FollowHead id="follow-h" />
-                <ul className="m-0 mt-4 flex min-h-0 grow list-none flex-col gap-2.5 p-0">
-                  {SOCIAL.map((s) => (
-                    <li key={s.id} className="min-h-0 flex-1">
-                      <FollowLink social={s} className="h-full max-h-[84px]" />
-                    </li>
-                  ))}
-                </ul>
+                <DistrictMap map={mapData} initialFilters={filters} svgClassName="max-h-[420px]" />
               </aside>
             }
           />
@@ -281,22 +294,18 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           </section>
         )}
 
-        {/* Below the widest screens, the accounts are a grid under the hero. */}
-        <section aria-labelledby="follow-h-m" className={`${WRAP} pt-[18px] xl:hidden`}>
-          <div className="border-b border-nr-line pb-2">
-            <FollowHead id="follow-h-m" />
-          </div>
-          <ul className="m-0 mt-3 grid list-none grid-cols-2 gap-2.5 p-0 lg:grid-cols-4">
-            {SOCIAL.map((s) => (
-              <li key={s.id}>
-                <FollowLink social={s} className="h-16" />
-              </li>
-            ))}
-          </ul>
+        {/* Below the widest screens (or with no hero), the map sits under it. */}
+        <section aria-label="महाराष्ट्राचा बातम्या नकाशा" className={`${WRAP} pt-[18px] lg:pt-8 ${slides.length ? 'xl:hidden' : ''}`}>
+          <DistrictMap
+            map={mapData}
+            initialFilters={filters}
+            className="mx-auto w-full max-w-[960px] rounded-[18px] bg-white p-[18px] shadow-[0_1px_0_#F0DCC8,0_20px_40px_-28px_rgba(120,30,30,0.35)] lg:p-7"
+            svgClassName="max-h-[420px] lg:max-h-[620px]"
+          />
         </section>
 
         <main id="main" className={`${WRAP} flex flex-col gap-9 pt-8 lg:gap-20 lg:pt-[72px]`}>
-          {/* 5 ─ वृत्त विशेष: नकाशा + सर्व मंजूर प्रसिद्धीपत्रके -------------- */}
+          {/* 5 ─ वृत्त विशेष: सर्व मंजूर प्रसिद्धीपत्रके ------------------------ */}
           <section id="releases" aria-labelledby="rel-h" className={`flex flex-col gap-3 lg:gap-5 ${ANCHOR}`}>
             <SectionHead
               eyebrow="वृत्त विशेष"
@@ -310,14 +319,6 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               initialFilters={filters}
               initial={releases}
               origin={origin}
-              map={{
-                viewBox: geometry.viewBox,
-                shapes: geometry.districts.map(({ id, nameMr, d }) => ({ id, nameMr, d })),
-                counts: Object.fromEntries(Object.entries(map.districts).map(([id, v]) => [id, v.count])),
-                ceiling: map.ceiling,
-                windowLabel: map.window.labelMr,
-                widened: map.widened,
-              }}
               districts={districtOptions}
               ministers={ministerOptions}
               topics={TOPICS.filter((t) => topicCounts.get(t.id)).map(({ id, label }) => ({ id, label }))}
@@ -325,12 +326,12 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           </section>
         </main>
 
-        {/* 6 ─ Special coverage: दुष्काळ २०२६, कर्जमुक्ती २०२६ ------------ */}
+        {/* 6 ─ योजना: दुष्काळ २०२६, कर्जमुक्ती २०२६ ------------------------ */}
         {coverage.map((c) => (
           <CoverageBand key={c.coverage.anchor} {...c} />
         ))}
 
-        {/* 9 ─ Media bands: जय महाराष्ट्र, then दिलखुलास --------------------- */}
+        {/* 9 ─ व्हिडिओ: जय महाराष्ट्र, then दिलखुलास ------------------------ */}
         <EpisodeBand id="media" name="जय महाराष्ट्र" episodes={jaiMaharashtra} />
         <EpisodeBand id="dilkhulas" name="दिलखुलास" episodes={dilkhulas} />
 
@@ -409,7 +410,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
         {/* 12 ─ Footer ----------------------------------------------------- */}
         <footer id="footer" className="mt-8 bg-nr-deep text-white lg:mt-24">
           <div
-            className={`${WRAP} grid gap-6 pb-6 pt-[26px] text-sm sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] lg:gap-10 lg:pb-9 lg:pt-[52px] lg:text-[0.9375rem]`}
+            className={`${WRAP} grid gap-6 pb-24 pt-[26px] text-sm sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] lg:gap-10 lg:pb-28 lg:pt-[52px] lg:text-[0.9375rem]`}
           >
             <div className="flex flex-col gap-3">
               <span className="self-start rounded-[18px] bg-white px-3.5 py-2.5">
@@ -446,8 +447,8 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           </div>
         </footer>
 
-        {/* 13 ─ Floating bar ------------------------------------------------ */}
-        <BottomNav />
+        {/* 13 ─ The assistant ------------------------------------------------ */}
+        <ChatButton />
       </div>
     </NewsUiProvider>
   )
@@ -489,7 +490,9 @@ function CoverageBand({
                 {coverage.figures.map((f) => (
                   <div key={f.label} className="flex flex-col-reverse rounded-[18px] bg-white/[0.08] px-2.5 py-3 lg:p-[18px]">
                     <dt className="mt-0.5 text-[0.78rem] leading-[1.45] text-white/90 lg:mt-1 lg:text-sm lg:leading-[1.55]">{f.label}</dt>
-                    <dd className="nr-h m-0 text-[1.625rem] font-extrabold leading-[1.3] text-nr-accent lg:text-[2.5rem]">{f.value}</dd>
+                    <dd className="nr-h m-0 ![text-wrap:nowrap] !whitespace-nowrap text-[clamp(1.125rem,5.6vw,1.625rem)] font-extrabold leading-[1.3] text-nr-accent lg:text-[2.25rem]">
+                      <FigureValue value={f.value} />
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -611,39 +614,6 @@ function EpisodeBand({ id, name, episodes }: { id: string; name: string; episode
   )
 }
 
-function FollowHead({ id }: { id: string }) {
-  return (
-    <h2 id={id} className="nr-h m-0 text-[1.3125rem] font-extrabold leading-normal text-nr-text xl:text-xl">
-      सोशल मीडिया
-    </h2>
-  )
-}
-
-/** One account: its own mark and colour, the handle, and — where there is
- *  room — a follow pill. The whole row is the link. */
-function FollowLink({ social: s, className }: { social: (typeof SOCIAL)[number]; className: string }) {
-  return (
-    <a
-      href={s.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={`${s.name} वर महासंवाद फॉलो करा (${s.handle})`}
-      className={`group flex items-center gap-3 rounded-2xl border border-nr-line bg-white px-3 transition-colors hover:border-nr-line2 hover:bg-nr-peach xl:px-3.5 ${className}`}
-    >
-      <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white xl:h-11 xl:w-11" style={{ background: s.tile }}>
-        {s.glyph}
-      </span>
-      <span className="min-w-0 grow leading-tight">
-        <b className="block text-[0.9375rem] text-nr-text">{s.name}</b>
-        <span className="block truncate text-xs text-nr-muted">{s.handle}</span>
-      </span>
-      <span className="shrink-0 rounded-full border-[1.5px] border-nr-line2 px-3 py-1 text-[0.8125rem] font-bold text-nr-primary transition-colors group-hover:border-nr-primary max-xl:hidden">
-        फॉलो करा
-      </span>
-    </a>
-  )
-}
-
 function SectionHead({ eyebrow, id, title, right }: { eyebrow: string; id: string; title: string; right?: ReactNode }) {
   return (
     <div className="flex items-end justify-between gap-6 border-b border-nr-line pb-2 lg:pb-3.5">
@@ -751,6 +721,19 @@ function stampMr(iso: string): string {
     minute: '2-digit',
     hourCycle: 'h23',
   }).format(at)
+}
+
+/** A figure on one line: the number full size, a trailing unit word
+ *  (लाख, कोटी) smaller beside it so the pair fits a third of the band. */
+function FigureValue({ value }: { value: string }) {
+  const m = value.match(/^(.*[\d०-९])\s+([^\d०-९]+)$/)
+  if (!m) return <>{value}</>
+  return (
+    <>
+      {m[1]}
+      <span className="ml-1 text-[0.6em]">{m[2]}</span>
+    </>
+  )
 }
 
 /** The site's own origin, for the absolute link a WhatsApp share needs. */

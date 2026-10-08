@@ -93,10 +93,11 @@ export const TRENDING: Array<{ label: string; query: string }> = [
 export const MAIN_NAV: Array<{ label: string; href: string; phone?: boolean }> = [
   { label: 'मुख्यपृष्ठ', href: '#top', phone: true },
   { label: 'वृत्त विशेष', href: '#releases', phone: true },
-  { label: 'दुष्काळ २०२६', href: '#drought', phone: true },
-  { label: 'कर्जमुक्ती २०२६', href: '#karjmukti' },
-  { label: 'जय महाराष्ट्र', href: '#media' },
-  { label: 'दिलखुलास', href: '#dilkhulas' },
+  /* योजना leads to the special coverage bands (दुष्काळ २०२६, then
+     कर्जमुक्ती २०२६); व्हिडिओ to the media bands (जय महाराष्ट्र, then
+     दिलखुलास). The pill stays lit through both bands of each. */
+  { label: 'योजना', href: '#drought', phone: true },
+  { label: 'व्हिडिओ', href: '#media' },
   { label: 'फॅक्ट चेक', href: '#factcheck', phone: true },
 ]
 

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, type ReactNode } from 'react'
 import type { NewsItem } from '@/lib/news/public'
-import { IChat, IDownload, IHome, IPin, ISearch, IShield, IVideo } from './icons'
+import { IChat } from './icons'
 import { plainClick, useNewsUi } from './ui'
 
 /**
@@ -185,63 +185,25 @@ export function LanguageSelect({
   )
 }
 
-/* ---------------------------------------------------------------- bottom bar */
-
-const cell =
-  'flex h-[60px] flex-col items-center justify-center gap-0.5 border-0 bg-transparent text-[0.78rem] font-bold text-nr-primary'
+/* ------------------------------------------------------------- chat button */
 
 /**
- * The floating pill at the bottom: six jumps on a desk and four on a phone,
- * split evenly either side of the raised "विचारा" button that opens the
- * assistant.
+ * The assistant's button, floating at the bottom right — where its panel
+ * opens, and where focus returns when the panel closes (`nr-chat-trigger`).
  */
-export function BottomNav() {
-  const { openFold, openChat } = useNewsUi()
-  const label = (t: string) => <span className="text-[#4A2E30]">{t}</span>
+export function ChatButton() {
+  const { openChat } = useNewsUi()
   return (
-    <nav
-      aria-label="जलद दुवे"
-      className="fixed inset-x-3 bottom-2.5 z-[45] grid h-16 grid-cols-[repeat(2,minmax(0,1fr))_76px_repeat(2,minmax(0,1fr))] items-center rounded-full border border-nr-line bg-white/[0.97] px-1.5 shadow-[0_18px_44px_-16px_rgba(40,6,10,0.45)] sm:inset-x-auto sm:bottom-[22px] sm:left-1/2 sm:h-[68px] sm:w-[680px] sm:-translate-x-1/2 sm:grid-cols-[repeat(3,minmax(0,1fr))_84px_repeat(3,minmax(0,1fr))] sm:px-3"
+    <button
+      type="button"
+      id="nr-chat-trigger"
+      onClick={() => openChat()}
+      aria-haspopup="dialog"
+      aria-label="महासंवाद सहाय्यकाला विचारा"
+      className="fixed bottom-4 right-4 z-[45] flex h-14 items-center gap-2 rounded-full border-4 border-white bg-nr-primary pl-3.5 pr-5 text-[0.9375rem] font-extrabold text-white shadow-[0_14px_30px_-10px_var(--nr-primary)] sm:bottom-6 sm:right-6 sm:h-[60px]"
     >
-      <a href="#top" className={cell}>
-        <IHome size={21} />
-        {label('मुख्यपृष्ठ')}
-      </a>
-      <ReleaseSearchLink className={cell}>
-        <ISearch size={21} />
-        {label('शोधा')}
-      </ReleaseSearchLink>
-      <a href="#media" className={`${cell} max-sm:hidden`}>
-        <IVideo size={21} />
-        {label('व्हिडिओ')}
-      </a>
-      <span className="flex flex-col items-center">
-        <button
-          type="button"
-          id="nr-chat-trigger"
-          onClick={() => openChat()}
-          aria-haspopup="dialog"
-          aria-label="महासंवाद सहाय्यकाला विचारा"
-          className="-mt-[30px] grid h-[62px] w-[62px] place-items-center rounded-full border-[5px] border-white bg-nr-primary text-white shadow-[0_10px_22px_-8px_var(--nr-primary)]"
-        >
-          <IChat size={24} strokeWidth={2} />
-        </button>
-        <span aria-hidden className="text-xs font-extrabold text-nr-primary">
-          विचारा
-        </span>
-      </span>
-      <a href="#releases" className={cell}>
-        <IPin size={21} />
-        {label('जिल्हा')}
-      </a>
-      <a href="#factcheck" className={`${cell} max-sm:hidden`}>
-        <IShield size={21} />
-        {label('फॅक्ट चेक')}
-      </a>
-      <button type="button" onClick={openFold} aria-haspopup="dialog" className={cell}>
-        <IDownload size={21} />
-        {label('फोल्ड')}
-      </button>
-    </nav>
+      <IChat size={22} strokeWidth={2} />
+      विचारा
+    </button>
   )
 }

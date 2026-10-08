@@ -29,7 +29,7 @@ export type HeroSlide = {
  *  - arrow keys, Home and End on the dashes.
  *
  * The active dash's fill is what advances it (`.nr-fill`), so the bar the
- * reader watches is exactly the time left. `aside` is the social accounts card,
+ * reader watches is exactly the time left. `aside` is the district news map,
  * drawn inside the hero on a wide screen.
  */
 export function HeroCarousel({ slides, aside }: { slides: HeroSlide[]; aside?: ReactNode }) {

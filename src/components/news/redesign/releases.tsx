@@ -19,13 +19,14 @@ import { ReadLink, RELEASE_SEARCH_ID } from './triggers'
 import { plainClick } from './ui'
 
 /**
- * सर्व मंजूर प्रसिद्धीपत्रके: the map, the district dropdown, the topic chips
- * and the list they filter.
+ * सर्व मंजूर प्रसिद्धीपत्रके: the district and minister dropdowns, the topic
+ * chips and the list they filter — and the district map in the hero
+ * (`DistrictMap`), which filters the same list.
  *
  * A filter changed here does not navigate. The URL is rewritten in place (so
- * the view is still a link), only the list below the map is refetched from
+ * the view is still a link), only the list is refetched from
  * `/api/news/releases`, and while it loads only the list shows a skeleton —
- * the page does not reload, re-read the fold, or jump to the map.
+ * the page does not reload or re-read the fold.
  *
  * Every control is still a real link or a GET form, so without JavaScript the
  * section works exactly as the server page always did.
@@ -62,7 +63,6 @@ export function ReleasesBrowser({
   initialFilters,
   initial,
   origin,
-  map,
   districts,
   ministers,
   topics,
@@ -70,7 +70,6 @@ export function ReleasesBrowser({
   initialFilters: Filters
   initial: ReleasePage
   origin: string
-  map: ReleasesMap
   /** Every district, plus राज्यव्यापी — the dropdown's options, in order. */
   districts: DistrictOption[]
   /** The roster, in Gazette order — the minister dropdown's options. */
@@ -94,6 +93,19 @@ export function ReleasesBrowser({
     setHydrated(true)
     return () => inflight.current?.abort()
   }, [])
+
+  /* The map sits in the hero, apart from this list: a district picked there
+     filters here, and the district shown here is lit there. */
+  const applyRef = useRef(apply)
+  applyRef.current = apply
+  useEffect(() => {
+    const onPick = (e: Event) => applyRef.current({ district: (e as CustomEvent<string>).detail })
+    window.addEventListener(DISTRICT_PICK, onPick)
+    return () => window.removeEventListener(DISTRICT_PICK, onPick)
+  }, [])
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(DISTRICT_SHOWN, { detail: filters.district }))
+  }, [filters.district])
 
   useEffect(() => {
     const q = term.trim()
@@ -155,7 +167,6 @@ export function ReleasesBrowser({
   const districtLabel = (key: string) => districts.find((d) => d.key === key)?.label ?? key
   const ministerLabel = (id: string) => ministers.find((m) => m.id === id)?.label ?? id
   const ministerOptions = ministers.map(({ id, ...m }) => ({ key: id, ...m }))
-  const ceiling = Math.max(1, map.ceiling)
 
   const feedStatus = loading
     ? 'प्रसिद्धीपत्रके शोधत आहे…'
@@ -170,63 +181,6 @@ export function ReleasesBrowser({
 
   return (
     <>
-      <figure className="m-0 mx-auto flex w-full max-w-[960px] flex-col gap-3 rounded-[18px] bg-white p-[18px] shadow-[0_1px_0_#F0DCC8,0_20px_40px_-28px_rgba(120,30,30,0.35)] lg:gap-4 lg:p-7">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <b className="text-[1.0625rem] lg:text-xl">महाराष्ट्राचा बातम्या नकाशा</b>
-          <span className="text-[0.8125rem] text-nr-muted lg:text-sm">
-            जिल्ह्यावर क्लिक करून बातम्या पहा · मागील {map.windowLabel}
-            {map.widened ? ' (वाढवलेला)' : ''}
-          </span>
-        </div>
-        {/* Each district is a real link that filters the list below, so the
-            map works by keyboard and screen reader; the dropdown under it does
-            the same job on a phone. */}
-        <svg
-          viewBox={map.viewBox}
-          className="mx-auto block h-auto max-h-[420px] w-full lg:max-h-[620px]"
-          role="group"
-          aria-label={`महाराष्ट्राचे ३६ जिल्हे — मागील ${map.windowLabel} मधील प्रसिद्धीपत्रकांनुसार छटा`}
-        >
-          {map.shapes.map((shape) => {
-            const count = map.counts[shape.id] ?? 0
-            const picked = shape.id === filters.district
-            const label = `${shape.nameMr} — ${count ? `${mrDigits(count)} प्रसिद्धीपत्रके` : 'या कालावधीत बातमी नाही'}`
-            return (
-              <a
-                key={shape.id}
-                {...filterLink({ district: picked ? '' : shape.id })}
-                aria-label={label}
-                aria-current={picked ? 'true' : undefined}
-                className="group outline-none"
-              >
-                <title>{label}</title>
-                <path
-                  d={shape.d}
-                  fill={shade(count, ceiling)}
-                  stroke={picked ? 'var(--nr-text)' : '#ffffff'}
-                  strokeWidth={picked ? 2.5 : 0.8}
-                  strokeLinejoin="round"
-                  vectorEffect="non-scaling-stroke"
-                  className="transition-[stroke] group-hover:stroke-[var(--nr-text)] group-focus-visible:stroke-[var(--nr-accent)] group-focus-visible:[stroke-width:4]"
-                />
-              </a>
-            )
-          })}
-        </svg>
-        <figcaption className="flex flex-wrap items-center justify-between gap-2 text-[0.8125rem] text-nr-text2">
-          <span className="flex items-center gap-[5px]">
-            कमी
-            {[0.25, 0.5, 0.75, 1].map((t) => (
-              <span key={t} aria-hidden className="inline-block h-[9px] w-5 rounded-[2px]" style={{ background: shade(t * ceiling, ceiling) }} />
-            ))}
-            जास्त
-          </span>
-          <a href={filters.district && filters.district !== STATEWIDE ? `/map?district=${filters.district}` : '/map'} className="font-extrabold text-nr-primary">
-            पूर्ण नकाशा →
-          </a>
-        </figcaption>
-      </figure>
-
       <form
         action="/news#releases"
         method="get"
@@ -333,7 +287,7 @@ export function ReleasesBrowser({
         ))}
       </div>
 
-      <div ref={listRef} className="min-w-0 scroll-mt-[126px] lg:scroll-mt-[148px]">
+      <div ref={listRef} className="min-w-0 scroll-mt-[118px] lg:scroll-mt-[124px]">
         <p role="status" className="m-0 text-[0.8125rem] text-nr-text2 lg:text-sm">
           {feedStatus}
         </p>
@@ -407,6 +361,102 @@ export function ReleasesBrowser({
         )}
       </div>
     </>
+  )
+}
+
+/** Map → list: the district picked (or '' to clear it). */
+const DISTRICT_PICK = 'nr:district-pick'
+/** List → map: the district the list now shows. */
+const DISTRICT_SHOWN = 'nr:district-shown'
+
+/**
+ * महाराष्ट्राचा बातम्या नकाशा, shaded by the week's releases. Each district is
+ * a real link that filters सर्व मंजूर प्रसिद्धीपत्रके (and works without JS);
+ * a plain click filters the list in place and brings it into view.
+ */
+export function DistrictMap({
+  map,
+  initialFilters,
+  className = '',
+  svgClassName = '',
+}: {
+  map: ReleasesMap
+  initialFilters: Filters
+  className?: string
+  svgClassName?: string
+}) {
+  const [district, setDistrict] = useState(initialFilters.district)
+  const ceiling = Math.max(1, map.ceiling)
+
+  useEffect(() => {
+    const onShown = (e: Event) => setDistrict((e as CustomEvent<string>).detail)
+    window.addEventListener(DISTRICT_SHOWN, onShown)
+    return () => window.removeEventListener(DISTRICT_SHOWN, onShown)
+  }, [])
+
+  return (
+    <figure className={`m-0 flex flex-col gap-3 ${className}`}>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+        <b className="nr-h text-[1.0625rem] font-extrabold text-nr-text lg:text-xl">महाराष्ट्राचा बातम्या नकाशा</b>
+        <span className="text-[0.8125rem] text-nr-muted">
+          जिल्ह्यावर क्लिक करून बातम्या पहा · मागील {map.windowLabel}
+          {map.widened ? ' (वाढवलेला)' : ''}
+        </span>
+      </div>
+      <svg
+        viewBox={map.viewBox}
+        className={`mx-auto block h-auto w-full ${svgClassName}`}
+        role="group"
+        aria-label={`महाराष्ट्राचे ३६ जिल्हे — मागील ${map.windowLabel} मधील प्रसिद्धीपत्रकांनुसार छटा`}
+      >
+        {map.shapes.map((shape) => {
+          const count = map.counts[shape.id] ?? 0
+          const picked = shape.id === district
+          const label = `${shape.nameMr} — ${count ? `${mrDigits(count)} प्रसिद्धीपत्रके` : 'या कालावधीत बातमी नाही'}`
+          const next = picked ? '' : shape.id
+          return (
+            <a
+              key={shape.id}
+              href={buildHref(initialFilters, { district: next }, '#releases')}
+              onClick={(e) => {
+                if (!plainClick(e)) return
+                e.preventDefault()
+                setDistrict(next)
+                window.dispatchEvent(new CustomEvent(DISTRICT_PICK, { detail: next }))
+                const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                document.getElementById('releases')?.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' })
+              }}
+              aria-label={label}
+              aria-current={picked ? 'true' : undefined}
+              className="group outline-none"
+            >
+              <title>{label}</title>
+              <path
+                d={shape.d}
+                fill={shade(count, ceiling)}
+                stroke={picked ? 'var(--nr-text)' : '#ffffff'}
+                strokeWidth={picked ? 2.5 : 0.8}
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+                className="transition-[stroke] group-hover:stroke-[var(--nr-text)] group-focus-visible:stroke-[var(--nr-accent)] group-focus-visible:[stroke-width:4]"
+              />
+            </a>
+          )
+        })}
+      </svg>
+      <figcaption className="flex flex-wrap items-center justify-between gap-2 text-[0.8125rem] text-nr-text2">
+        <span className="flex items-center gap-[5px]">
+          कमी
+          {[0.25, 0.5, 0.75, 1].map((t) => (
+            <span key={t} aria-hidden className="inline-block h-[9px] w-5 rounded-[2px]" style={{ background: shade(t * ceiling, ceiling) }} />
+          ))}
+          जास्त
+        </span>
+        <a href={district && district !== STATEWIDE ? `/map?district=${district}` : '/map'} className="font-extrabold text-nr-primary">
+          पूर्ण नकाशा →
+        </a>
+      </figcaption>
+    </figure>
   )
 }
 
