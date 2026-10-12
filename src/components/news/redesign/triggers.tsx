@@ -66,18 +66,34 @@ export function SearchButton({ className, children, label, query }: { className:
 /** The search box in सर्व मंजूर प्रसिद्धीपत्रके (`ReleasesBrowser`). */
 export const RELEASE_SEARCH_ID = 'rel-search'
 
+/** The big search box on the योजना and व्हिडिओ pages (`HubBrowser`). */
+export const HUB_SEARCH_ID = 'hub-search'
+
 /**
- * "शोधा" in the masthead and the bottom bar: brings the releases' search box
+ * "शोधा" in the masthead and the bottom bar: brings the page's search box
  * into view and puts the cursor in it, so the reader searches the list itself.
- * Without JS it is a plain jump to the section.
+ * Without JS it is a plain jump to the section. On `/news` that is the
+ * releases' box; the hub pages pass their own.
  */
-export function ReleaseSearchLink({ className, children, label }: { className: string; children: ReactNode; label?: string }) {
+export function ReleaseSearchLink({
+  className,
+  children,
+  label,
+  href = '#releases',
+  targetId = RELEASE_SEARCH_ID,
+}: {
+  className: string
+  children: ReactNode
+  label?: string
+  href?: string
+  targetId?: string
+}) {
   return (
     <a
-      href="#releases"
+      href={href}
       aria-label={label}
       onClick={(e) => {
-        const input = document.getElementById(RELEASE_SEARCH_ID)
+        const input = document.getElementById(targetId)
         if (!plainClick(e) || !(input instanceof HTMLInputElement)) return
         e.preventDefault()
         const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches

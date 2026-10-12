@@ -40,6 +40,7 @@ import { listArticles } from "@/lib/db";
 import { resolveDistrict } from "@/lib/districts";
 import { DGIPR_MR } from "@/lib/dgipr/marathi";
 import { summary60 } from "@/lib/dgipr/summary";
+import { topicOf } from "@/lib/news/public";
 import { quantileScale } from "@/lib/news/scale";
 import { windowsFrom } from "@/lib/news/window";
 import type { Article } from "@/lib/types";
@@ -164,17 +165,22 @@ export function releaseDocxHref(id: number | string): string {
  */
 export function toRelease(article: Article): DgiprRelease {
   const id = String(article.id);
+  const titleMr = article.title || article.raw_text.split(/\n/)[0]?.trim() || "";
+  const summary60Mr = summary60(article.body || article.raw_text, {
+    titleMr: article.title,
+    attributionMr: article.attribution,
+  });
 
   return {
     id,
     slug: article.release_no ? `vrutt-${article.release_no}` : id,
-    titleMr: article.title || article.raw_text.split(/\n/)[0]?.trim() || "",
+    titleMr,
     date: article.fold_date,
     summaryMr: article.body || article.raw_text,
-    summary60Mr: summary60(article.body || article.raw_text, {
-      titleMr: article.title,
-      attributionMr: article.attribution,
-    }),
+    summary60Mr,
+    /* Read exactly as `/news` reads it — see `toNewsItem` — so the glyph on the
+       map and the chip on the list never name two different subjects. */
+    topic: topicOf(titleMr, summary60Mr?.trim() || null),
     /* The column is written by `resolveDistrict` on the way in, so it is
        already canonical — passed through it again anyway, because a row edited
        by hand at the desk has not been, and a district key the map's geometry

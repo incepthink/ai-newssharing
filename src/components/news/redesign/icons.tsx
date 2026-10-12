@@ -82,6 +82,9 @@ export const IXCircle = (p: P) => (
 export const ICheck = (p: P) => (
   <G {...p}><path d="m5 12 5 5 9-10" /></G>
 )
+export const IChevronDown = (p: P) => (
+  <G {...p}><path d="m6 9 6 6 6-6" /></G>
+)
 
 export const IPlay = ({ size = 16, ...rest }: P) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" {...rest}>

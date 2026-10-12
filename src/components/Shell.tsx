@@ -57,8 +57,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
    * document scroll: the masthead is `position: sticky`, and an overflow clip
    * here would turn that into a scroll container that never scrolls.
    * A release page under `/news/` is still a desk-shell document.
+   *
+   * The योजना and व्हिडिओ pages (`/yojana`, `/video` and the pages under
+   * them) wear the same public frame, so they get the same bare `<main>`.
    */
-  if (pathname === '/news') {
+  const publicFrame = ['/yojana', '/video'].some((p) => pathname === p || pathname.startsWith(`${p}/`))
+  if (pathname === '/news' || publicFrame) {
     return <main className="w-full max-w-none grow p-0">{children}</main>
   }
 

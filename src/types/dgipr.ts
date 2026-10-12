@@ -15,6 +15,7 @@
  * `src/lib/dgipr/read.ts` for the rest of that argument, and
  * `scripts/dgipr/pull.mjs` for where these rows come from.
  */
+import type { TopicId } from "@/lib/news/public";
 import type { NewsWindow } from "./news";
 
 /**
@@ -133,6 +134,13 @@ export type DgiprRelease = {
    * first kind have none, rows from the second always do.
    */
   url?: string | null;
+  /**
+   * The subject the map marks it with — the same keyword reading `/news` puts
+   * on its topic chips (`topicOf` over the headline and the sixty-word cut), so
+   * a शेती release carries the शेती glyph on both surfaces. Null when no rule
+   * matches; optional because the curated rows are never read for one.
+   */
+  topic?: TopicId | null;
 };
 
 /**

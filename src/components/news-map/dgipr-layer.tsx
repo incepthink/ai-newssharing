@@ -3,25 +3,36 @@
 import { type MotionValue } from "motion/react";
 import { memo, useEffect, useMemo, useRef } from "react";
 
+import { TOPIC_MARKS, topicMarkOf, type TopicMark } from "@/data/topic-marks";
 import { datelineMr, releaseCountMr } from "@/lib/dgipr/marathi";
 import { toDevanagari } from "@/lib/news/marathi";
 import type { DistrictShape } from "@/types/map";
 import type { DgiprRelease } from "@/types/dgipr";
 
-/**
- * How far a mark sits from its district's centroid when it has company, in
- * viewBox units. Deliberately tighter than `PinLayer`'s ring of 15: this layer
- * sits *over* that one, and two rosettes of the same radius around the same
- * centroid would interleave into one unreadable cluster.
- */
-const RING = 9;
-/** Marks per ring before a second ring opens outside the first. */
+/** The disc the topic glyph sits on, in screen pixels — see `useStake`. */
+const HEAD = 10;
+/** The glyph inside it — sized off `HEAD` so the two stay in proportion. */
+const GLYPH = Math.round(HEAD * 1.2);
+/** How far a lone head stands above its district's centroid. */
+const LIFT = 20;
+/** How far fanned heads stand from the centroid, per ring. */
+const RING = 26;
+/** Heads per ring before a second ring opens outside the first. */
 const PER_RING = 6;
 
+type Group = {
+  districtId: string;
+  mark: TopicMark;
+  /** This district's releases on this topic, newest first. */
+  releases: DgiprRelease[];
+  /** Where the head sits, relative to the centroid. */
+  head: [x: number, y: number];
+};
+
 type Placed = {
-  release: DgiprRelease;
   districtId: string;
   at: [x: number, y: number];
+  groups: Group[];
 };
 
 type DgiprLayerProps = {
@@ -35,28 +46,19 @@ type DgiprLayerProps = {
 };
 
 /**
- * Government press releases, marked at the precision a dateline supports.
+ * Government press releases, one pin per subject per district.
  *
- * This is an **overlay**, not a mode. The heat/pins control answers "what is
- * this sheet coloured by", and both of its answers are about the same corpus of
- * scraped newspaper articles. A DGIPR release is a different kind of object
- * from a different source, so it is a different thing on the sheet that can be
- * switched on over either of them — which is also what a tag and a filter mean,
- * as against a third mode.
+ * The pin is maharashtra-is-building's: an anchor on the ground, a stem, and a
+ * disc in the subject's hue with the subject's glyph on it — so शेती reads as
+ * a sprout, दुष्काळ as a drop, and a reader can see *what* a district is
+ * issuing about before opening anything. The subjects are `/news`'s topic
+ * chips, read by the same rule; see `data/topic-marks.ts`.
  *
- * **The mark keeps `PinLayer`'s grammar and changes its identity.** A release
- * carries a dateline and never a coordinate, so it is exactly as imprecise as a
- * district-tier story: a soft halo for the area, a dashed ring because the edge
- * of that area is not known either. What differs is a square core instead of a
- * round one and the official hue instead of the accent — so the two marks tell
- * the truth in the same words while never being mistaken for each other. A
- * sharp pin was never an option here; there is nothing to be sharp about.
- *
- * Where a district issued several releases the marks are stacked into one, and
- * that is not a compromise. Four of the five releases in the snapshot are
- * datelined Mumbai, and four halos fanned around one centroid would claim four
- * places in a district where the source named one. The stack carries its count
- * and opens the newest; the panel lists the rest.
+ * The anchor is the district centroid, because a dateline is not a coordinate.
+ * Several subjects in one district share that one anchor and fan their heads
+ * around it, which says "these are all here" without claiming any of them is
+ * at a different point. Releases on the same subject stack into one head with
+ * a count, opening the newest; the panel lists the rest.
  */
 export const DgiprLayer = memo(function DgiprLayer({
   byDistrict,
@@ -69,14 +71,13 @@ export const DgiprLayer = memo(function DgiprLayer({
 
   return (
     <g className="map-dgipr">
-      {placed.map(({ release, districtId, at }) => (
-        <DgiprMark
+      {placed.map(({ districtId, at, groups }) => (
+        <DistrictMarks
           key={districtId}
-          release={release}
-          stacked={byDistrict[districtId]?.length ?? 1}
           at={at}
+          groups={groups}
           scale={scale}
-          selected={(byDistrict[districtId] ?? []).some((r) => r.id === selectedId)}
+          selectedId={selectedId}
           onSelect={onSelect}
         />
       ))}
@@ -85,117 +86,189 @@ export const DgiprLayer = memo(function DgiprLayer({
 });
 
 /**
- * One mark per district, standing on the centroid, carrying the newest release.
+ * One anchor per district, standing on the centroid, with a head per subject.
  *
- * The ring machinery is kept for the day a release starts carrying something
- * finer than a dateline; today every release in a district collapses onto one
- * mark, so `fan` is called with a count of one and returns the centroid
- * unmoved.
+ * Subjects are ordered by the legend's order, so the same district lays out
+ * the same way on every render and a reader's eye can come back to a mark.
  */
 function place(
   byDistrict: Record<string, DgiprRelease[]>,
   districts: DistrictShape[],
 ): Placed[] {
   const centroids = new Map(districts.map((district) => [district.id, district.centroid]));
+  const order = new Map(TOPIC_MARKS.map((mark, index) => [mark.id, index]));
   const placed: Placed[] = [];
 
   for (const [districtId, releases] of Object.entries(byDistrict)) {
     const centroid = centroids.get(districtId);
     if (!centroid || releases.length === 0) continue;
 
-    const [dx, dy] = fan(1, 0);
+    const bySubject = new Map<TopicMark, DgiprRelease[]>();
+
+    // Newest first is how the server hands them over, and each bucket keeps it.
+    for (const release of releases) {
+      const mark = topicMarkOf(release.topic);
+      const bucket = bySubject.get(mark);
+
+      if (bucket) bucket.push(release);
+      else bySubject.set(mark, [release]);
+    }
+
+    const subjects = [...bySubject.entries()].sort(
+      ([a], [b]) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
+    );
 
     placed.push({
-      // Newest first is how the server hands them over, so this is the newest.
-      release: releases[0],
       districtId,
-      at: [centroid[0] + dx, centroid[1] + dy],
+      at: [centroid[0], centroid[1]],
+      groups: subjects.map(([mark, list], index) => ({
+        districtId,
+        mark,
+        releases: list,
+        head: fan(subjects.length, index),
+      })),
     });
   }
 
   return placed;
 }
 
-/** A deterministic rosette: one mark stays on the centroid, several ring it. */
+/** A deterministic rosette: a lone head stands straight up, several ring it. */
 function fan(count: number, index: number): [number, number] {
-  if (count < 2) return [0, 0];
+  if (count < 2) return [0, -LIFT];
 
   const ring = Math.floor(index / PER_RING) + 1;
   const slot = index % PER_RING;
   const slots = Math.min(count - (ring - 1) * PER_RING, PER_RING);
-
-  const angle = (slot / slots) * Math.PI * 2 - Math.PI / 2;
+  // Starts at the top and goes clockwise; the second ring is turned half a
+  // slot so its heads sit in the gaps of the first.
+  const angle = ((slot + (ring - 1) * 0.5) / slots) * Math.PI * 2 - Math.PI / 2;
 
   return [Math.cos(angle) * RING * ring, Math.sin(angle) * RING * ring];
 }
 
-function DgiprMark({
-  release,
-  stacked,
+function DistrictMarks({
   at,
+  groups,
   scale,
-  selected,
+  selectedId,
   onSelect,
 }: {
-  release: DgiprRelease;
-  /** How many releases this district issued in the window. */
-  stacked: number;
   at: [x: number, y: number];
+  groups: Group[];
   scale: MotionValue<number>;
-  selected: boolean;
+  selectedId: string | null;
   onSelect: (release: DgiprRelease) => void;
 }) {
   const ref = useStake(at, scale);
 
   return (
+    <g ref={ref} className="map-dgipr-district" transform={`translate(${at[0]} ${at[1]})`}>
+      {/* The stems first and the heads after, so no stem is ever drawn across
+          a neighbouring head in a crowded rosette. */}
+      {groups.map(({ mark, head }) => (
+        <path key={mark.id} className="map-dgipr-stem" d={stemPath(head[0], head[1], HEAD)} />
+      ))}
+
+      {/* One anchor for the whole district: the place the dateline names. */}
+      <circle className="map-dgipr-anchor" r="2" />
+
+      {groups.map((group, index) => (
+        <TopicPin
+          key={group.mark.id}
+          group={group}
+          delay={index * 40}
+          selected={group.releases.some((release) => release.id === selectedId)}
+          onSelect={onSelect}
+        />
+      ))}
+    </g>
+  );
+}
+
+function TopicPin({
+  group,
+  delay,
+  selected,
+  onSelect,
+}: {
+  group: Group;
+  delay: number;
+  selected: boolean;
+  onSelect: (release: DgiprRelease) => void;
+}) {
+  const { mark, releases, head } = group;
+  const [x, y] = head;
+  const lead = releases[0];
+  const Icon = mark.icon;
+  const stacked = releases.length;
+
+  return (
     <g
-      ref={ref}
       className="map-dgipr-mark"
       data-selected={selected || undefined}
-      transform={`translate(${at[0]} ${at[1]})`}
+      style={{ animationDelay: `${delay}ms` }}
       role="button"
       tabIndex={0}
       aria-pressed={selected}
-      onClick={() => onSelect(release)}
+      onClick={() => onSelect(lead)}
       onKeyDown={(event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
 
         event.preventDefault();
-        onSelect(release);
+        onSelect(lead);
       }}
     >
-      {/* The place, the count and the headline the mark opens — the same three
-          things the panel opens with, so the tooltip and the panel never
-          disagree about what the mark stands for. */}
+      {/* The subject, the place, the count and the headline the mark opens. */}
       <title>
-        {`${datelineMr(release)} — ${releaseCountMr(stacked)}: ${release.titleMr}`}
+        {`${mark.labelMr} · ${datelineMr(lead)} — ${releaseCountMr(stacked)}: ${lead.titleMr}`}
       </title>
 
-      {/* No tip and no point, because a dateline is not a coordinate. The halo
-          is the claim; the ring is dashed because the edge of the area is not
-          known either. Both borrowed verbatim from the district-tier story
-          mark — the claim really is the same one. */}
-      <circle className="map-dgipr-halo" r="11.5" />
-      <circle className="map-dgipr-ring" r="6.4" />
+      <g className="map-dgipr-body">
+        <circle className="map-dgipr-ring" cx={x} cy={y} r={HEAD + 3.5} />
+        <circle className="map-dgipr-head" cx={x} cy={y} r={HEAD} style={{ fill: mark.tint }} />
+        <Icon
+          className="map-dgipr-icon"
+          x={x - GLYPH / 2}
+          y={y - GLYPH / 2}
+          width={GLYPH}
+          height={GLYPH}
+          strokeWidth={2.2}
+          aria-hidden
+        />
 
-      {/* The one thing that differs: a square core, for an official notice.
-          A shape rather than only a colour, so the layer survives being read
-          without hue — printed, screenshotted, or by a reader who cannot
-          separate violet from green. */}
-      <rect className="map-dgipr-core" x="-2.4" y="-2.4" width="4.8" height="4.8" rx="0.7" />
+        {/* Said only when the subject has more than one release here. */}
+        {stacked > 1 ? (
+          <g className="map-dgipr-badge" transform={`translate(${x + HEAD * 0.8} ${y - HEAD * 0.8})`}>
+            <circle r="4.6" />
+            <text dy="0.35em">{toDevanagari(stacked)}</text>
+          </g>
+        ) : null}
+      </g>
 
-      {/* Said only when the district issued more than one. A number on a mark
-          standing for a single release would be noise. */}
-      {stacked > 1 ? (
-        <text className="map-dgipr-count" x="7.6" y="-5.6">
-          {toDevanagari(stacked)}
-        </text>
-      ) : null}
-
-      {/* A finger-sized target over a mark that is deliberately small. */}
-      <circle className="map-dgipr-hit" r="12" />
+      {/* A finger-sized target over the head. */}
+      <circle className="map-dgipr-hit" cx={x} cy={y} r={HEAD + 3} />
     </g>
   );
+}
+
+/**
+ * The stem, from just outside the anchor to just inside the head, along
+ * whatever angle the fan produced. Trimmed at both ends so it never shows
+ * through the anchor dot or crosses the disc it is holding up.
+ */
+function stemPath(x: number, y: number, headRadius: number): string {
+  const length = Math.hypot(x, y);
+
+  if (length < 1) return "";
+
+  const unitX = x / length;
+  const unitY = y / length;
+  const start = 2.5;
+  const end = Math.max(start, length - headRadius - 0.5);
+  const round = (value: number) => Math.round(value * 100) / 100;
+
+  return `M${round(unitX * start)} ${round(unitY * start)} L${round(unitX * end)} ${round(unitY * end)}`;
 }
 
 /**

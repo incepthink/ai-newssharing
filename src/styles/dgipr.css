@@ -14,14 +14,14 @@
 
 /* --- The mark ------------------------------------------------------------
 
-   Borrowed wholesale from the district-tier story pin, because it is making
-   exactly the same claim: a release carries a dateline, a district-tier story
-   carries a desk, and neither is a coordinate. Halo for the area, dashed ring
-   because the edge of that area is not known either, no tip anywhere.
+   maharashtra-is-building's pin: an anchor on the ground, a stem, and a disc
+   in the subject's hue carrying the subject's glyph. The hue is set inline
+   from `data/topic-marks.ts`; every one of them clears 3:1 against white, so
+   the glyph is always white.
 
-   What differs is the core — square, not round — and the hue. Two signals for
-   one distinction on purpose: the sheet has to stay readable printed, in a
-   screenshot, and by a reader who cannot separate violet from green.
+   The anchor stands on the district centroid, because a release carries a
+   dateline and not a coordinate. Several subjects in one district fan their
+   heads around that one anchor.
 
    Dimensions are in screen pixels rather than viewBox units: every mark
    counter-scales against the camera (see `useStake` in `dgipr-layer.tsx`), so
@@ -34,10 +34,24 @@
   pointer-events: none;
 }
 
+.map-dgipr-anchor {
+  fill: var(--color-slate-500);
+  stroke: var(--color-surface);
+  stroke-width: 1;
+}
+
+.map-dgipr-stem {
+  fill: none;
+  stroke: var(--color-slate-400);
+  stroke-width: 1.2;
+  opacity: 0.9;
+}
+
 .map-dgipr-mark {
   pointer-events: auto;
   cursor: pointer;
-  animation: dgipr-arrive 320ms var(--ease-out-soft) backwards;
+  animation: dgipr-arrive 420ms var(--ease-out-soft) backwards;
+  transform-origin: 0 0;
 }
 
 .map-dgipr-mark:focus {
@@ -45,8 +59,14 @@
 }
 
 @keyframes dgipr-arrive {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .map-dgipr-hit {
@@ -54,72 +74,84 @@
   pointer-events: fill;
 }
 
-.map-dgipr-halo {
-  fill: var(--color-official);
-  fill-opacity: 0.15;
-  transition: fill-opacity 160ms var(--ease-out-soft);
+.map-dgipr-body {
+  transition: transform 220ms var(--ease-out-soft);
 }
 
-.map-dgipr-ring {
-  fill: none;
-  stroke: var(--color-official);
-  stroke-width: 1.5;
-  stroke-opacity: 0.8;
-  stroke-dasharray: 3 3;
-  transition: stroke-opacity 160ms var(--ease-out-soft);
+.map-dgipr-mark:hover .map-dgipr-body,
+.map-dgipr-mark:focus-visible .map-dgipr-body,
+.map-dgipr-mark[data-selected] .map-dgipr-body {
+  transform: translateY(-2px);
 }
 
-/* The square. Full ink and a keyline, so it holds over a level-5 district and
-   over a story pin's halo alike — this layer is drawn last and has to be the
-   thing a reader can actually hit. */
-.map-dgipr-core {
-  fill: var(--color-official);
-  stroke: var(--color-surface);
-  stroke-width: 0.9;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 1px 2px rgb(26 26 48 / 0.3));
-  transition: fill 160ms var(--ease-out-soft);
+.map-dgipr-head {
+  stroke: #ffffff;
+  stroke-width: 1.6;
+  filter: drop-shadow(0 1.5px 2.5px rgb(26 26 48 / 0.3));
 }
 
-/* How many releases the district issued, when it issued more than one. Mono
-   and tiny: it is a tally beside a mark, not a label on it. */
-.map-dgipr-count {
-  font-family: var(--font-mono);
-  font-size: 7px;
-  font-weight: 600;
-  fill: var(--color-official-deep);
-  paint-order: stroke;
-  stroke: var(--color-surface);
-  stroke-width: 2.4;
-  stroke-linejoin: round;
+.map-dgipr-icon {
+  color: #ffffff;
   pointer-events: none;
 }
 
-.map-dgipr-mark:hover .map-dgipr-halo,
-.map-dgipr-mark:focus-visible .map-dgipr-halo,
-.map-dgipr-mark[data-selected] .map-dgipr-halo {
-  fill-opacity: 0.28;
-}
-
-.map-dgipr-mark:hover .map-dgipr-ring,
-.map-dgipr-mark:focus-visible .map-dgipr-ring,
-.map-dgipr-mark[data-selected] .map-dgipr-ring {
-  stroke-opacity: 1;
-}
-
-.map-dgipr-mark:hover .map-dgipr-core,
-.map-dgipr-mark:focus-visible .map-dgipr-core,
-.map-dgipr-mark[data-selected] .map-dgipr-core {
-  fill: var(--color-official-hover);
-}
-
-/* The open release, picked out. A ring around the mark rather than a colour
-   change, so the shape still says what it says while selected. */
-.map-dgipr-mark[data-selected] .map-dgipr-hit {
+/* Only the open subject — and the focused one — wears the outer ring, so
+   "which one am I reading" is answerable from the map. */
+.map-dgipr-ring {
   fill: none;
-  stroke: var(--color-official-deep);
+  stroke: var(--color-accent);
   stroke-width: 1.6;
-  stroke-opacity: 0.9;
+  opacity: 0;
+  transition: opacity 180ms var(--ease-out-soft);
+}
+
+.map-dgipr-mark:hover .map-dgipr-ring {
+  opacity: 0.5;
+}
+
+.map-dgipr-mark[data-selected] .map-dgipr-ring,
+.map-dgipr-mark:focus-visible .map-dgipr-ring {
+  opacity: 1;
+}
+
+.map-dgipr-mark:focus-visible .map-dgipr-ring {
+  stroke: var(--color-focus);
+  stroke-width: 2.2;
+}
+
+/* How many releases on this subject, when there is more than one. */
+.map-dgipr-badge circle {
+  fill: var(--color-surface);
+  stroke: var(--color-slate-400);
+  stroke-width: 0.8;
+}
+
+.map-dgipr-badge text {
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  font-weight: 700;
+  text-anchor: middle;
+  fill: var(--color-text);
+  pointer-events: none;
+}
+
+/* The legend's swatch: the same disc and glyph, flat. */
+.topic-key-disc {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgb(26 26 48 / 0.25);
+}
+
+.topic-key-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--color-text-subtle);
 }
 
 .map-frame[data-panning] .map-dgipr-mark {

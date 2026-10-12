@@ -452,7 +452,7 @@ export function DistrictMap({
           ))}
           जास्त
         </span>
-        <a href={district && district !== STATEWIDE ? `/map?district=${district}` : '/map'} className="font-extrabold text-nr-primary">
+        <a href={district && district !== STATEWIDE ? `/map?district=${district}` : '/map'} target="_blank" rel="noopener noreferrer" className="font-extrabold text-nr-primary">
           पूर्ण नकाशा →
         </a>
       </figcaption>
@@ -736,7 +736,9 @@ function SkeletonRow() {
 
 const ACTION = 'inline-flex h-11 items-center gap-1.5 rounded-full border px-[13px] text-sm font-semibold text-[#2A221D]'
 
-function ReleaseRow({ item: r, origin }: { item: NewsItem; origin: string }) {
+/** One release in a list. `badge` names what it belongs to where the list
+ *  mixes several — the scheme or programme on the hub pages. */
+export function ReleaseRow({ item: r, origin, badge }: { item: NewsItem; origin: string; badge?: string }) {
   const share = `https://wa.me/?text=${encodeURIComponent(`${r.title}\n${origin}${r.href}\n— महासंवाद, माहिती व जनसंपर्क महासंचालनालय`)}`
   return (
     <li className="flex flex-col gap-2 border-b border-nr-line py-4 sm:grid sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-[26px] sm:py-6">
@@ -745,6 +747,7 @@ function ReleaseRow({ item: r, origin }: { item: NewsItem; origin: string }) {
       </ReadLink>
       <div className="flex min-w-0 flex-col gap-2">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.78rem] lg:text-[0.8125rem]">
+          {badge && <span className="rounded bg-nr-accent-soft px-2 py-px font-extrabold text-nr-accent-ink lg:px-2.5 lg:py-0.5">{badge}</span>}
           <span className="rounded bg-nr-place-soft px-2 py-px font-bold text-nr-place lg:px-2.5 lg:py-0.5">{r.place}</span>
           <b className="font-extrabold text-nr-primary">{r.topicLabel}</b>
           <time dateTime={r.date} className="text-nr-muted">

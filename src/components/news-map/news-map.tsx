@@ -153,11 +153,12 @@ export function NewsMap({
    * the choropleth and over the pins alike, and turning it off leaves whatever
    * was underneath exactly as it was.
    *
-   * Off by default. The map's front door is the press — that is what the
-   * product is — and an overlay the reader did not ask for would put marks on
-   * the sheet before they have been told what the marks mean.
+   * On by default. The corpus under the choropleth is the desk's approved
+   * releases now, not the press, so the topic pins are the map's own subject
+   * rather than a guest on it — and the plate prints their key whenever they
+   * are showing, so no mark arrives before its meaning does.
    */
-  const [official, setOfficial] = useState(false);
+  const [official, setOfficial] = useState(true);
   /** Null while the server renders, then the live minute. See `useNow`. */
   const now = useNow();
 

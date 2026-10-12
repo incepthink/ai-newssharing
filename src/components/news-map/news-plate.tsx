@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { useState } from "react";
 
 import { MINISTER_TIERS } from "@/data/ministers";
+import { TOPIC_MARKS, topicMarkOf, type TopicMark } from "@/data/topic-marks";
 import { DGIPR_MR, releaseCountMr } from "@/lib/dgipr/marathi";
 import {
   agoMr,
@@ -419,26 +420,26 @@ export function NewsPlate({
           <motion.div className="news-ramp news-plate-fold" variants={RISE} transition={{ duration: 0.7 }}>
             <p className="news-control-label">{DGIPR_MR.layer}</p>
 
+            {/* One row per subject actually on the sheet, in the same disc and
+                glyph the pins wear, so the key cannot drift from the marks. */}
             <ul className="pin-key">
-              <li className="pin-key-row">
-                <svg className="pin-key-mark" viewBox="-13 -13 26 26" aria-hidden>
-                  <circle className="map-dgipr-halo" r="11.5" />
-                  <circle className="map-dgipr-ring" r="6.4" />
-                  <rect
-                    className="map-dgipr-core"
-                    x="-2.4"
-                    y="-2.4"
-                    width="4.8"
-                    height="4.8"
-                    rx="0.7"
-                  />
-                </svg>
-                <span>
-                  <span className="pin-key-name">{DGIPR_MR.keyName}</span>
-                  <span className="pin-key-note">{DGIPR_MR.keyNote}</span>
-                </span>
-              </li>
+              {topicTally(dgipr).map(({ mark, count }) => {
+                const Icon = mark.icon;
+
+                return (
+                  <li key={mark.id} className="pin-key-row">
+                    <span className="topic-key-disc" style={{ background: mark.tint }} aria-hidden>
+                      <Icon width={12} height={12} strokeWidth={2.2} />
+                    </span>
+                    <span className="pin-key-name">{mark.labelMr}</span>
+                    <span className="topic-key-count">{toDevanagari(count)}</span>
+                  </li>
+                );
+              })}
             </ul>
+            <p className="pin-key-note">
+              {DGIPR_MR.keyName} · {DGIPR_MR.keyNote}
+            </p>
 
             {/* This layer widens its own window when the one the reader picked
                 reached too few districts to read as a map — see `DISTRICT_FLOOR`
@@ -566,4 +567,25 @@ export function NewsPlate({
       </div>
     </motion.aside>
   );
+}
+
+/**
+ * How many placed releases each subject has, in legend order, leaving out the
+ * subjects with none — a key row for a glyph that is nowhere on the sheet is a
+ * row the reader goes looking for and cannot find.
+ */
+function topicTally(dgipr: DgiprMap): Array<{ mark: TopicMark; count: number }> {
+  const counts = new Map<TopicMark["id"], number>();
+
+  for (const releases of Object.values(dgipr.byDistrict)) {
+    for (const release of releases) {
+      const id = topicMarkOf(release.topic).id;
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+  }
+
+  return TOPIC_MARKS.filter((mark) => counts.has(mark.id)).map((mark) => ({
+    mark,
+    count: counts.get(mark.id) ?? 0,
+  }));
 }

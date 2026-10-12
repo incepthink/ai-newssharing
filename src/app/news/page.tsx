@@ -1,36 +1,24 @@
-import Image from 'next/image'
 import Link from 'next/link'
-import { headers } from 'next/headers'
-import type { ReactNode } from 'react'
-import { FACT_CHECK_TEAM_LIVE, MAIN_NAV, SPECIAL_COVERAGE, TRENDING, type SpecialCoverage } from '@/data/news-editorial'
+import { FACT_CHECK_TEAM_LIVE, SPECIAL_COVERAGE, VIDEO_PROGRAMMES, type SpecialCoverage } from '@/data/news-editorial'
 import { MINISTERS } from '@/data/ministers'
-import { foldArticles } from '@/lib/db'
 import { DISTRICTS } from '@/lib/districts'
 import { DGIPR_MR } from '@/lib/dgipr/marathi'
 import { buildNewsMap } from '@/lib/dgipr/from-db'
 import { buildMapGeometry } from '@/lib/map/geometry'
-import { todayIso } from '@/lib/marathi'
-import { toFoldItem } from '@/lib/news/fold-item'
-import { loadNewsCorpus } from '@/lib/news/items'
+import { loadFrame } from '@/lib/news/frame'
+import { figureSources, liveDecisions, mediaFirst, programmeEpisodes, schemeReleases } from '@/lib/news/hubs'
 import { districtNameMr } from '@/lib/news/marathi'
-import { searchItems, TOPICS, topicLabel, type NewsItem, type TopicId } from '@/lib/news/public'
-import { buildHref, parseFilters, queryOf, STATEWIDE, type Filters, type Query } from '@/lib/news/release-filters'
+import { TOPICS, topicLabel, type NewsItem, type TopicId } from '@/lib/news/public'
+import { parseFilters, queryOf, STATEWIDE, type Query } from '@/lib/news/release-filters'
 import { releasePage } from '@/lib/news/releases'
 import { StoryPhoto } from '@/components/news/story-photo'
+import { ANCHOR, NewsFrame, SectionHead, SOCIAL, WRAP, YOUTUBE_URL } from '@/components/news/redesign/chrome'
 import { FactCheck } from '@/components/news/redesign/fact-check'
 import { HeroCarousel, type HeroSlide } from '@/components/news/redesign/hero'
-import { MainNav } from '@/components/news/redesign/main-nav'
-import { IDownload, IPlay, ISearch } from '@/components/news/redesign/icons'
+import { IPlay } from '@/components/news/redesign/icons'
 import { DistrictMap, ReleasesBrowser, type DistrictOption, type MinisterOption, type ReleasesMap } from '@/components/news/redesign/releases'
-import {
-  ChatButton,
-  FoldButton,
-  ReadLink,
-  ReleaseSearchLink,
-  SearchChip,
-} from '@/components/news/redesign/triggers'
-import { NewsUiProvider } from '@/components/news/redesign/ui'
-import { IconFacebookF, IconInstagram, IconTelegram, IconX, IconYouTube } from '@/components/ui'
+import { SchemeFigures } from '@/components/news/redesign/scheme-figures'
+import { ReadLink, SearchChip } from '@/components/news/redesign/triggers'
 
 /**
  * News — the public front door, to the "नवी रचना — प्रस्ताव" redesign
@@ -69,58 +57,14 @@ export const metadata = {
 }
 
 const LEAD_COUNT = 5
-/** The content column: 1280px, with a gutter that keeps it off the window's
- *  edge below that. */
-const WRAP = 'mx-auto w-full max-w-[1328px] px-4 sm:px-6'
-/** Anchored sections clear the sticky masthead. */
-const ANCHOR = 'scroll-mt-[118px] lg:scroll-mt-[124px]'
-
-/**
- * DGIPR's social channels — the four official accounts confirmed by DGIPR.
- * Each tile wears its platform's own colour and mark, the one place on the
- * page outside the palette, because a reader looks for the logo they know.
- */
-const SOCIAL = [
-  { id: 'facebook', name: 'Facebook', handle: 'MahaDGIPR', glyph: <IconFacebookF size={20} />, tile: '#1877F2', url: 'https://www.facebook.com/MahaDGIPR' },
-  { id: 'x', name: 'X', handle: '@MahaDGIPR', glyph: <IconX size={16} />, tile: '#000000', url: 'https://x.com/MahaDGIPR' },
-  {
-    id: 'instagram',
-    name: 'Instagram', handle: '@mahadgipr',
-    glyph: <IconInstagram size={20} />,
-    tile: 'linear-gradient(45deg, #F58529, #DD2A7B 50%, #8134AF)',
-    url: 'https://www.instagram.com/mahadgipr',
-  },
-  { id: 'youtube', name: 'YouTube', handle: '@MAHARASHTRADGIPR', glyph: <IconYouTube size={20} />, tile: '#FF0000', url: 'https://www.youtube.com/@MAHARASHTRADGIPR' },
-] as const
-
-/** The masthead's row of the same accounts, plus the Telegram channel, each
- *  on its platform's own colour. */
-const NAV_SOCIAL = [
-  ...SOCIAL.map((s) => ({
-    name: s.name,
-    url: s.url,
-    tile: s.tile,
-    glyph: s.id === 'x' ? <IconX size={13} /> : s.id === 'instagram' ? <IconInstagram size={16} /> : s.id === 'youtube' ? <IconYouTube size={16} /> : <IconFacebookF size={17} />,
-  })),
-  { name: 'Telegram', url: 'https://t.me/MahaDGIPR', tile: '#229ED9', glyph: <IconTelegram size={16} /> },
-]
-
-type Href = (patch: Partial<Filters>, hash?: string) => string
 
 export default async function NewsPage({ searchParams }: { searchParams: Promise<Query> }) {
   const query = await searchParams
   const filters = parseFilters(query)
   const now = Date.now()
-  const today = todayIso()
 
-  const [{ corpus, items }, geometry, origin, todayFold] = await Promise.all([
-    loadNewsCorpus(),
-    buildMapGeometry(),
-    requestOrigin(),
-    foldArticles(today),
-  ])
-
-  const href: Href = (patch, hash = '') => buildHref(filters, patch, hash)
+  const [{ corpus, items, frame }, geometry] = await Promise.all([loadFrame(), buildMapGeometry()])
+  const origin = frame.origin
 
   /* --- the release list: first paint; the island takes over from here ---- */
   const releases = releasePage(items, filters)
@@ -131,27 +75,19 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
   /* No editor-picked lead exists in the schema yet. The hero carries the
      newest releases with a photograph or a video, topped up from the newest
      without. */
-  const hasMedia = (i: NewsItem) => Boolean(i.img || i.video)
-  const lead = [...items.filter(hasMedia), ...items.filter((i) => !hasMedia(i))].slice(0, LEAD_COUNT)
+  const lead = mediaFirst(items).slice(0, LEAD_COUNT)
   const slides: HeroSlide[] = lead.map((item) => ({ item, kicker: kickerOf(item), short: shortTitle(item.title) }))
 
-  const trending = TRENDING.filter((t) => searchItems(items, t.query).length > 0)
-
-  /* --- special coverage ------------------------------------------------- */
+  /* --- योजना: a band per scheme, leading to its page --------------------- */
   /* A band with no approved release in it is not shown. */
   const coverage = SPECIAL_COVERAGE.flatMap((c) => {
-    const sel = c.select
-    const rows = 'topic' in sel ? items.filter((i) => i.topic === sel.topic) : searchItems(items, sel.query)
+    const rows = schemeReleases(items, c)
     if (!rows.length) return []
     return {
       coverage: c,
-      stories: [...rows.filter(hasMedia), ...rows.filter((i) => !hasMedia(i))].slice(0, 4),
-      decisions: c.decisions.filter((d) => searchItems(items, d.query).length > 0),
-      figureSources: [...new Set(c.figures.map((f) => f.source))].map((no) => ({
-        no,
-        item: items.find((i) => i.no === no) ?? null,
-      })),
-      allHref: 'topic' in sel ? href({ topic: sel.topic }, '#releases') : href({ q: sel.query }, '#releases'),
+      stories: mediaFirst(rows).slice(0, 4),
+      decisions: liveDecisions(items, c),
+      figureSources: figureSources(items, c),
     }
   })
 
@@ -198,23 +134,13 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
     terms: [m.formalMr, m.portfolioMr, ...m.aliasesMr, ...m.aliasesEn],
   }))
 
+  /* --- व्हिडिओ: a band per programme, leading to its page ---------------- */
+  const episodes = programmeEpisodes(items)
+  const programmes = VIDEO_PROGRAMMES.map((p) => ({ ...p, episodes: episodes.get(p.slug) ?? [] }))
+
   /* --- the rest --------------------------------------------------------- */
-  /* An episode is the directorate's announcement of the programme's interview
-     — its headline names the programme and says मुलाखत. A story that only
-     quotes the slogan ("…‘जय महाराष्ट्र’चा निनाद") is not one. */
-  const episodesOf = (name: string) => items.filter((i) => i.title.includes(name) && i.title.includes('मुलाखत'))
-  const jaiMaharashtra = episodesOf('जय महाराष्ट्र')
-  /* Most interviews air on both programmes under one joint release, whose
-     photograph is the जय महाराष्ट्र card. So दिलखुलास leads with its newest
-     episode of its own, else one the band above is not already leading. */
-  const dilkhulasAll = episodesOf('दिलखुलास')
-  const dilkhulasLead =
-    dilkhulasAll.find((i) => !i.title.includes('जय महाराष्ट्र')) ??
-    dilkhulasAll.find((i) => i.id !== jaiMaharashtra[0]?.id) ??
-    dilkhulasAll[0]
-  const dilkhulas = dilkhulasLead ? [dilkhulasLead, ...dilkhulasAll.filter((i) => i !== dilkhulasLead)] : []
   const pictured = items.filter((i) => i.img)
-  const ytItem = jaiMaharashtra[0] ?? dilkhulas[0] ?? items.find((i) => i.video) ?? null
+  const ytItem = programmes.find((p) => p.episodes[0])?.episodes[0] ?? items.find((i) => i.video) ?? null
 
   /* The fact check's two samples: a forwarded copy of a real approved
      release, and a message no release says. */
@@ -227,52 +153,8 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
   ]
 
   return (
-    <NewsUiProvider
-      today={today}
-      foldItems={todayFold.map(toFoldItem)}
-      recent={items.slice(0, 4)}
-      suggestions={trending.slice(0, 5)}
-      origin={origin}
-    >
-      <div className="nr flex min-h-screen flex-col">
-        <a
-          href="#releases"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg"
-        >
-          मुख्य मजकुराकडे जा
-        </a>
+    <NewsFrame frame={frame}>
         <h1 className="sr-only">महासंवाद — महाराष्ट्र शासनाच्या अधिकृत बातम्या</h1>
-
-        {/* 2 ─ Masthead (sticky)--------------------------------------- */}
-        <header className="sticky top-0 z-30 border-b border-nr-line bg-[rgba(255,248,238,0.97)]">
-          <div className={`${WRAP} flex h-[56px] items-center justify-between gap-2 lg:h-[64px] lg:gap-6`}>
-            <a href="#top" aria-label="महासंवाद — मुखपृष्ठ" className="min-w-0 shrink-0">
-              <Image src="/mahasamvad-logo.png" alt="महासंवाद" width={292} height={100} priority className="h-[36px] w-auto lg:h-[46px]" />
-            </a>
-            <div className="flex shrink-0 items-center gap-2.5">
-              <ReleaseSearchLink className="flex h-11 items-center gap-2 rounded-full border-[1.5px] border-nr-primary bg-white px-[18px] text-[0.9375rem] font-bold text-nr-primary max-lg:hidden">
-                <ISearch size={18} strokeWidth={2.2} />
-                शोधा
-              </ReleaseSearchLink>
-              <ReleaseSearchLink
-                label="प्रसिद्धीपत्रकांत शोधा"
-                className="grid h-11 w-11 place-items-center rounded-full border-[1.5px] border-nr-primary bg-white text-nr-primary lg:hidden"
-              >
-                <ISearch size={18} strokeWidth={2.2} />
-              </ReleaseSearchLink>
-              <FoldButton className="flex h-11 items-center gap-2.5 rounded-full bg-nr-primary pl-[18px] pr-1.5 text-[0.9375rem] font-bold text-white shadow-[0_10px_22px_-12px_var(--nr-primary)] max-lg:hidden">
-                आजचा फोल्ड
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-nr-primary">
-                  <IDownload size={16} strokeWidth={2.4} />
-                </span>
-              </FoldButton>
-              <FoldButton label="आजचा फोल्ड डाउनलोड करा" className="grid h-11 w-11 place-items-center rounded-full bg-nr-primary text-white lg:hidden">
-                <IDownload size={18} strokeWidth={2.2} />
-              </FoldButton>
-            </div>
-          </div>
-          <MainNav items={MAIN_NAV} social={NAV_SOCIAL} />
-        </header>
 
         {/* 3 ─ Hero carousel + बातम्या नकाशा ------------------------------ */}
         {slides.length ? (
@@ -326,14 +208,21 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           </section>
         </main>
 
-        {/* 6 ─ योजना: दुष्काळ २०२६, कर्जमुक्ती २०२६ ------------------------ */}
-        {coverage.map((c) => (
-          <CoverageBand key={c.coverage.anchor} {...c} />
-        ))}
+        {/* 6 ─ योजना: दुष्काळ २०२६, कर्जमुक्ती २०२६ — the nav's योजना lands
+            here; each band leads on to /yojana. */}
+        <div id="yojana" className={ANCHOR}>
+          {coverage.map((c) => (
+            <CoverageBand key={c.coverage.anchor} {...c} />
+          ))}
+        </div>
 
-        {/* 9 ─ व्हिडिओ: जय महाराष्ट्र, then दिलखुलास ------------------------ */}
-        <EpisodeBand id="media" name="जय महाराष्ट्र" episodes={jaiMaharashtra} />
-        <EpisodeBand id="dilkhulas" name="दिलखुलास" episodes={dilkhulas} />
+        {/* 9 ─ व्हिडिओ: जय महाराष्ट्र, then दिलखुलास — the nav's व्हिडिओ lands
+            here; each band leads on to /video. */}
+        <div id="video" className={ANCHOR}>
+          {programmes.map((p) => (
+            <EpisodeBand key={p.slug} id={p.slug} name={p.name} episodes={p.episodes} />
+          ))}
+        </div>
 
         <div className={`${WRAP} flex flex-col gap-8 pt-8 lg:gap-20 lg:pt-20`}>
           {/* 10 ─ फॅक्ट चेक -------------------------------------------- */}
@@ -407,69 +296,24 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           </section>
         </div>
 
-        {/* 12 ─ Footer ----------------------------------------------------- */}
-        <footer id="footer" className="mt-8 bg-nr-deep text-white lg:mt-24">
-          <div
-            className={`${WRAP} grid gap-6 pb-24 pt-[26px] text-sm sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] lg:gap-10 lg:pb-28 lg:pt-[52px] lg:text-[0.9375rem]`}
-          >
-            <div className="flex flex-col gap-3">
-              <span className="self-start rounded-[18px] bg-white px-3.5 py-2.5">
-                <Image src="/mahasamvad-logo.png" alt="महासंवाद" width={292} height={100} className="h-9 w-auto lg:h-[46px]" />
-              </span>
-              <p className="m-0 leading-[1.65] text-white/[0.84]">
-                माहिती व जनसंपर्क महासंचालनालय, महाराष्ट्र शासन. इथली प्रत्येक बातमी वृत्त विभागाने मंजूर केलेले प्रसिद्धीपत्रक आहे.
-              </p>
-            </div>
-            <FooterList title="बातम्या">
-              <a href="#releases">वृत्त विशेष</a>
-              <Link href="/map">बातम्या नकाशा</Link>
-            </FooterList>
-            <FooterList title="शासकीय दुवे">
-              <a href="https://www.maharashtra.gov.in" rel="noopener">
-                महाराष्ट्र शासन
-              </a>
-              <a href="https://dgipr.maharashtra.gov.in/about" rel="noopener">
-                माहिती व जनसंपर्क महासंचालनालय
-              </a>
-              <a href="https://aaplesarkar.mahaonline.gov.in" rel="noopener">
-                आपले सरकार
-              </a>
-            </FooterList>
-            <FooterList title="मदत व धोरणे">
-              <span className="text-white/70">संपर्क · माहितीचा अधिकार · सुलभता · गोपनीयता — पाने तयार होत आहेत</span>
-              <span className="text-white/70">संपूर्ण पान कीबोर्डने वापरता येते; २००% झूमवर वाचनीय.</span>
-              <Link href="/desk">कर्मचारी प्रवेश</Link>
-            </FooterList>
-            <p className="m-0 border-t border-white/[0.18] pt-5 text-xs text-white/[0.78] sm:col-span-2 lg:col-span-4 lg:text-[0.8125rem]">
-              स्थिती: हे पान प्रस्ताव नमुना (pitch prototype) आहे; महासंचालनालयाने अधिकृत संकेतस्थळ म्हणून अद्याप स्वीकारलेले नाही.
-              {corpus.approvedAt && <> · शेवटची मंजुरी: {stampMr(corpus.approvedAt)}</>}
-            </p>
-          </div>
-        </footer>
-
-        {/* 13 ─ The assistant ------------------------------------------------ */}
-        <ChatButton />
-      </div>
-    </NewsUiProvider>
+    </NewsFrame>
   )
 }
 
 /* ------------------------------------------------------------------ pieces */
 
-/** A special coverage band: its figures, four of its releases, the decisions
- *  it leads to and the full list. */
+/** A scheme's band: its figures, four of its releases, the decisions it
+ *  leads to and every scheme (`/yojana`). */
 function CoverageBand({
   coverage,
   stories,
   decisions,
   figureSources,
-  allHref,
 }: {
   coverage: SpecialCoverage
   stories: NewsItem[]
   decisions: SpecialCoverage['decisions']
   figureSources: Array<{ no: string; item: NewsItem | null }>
-  allHref: string
 }) {
   const headId = `${coverage.anchor}-h`
   return (
@@ -484,35 +328,7 @@ function CoverageBand({
               {coverage.title}
             </h2>
           </div>
-          {coverage.figures.length > 0 && (
-            <div>
-              <dl className="m-0 grid grid-cols-3 gap-2 lg:gap-3">
-                {coverage.figures.map((f) => (
-                  <div key={f.label} className="flex flex-col-reverse rounded-[18px] bg-white/[0.08] px-2.5 py-3 lg:p-[18px]">
-                    <dt className="mt-0.5 text-[0.78rem] leading-[1.45] text-white/90 lg:mt-1 lg:text-sm lg:leading-[1.55]">{f.label}</dt>
-                    <dd className="nr-h m-0 ![text-wrap:nowrap] !whitespace-nowrap text-[clamp(1.125rem,5.6vw,1.625rem)] font-extrabold leading-[1.3] text-nr-accent lg:text-[2.25rem]">
-                      <FigureValue value={f.value} />
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-              <p className="m-0 mt-2 text-xs text-white/70">
-                आकडे:{' '}
-                {figureSources.map((s, k) => (
-                  <span key={s.no}>
-                    {k > 0 && ', '}
-                    {s.item ? (
-                      <ReadLink item={s.item} className="text-white/90 underline underline-offset-2">
-                        वृत्त क्र. {s.no}
-                      </ReadLink>
-                    ) : (
-                      <>वृत्त क्र. {s.no}</>
-                    )}
-                  </span>
-                ))}
-              </p>
-            </div>
-          )}
+          <SchemeFigures figures={coverage.figures} sources={figureSources} />
         </div>
 
         <div className="nr-scroll -mx-4 flex gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:px-0">
@@ -549,10 +365,10 @@ function CoverageBand({
             </>
           )}
           <Link
-            href={allHref}
+            href="/yojana"
             className="flex h-12 items-center justify-center rounded-full bg-white px-5 text-[0.9375rem] font-extrabold text-nr-deep lg:col-start-3 lg:h-[46px]"
           >
-            {coverage.allLabel} →
+            सर्व योजना →
           </Link>
         </div>
       </div>
@@ -561,7 +377,7 @@ function CoverageBand({
 }
 
 /** One programme's band: the newest episode large, the three before it
- *  listed, and the channel for the rest. */
+ *  listed, and every programme (`/video`). */
 function EpisodeBand({ id, name, episodes }: { id: string; name: string; episodes: NewsItem[] }) {
   const headId = `${id}-h`
   return (
@@ -569,7 +385,9 @@ function EpisodeBand({ id, name, episodes }: { id: string; name: string; episode
       <div className={`${WRAP} grid items-start gap-6 py-7 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10 lg:py-14`}>
         <div className="flex flex-col gap-3.5 lg:gap-4">
           <h2 id={headId} className="nr-h m-0 text-[1.625rem] font-extrabold lg:text-4xl">
-            {name}
+            <Link href={`/video/${id}`} className="nr-link text-white">
+              {name}
+            </Link>
           </h2>
           {episodes[0] ? (
             <>
@@ -600,31 +418,23 @@ function EpisodeBand({ id, name, episodes }: { id: string; name: string; episode
             </ReadLink>
           ))}
           {episodes.length < 2 && <p className="m-0 py-3.5 text-sm text-white/70">आधीचे भाग अद्याप मंजूर नाहीत.</p>}
+          <Link
+            href="/video"
+            className="mt-3.5 flex h-12 items-center justify-center rounded-full bg-white px-5 text-[0.9375rem] font-extrabold text-nr-night"
+          >
+            सर्व व्हिडिओ →
+          </Link>
           <a
-            href={SOCIAL[3].url}
+            href={YOUTUBE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3.5 flex min-h-11 items-center text-[0.9375rem] font-extrabold text-nr-accent"
+            className="mt-1.5 flex min-h-11 items-center text-[0.9375rem] font-extrabold text-nr-accent"
           >
-            सर्व भाग YouTube वर →
+            YouTube वर पहा →
           </a>
         </div>
       </div>
     </section>
-  )
-}
-
-function SectionHead({ eyebrow, id, title, right }: { eyebrow: string; id: string; title: string; right?: ReactNode }) {
-  return (
-    <div className="flex items-end justify-between gap-6 border-b border-nr-line pb-2 lg:pb-3.5">
-      <div>
-        <div className="text-[0.8125rem] font-extrabold text-nr-primary lg:text-sm">{eyebrow}</div>
-        <h2 id={id} className="nr-h m-0 text-[1.75rem] font-extrabold lg:mt-0.5 lg:text-[2.5rem] lg:leading-[1.35]">
-          {title}
-        </h2>
-      </div>
-      {right}
-    </div>
   )
 }
 
@@ -682,20 +492,6 @@ function SocialPreview({ id, pictured, latest, yt }: { id: string; pictured: New
   return <p className="m-0 rounded-[14px] border border-dashed border-nr-line2 p-4 text-sm text-nr-muted">पूर्वावलोकन लवकरच</p>
 }
 
-function FooterList({ title, children }: { title: string; children: ReactNode }) {
-  const list = Array.isArray(children) ? children : [children]
-  return (
-    <div>
-      <div className="font-extrabold">{title}</div>
-      <ul className="m-0 mt-2.5 flex list-none flex-col gap-2 p-0 [&_a:hover]:underline [&_a]:text-white">
-        {list.map((item, i) => (
-          <li key={i}>{item}</li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
 /** The hero's yellow chip: the release's topic, else what kind of release. */
 function kickerOf(item: NewsItem): string {
   if (item.topic) return topicLabel(item.topic)
@@ -706,40 +502,4 @@ function kickerOf(item: NewsItem): string {
 function shortTitle(title: string): string {
   const words = title.split(/\s+/)
   return words.length > 7 ? `${words.slice(0, 7).join(' ')}…` : title
-}
-
-/** `२२ सप्टेंबर, २०२६ रोजी १८:३०`, always in India time. */
-function stampMr(iso: string): string {
-  const at = new Date(iso)
-  if (Number.isNaN(at.getTime())) return ''
-  return new Intl.DateTimeFormat('mr-IN', {
-    timeZone: 'Asia/Kolkata',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  }).format(at)
-}
-
-/** A figure on one line: the number full size, a trailing unit word
- *  (लाख, कोटी) smaller beside it so the pair fits a third of the band. */
-function FigureValue({ value }: { value: string }) {
-  const m = value.match(/^(.*[\d०-९])\s+([^\d०-९]+)$/)
-  if (!m) return <>{value}</>
-  return (
-    <>
-      {m[1]}
-      <span className="ml-1 text-[0.6em]">{m[2]}</span>
-    </>
-  )
-}
-
-/** The site's own origin, for the absolute link a WhatsApp share needs. */
-async function requestOrigin(): Promise<string> {
-  const h = await headers()
-  const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000'
-  const proto = h.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https')
-  return `${proto}://${host}`
 }

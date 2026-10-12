@@ -25,7 +25,6 @@ export type SpecialCoverage = {
   figures: Array<{ value: string; label: string; source: string }>
   /** Key decisions; each opens a search of the approved corpus. */
   decisions: Array<{ label: string; query: string }>
-  allLabel: string
 }
 
 /** The special coverage bands, in page order. */
@@ -46,7 +45,6 @@ export const SPECIAL_COVERAGE: SpecialCoverage[] = [
       { label: 'विद्यार्थ्यांच्या परीक्षा शुल्क माफीसह इतर मदत', query: 'परीक्षा शुल्क' },
       { label: 'वैरण विकास कार्यक्रम — चारा सुरक्षा', query: 'वैरण' },
     ],
-    allLabel: 'दुष्काळ २०२६ — सर्व बातम्या',
   },
   /* कर्जमुक्ती २०२६ — no topic rule covers it (शेती holds the word), so its
      releases are the ones a search for it finds. Figures from release 217559
@@ -67,7 +65,6 @@ export const SPECIAL_COVERAGE: SpecialCoverage[] = [
       { label: 'पात्र शेतकऱ्यांसाठी आधार प्रमाणीकरण', query: 'आधार प्रमाणीकरण' },
       { label: 'सावकारीविरोधात जनजागृती — महाराष्ट्र सावकारी (नियमन) अधिनियम, २०१४', query: 'सावकारी' },
     ],
-    allLabel: 'कर्जमुक्ती २०२६ — सर्व बातम्या',
   },
 ]
 
@@ -89,15 +86,28 @@ export const TRENDING: Array<{ label: string; query: string }> = [
   { label: 'भरती परीक्षा सुधारणा', query: 'भरती परीक्षा' },
 ]
 
-/** The masthead's pill navigation: anchors on the page. */
+/** A video programme: its episodes are the releases announcing its
+ *  interviews (`programmeEpisodes` in `lib/news/hubs.ts`). */
+export type VideoProgramme = {
+  /** `/video/<slug>`, and the band's anchor on `/news`. */
+  slug: string
+  name: string
+}
+
+/** The programmes on `/video`, in page order. */
+export const VIDEO_PROGRAMMES: VideoProgramme[] = [
+  { slug: 'jai-maharashtra', name: 'जय महाराष्ट्र' },
+  { slug: 'dilkhulas', name: 'दिलखुलास' },
+]
+
+/** The masthead's pill navigation. Every href is a section of `/news`;
+ *  योजना and व्हिडिओ land on their bands there, which lead on to the
+ *  `/yojana` and `/video` pages. */
 export const MAIN_NAV: Array<{ label: string; href: string; phone?: boolean }> = [
   { label: 'मुख्यपृष्ठ', href: '#top', phone: true },
   { label: 'वृत्त विशेष', href: '#releases', phone: true },
-  /* योजना leads to the special coverage bands (दुष्काळ २०२६, then
-     कर्जमुक्ती २०२६); व्हिडिओ to the media bands (जय महाराष्ट्र, then
-     दिलखुलास). The pill stays lit through both bands of each. */
-  { label: 'योजना', href: '#drought', phone: true },
-  { label: 'व्हिडिओ', href: '#media' },
+  { label: 'योजना', href: '#yojana', phone: true },
+  { label: 'व्हिडिओ', href: '#video', phone: true },
   { label: 'फॅक्ट चेक', href: '#factcheck', phone: true },
 ]
 
