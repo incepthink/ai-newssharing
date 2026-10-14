@@ -58,6 +58,9 @@ export type DgiprRelease = {
   /** The issuing office — the directorate itself, or a district office. */
   authorMr: string | null;
   tags: string[];
+  /** The source's own categories (`दुष्काळ २०२६`, …); optional because the
+   *  curated rows carry none. */
+  sourceCategories?: string[];
   featured: boolean;
   /** Served from this app's own `public/dgipr/posters/`; the pull copies them
    *  across so the snapshot is self-contained. A desk row carries its own

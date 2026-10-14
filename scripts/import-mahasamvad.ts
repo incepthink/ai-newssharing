@@ -2,34 +2,52 @@
  * Import real recent articles with actual photos from Mahasamvad WordPress REST API
  * into PostgreSQL articles table.
  *
- * Two passes:
+ * Three passes:
  *   1. Every post from today and the `--days` before it (default 7), in full.
  *   2. A backfill over the `--backfill-days` before that (default 60) for the
- *      page's thin bands only: कर्जमुक्ती releases and the जय महाराष्ट्र /
- *      दिलखुलास interview announcements, so those bands have past episodes.
+ *      page's thin bands only: कर्जमुक्ती releases, the जय महाराष्ट्र /
+ *      दिलखुलास interview announcements, and the Chief Minister's and Deputy
+ *      Chief Ministers' releases the hero carousel leads with.
+ *   3. The newest `--scheme-posts` (default 40) of each योजना's own Mahasamvad
+ *      category (`SPECIAL_COVERAGE[].category`), however old, so every scheme
+ *      page has its story.
+ *
+ * Each post keeps the names of its Mahasamvad categories, which is what a
+ * योजना selects on.
  *
  * Idempotent: a post already imported (same source_url) is refreshed, not
  * duplicated, so it can be re-run through the day as Mahasamvad publishes.
  *
  * Usage:
  *   npm run import:mahasamvad
- *   npm run import:mahasamvad -- --days 7 --backfill-days 60
+ *   npm run import:mahasamvad -- --days 7 --backfill-days 60 --scheme-posts 40
  */
 import { loadEnvConfig } from '@next/env'
 import { createArticle, ensureSchema, getArticleBySourceUrl, pool, updateArticle } from '../src/lib/db'
 import { DISTRICTS, resolveDistrict } from '../src/lib/districts'
+import { MINISTERS } from '../src/data/ministers'
+import { SPECIAL_COVERAGE } from '../src/data/news-editorial'
 import type { Category } from '../src/lib/types'
 
 // Load environment variables without logging credentials
 loadEnvConfig(process.cwd())
 
 const MAHASAMVAD_API = 'https://mahasamvad.in/wp-json/wp/v2/posts'
+const CATEGORIES_API = 'https://mahasamvad.in/wp-json/wp/v2/categories'
 const PAGE_SIZE = 50
 
-/** Titles the backfill pass keeps: the scheme, and the programmes' episode
+/** The Chief Minister's and Deputy Chief Ministers' names as the press
+ *  writes them (`data/ministers.ts`). */
+const CM_DCM_NAMES = MINISTERS.filter((m) => m.tier === 'cm' || m.tier === 'dcm').flatMap((m) => m.aliasesMr)
+
+/** Titles the backfill pass keeps: the scheme, the programmes' episode
  *  announcements (which always say मुलाखत — a story that merely quotes the
- *  slogan "जय महाराष्ट्र" is not an episode). */
-const BACKFILL_TITLES = [/कर्जमुक्ती/, /(जय महाराष्ट्र|दिलखुलास)[\s\S]*मुलाखत/]
+ *  slogan "जय महाराष्ट्र" is not an episode), and the CM's and DCMs' news. */
+const BACKFILL_TITLES: Array<(title: string) => boolean> = [
+  (t) => /कर्जमुक्ती/.test(t),
+  (t) => /(जय महाराष्ट्र|दिलखुलास)[\s\S]*मुलाखत/.test(t),
+  (t) => CM_DCM_NAMES.some((name) => t.includes(name)),
+]
 
 function arg(name: string, fallback: number): number {
   const i = process.argv.indexOf(`--${name}`)
@@ -67,33 +85,70 @@ async function getJson<T>(url: string): Promise<T> {
 }
 
 /** Every post in a window, newest first, paged until the API runs out. */
-async function fetchWindow(params: Record<string, string>): Promise<WpPost[]> {
-  const out: WpPost[] = []
+async function fetchWindow<T = WpPost>(params: Record<string, string>, api = MAHASAMVAD_API): Promise<T[]> {
+  const out: T[] = []
   for (let page = 1; ; page++) {
-    const qs = new URLSearchParams({ ...params, per_page: String(PAGE_SIZE), page: String(page) })
-    const batch = await getJson<WpPost[]>(`${MAHASAMVAD_API}?${qs}`)
+    const qs = new URLSearchParams({ per_page: String(PAGE_SIZE), ...params, page: String(page) })
+    const batch = await getJson<T[]>(`${api}?${qs}`)
     out.push(...batch)
     if (batch.length < PAGE_SIZE) return out
   }
 }
 
-async function fetchPosts(days: number, backfillDays: number): Promise<WpPost[]> {
+/** `include=` with many ids makes a URL too long for the server; ask in
+ *  batches. */
+async function fetchByIds(ids: number[]): Promise<WpPost[]> {
+  const out: WpPost[] = []
+  for (let i = 0; i < ids.length; i += PAGE_SIZE) {
+    out.push(...(await fetchWindow({ include: ids.slice(i, i + PAGE_SIZE).join(','), _embed: '1' })))
+  }
+  return out
+}
+
+/** Each योजना's Mahasamvad category id, looked up by the name the editorial
+ *  config gives it. A name the site does not have is reported, not guessed. */
+async function schemeCategoryIds(): Promise<Array<{ name: string; id: number }>> {
+  const names = SPECIAL_COVERAGE.flatMap((c) => (c.category ? [c.category] : []))
+  if (!names.length) return []
+  const cats = await fetchWindow<{ id: number; name: string }>({ _fields: 'id,name' }, CATEGORIES_API)
+  return names.flatMap((name) => {
+    const hit = cats.find((c) => decodeHtmlEntities(c.name).trim() === name)
+    if (!hit) console.warn(`  No Mahasamvad category named ${name}.`)
+    return hit ? [{ name, id: hit.id }] : []
+  })
+}
+
+async function fetchPosts(days: number, backfillDays: number, schemePosts: number): Promise<WpPost[]> {
   const since = istDaysAgo(days)
   console.log(`Fetching every post since ${since}...`)
   const recent = await fetchWindow({ after: `${since}T00:00:00`, _embed: '1' })
   console.log(`  ${recent.length} posts.`)
+  const seen = new Set(recent.map((p) => p.id))
+  const out = [...recent]
 
-  if (!backfillDays) return recent
-  const from = istDaysAgo(days + backfillDays)
-  console.log(`Backfilling कर्जमुक्ती / जय महाराष्ट्र / दिलखुलास from ${from}...`)
-  const titles = await fetchWindow({ after: `${from}T00:00:00`, before: `${since}T00:00:00`, _fields: 'id,title' })
-  const ids = titles
-    .filter((p) => BACKFILL_TITLES.some((re) => re.test(decodeHtmlEntities(p.title?.rendered ?? ''))))
-    .map((p) => p.id)
-  const older = ids.length ? await fetchWindow({ include: ids.join(','), _embed: '1' }) : []
-  console.log(`  ${older.length} of ${titles.length} older posts.`)
+  if (backfillDays) {
+    const from = istDaysAgo(days + backfillDays)
+    console.log(`Backfilling कर्जमुक्ती / जय महाराष्ट्र / दिलखुलास / CM & DCM from ${from}...`)
+    const titles = await fetchWindow({ after: `${from}T00:00:00`, before: `${since}T00:00:00`, _fields: 'id,title' })
+    const ids = titles
+      .filter((p) => BACKFILL_TITLES.some((keep) => keep(decodeHtmlEntities(p.title?.rendered ?? ''))))
+      .map((p) => p.id)
+    const older = await fetchByIds(ids)
+    console.log(`  ${older.length} of ${titles.length} older posts.`)
+    for (const p of older) if (!seen.has(p.id)) (seen.add(p.id), out.push(p))
+  }
 
-  return [...recent, ...older]
+  if (schemePosts) {
+    for (const { name, id } of await schemeCategoryIds()) {
+      const qs = new URLSearchParams({ categories: String(id), per_page: String(schemePosts), _fields: 'id' })
+      const ids = (await getJson<Array<{ id: number }>>(`${MAHASAMVAD_API}?${qs}`)).map((p) => p.id).filter((i) => !seen.has(i))
+      const posts = await fetchByIds(ids)
+      console.log(`  योजना ${name}: ${posts.length} more posts.`)
+      for (const p of posts) (seen.add(p.id), out.push(p))
+    }
+  }
+
+  return out
 }
 
 function decodeHtmlEntities(str: string): string {
@@ -182,7 +237,7 @@ export interface ImportSummary {
 export async function importMahasamvad(): Promise<ImportSummary> {
   await ensureSchema()
 
-  const posts = await fetchPosts(arg('days', 7), arg('backfill-days', 60))
+  const posts = await fetchPosts(arg('days', 7), arg('backfill-days', 60), arg('scheme-posts', 40))
   console.log(`Fetched ${posts.length} posts from Mahasamvad API.`)
 
   let importedCount = 0
@@ -229,6 +284,7 @@ export async function importMahasamvad(): Promise<ImportSummary> {
     // Resolve district canonically using resolveDistrict()
     let resolvedDistrict: string | null = null
     const terms = (post._embedded?.['wp:term'] || []).flat()
+    const categories = [...new Set(terms.filter((t) => t.taxonomy === 'category').map((t) => decodeHtmlEntities(t.name).trim()))]
     for (const term of terms) {
       const match = resolveDistrict(term.name) || resolveDistrict(term.slug)
       if (match) {
@@ -285,6 +341,7 @@ export async function importMahasamvad(): Promise<ImportSummary> {
         category,
         bullets: bullets.length > 0 ? bullets : existing.bullets,
         dateline: dateline ?? existing.dateline,
+        source_categories: categories,
         // Setting status re-stamps approved_at with now; leave an approved
         // row's publish time alone.
         ...(existing.status === 'approved' ? {} : { status: 'approved' as const }),
@@ -313,6 +370,7 @@ export async function importMahasamvad(): Promise<ImportSummary> {
         fold_date: foldDate,
         poster_url: posterUrl,
         source_url: canonicalUrl,
+        source_categories: categories,
       })
       importedCount++
     }

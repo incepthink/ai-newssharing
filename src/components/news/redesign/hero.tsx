@@ -16,7 +16,7 @@ export type HeroSlide = {
 }
 
 /**
- * The lead releases, full-bleed, rotating every four and a half seconds.
+ * The lead releases, full-bleed, rotating every three seconds.
  *
  * The behaviour is the APG tabbed carousel the old `LeadCarousel` built:
  *
