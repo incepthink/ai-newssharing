@@ -200,6 +200,7 @@ export function toRelease(article: Article): DgiprRelease {
        what the department chose to pull out of its own text — which is exactly
        what the panel's खुणा row is for. */
     tags: article.bullets ?? [],
+    sourceCategories: article.source_categories ?? [],
     featured: article.category === "cm",
     /* The desk's own photograph column. Null means no picture, and every
        surface that reads this draws a plate rather than a stand-in photo. A

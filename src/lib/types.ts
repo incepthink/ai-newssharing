@@ -50,6 +50,9 @@ export interface Article {
   poster_url?: string | null
   /** Canonical source permalink (e.g. Mahasamvad post link). */
   source_url?: string | null
+  /** The source's own category names (Mahasamvad's `दुष्काळ २०२६`, …) —
+   *  what a योजना selects on. Empty for a desk-filed release. */
+  source_categories?: string[]
 }
 
 export interface Fold {

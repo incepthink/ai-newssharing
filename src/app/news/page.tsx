@@ -56,7 +56,11 @@ export const metadata = {
     'महाराष्ट्र शासनाच्या अधिकृत बातम्या — ताज्या, विषयानुसार आणि तुमच्या जिल्ह्यातील. माहिती व जनसंपर्क महासंचालनालयाची मंजूर प्रसिद्धीपत्रके.',
 }
 
-const LEAD_COUNT = 5
+const LEAD_COUNT = 10
+
+/** The Chief Minister and the Deputy Chief Ministers, in Gazette order — the
+ *  only releases the hero carries. */
+const LEADERS = MINISTERS.filter((m) => m.tier === 'cm' || m.tier === 'dcm')
 
 export default async function NewsPage({ searchParams }: { searchParams: Promise<Query> }) {
   const query = await searchParams
@@ -72,15 +76,16 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
   for (const i of items) if (i.topic) topicCounts.set(i.topic, (topicCounts.get(i.topic) ?? 0) + 1)
 
   /* --- the hero --------------------------------------------------------- */
-  /* No editor-picked lead exists in the schema yet. The hero carries the
-     newest releases with a photograph or a video, topped up from the newest
-     without. */
-  const lead = mediaFirst(items).slice(0, LEAD_COUNT)
+  /* The hero is the Chief Minister's and Deputy Chief Ministers' news only:
+     the newest releases whose attribution or headline names one of them
+     (`ministers`, matched against the roster), those with a photograph or a
+     video first. */
+  const lead = mediaFirst(items.filter((i) => leaderOf(i))).slice(0, LEAD_COUNT)
   const slides: HeroSlide[] = lead.map((item) => ({ item, kicker: kickerOf(item), short: shortTitle(item.title) }))
 
   /* --- योजना: a band per scheme, leading to its page --------------------- */
   /* A band with no approved release in it is not shown. */
-  const coverage = SPECIAL_COVERAGE.flatMap((c) => {
+  const coverage = SPECIAL_COVERAGE.filter((c) => c.onHome).flatMap((c) => {
     const rows = schemeReleases(items, c)
     if (!rows.length) return []
     return {
@@ -163,7 +168,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
             aside={
               <aside
                 aria-label="महाराष्ट्राचा बातम्या नकाशा"
-                className="absolute bottom-12 right-[max(1.5rem,calc((100vw-1280px)/2))] top-12 hidden w-[440px] flex-col justify-center rounded-[22px] bg-[rgba(255,248,238,0.95)] p-[22px] shadow-[0_30px_60px_-24px_rgba(40,6,10,0.55)] xl:flex"
+                className="absolute bottom-20 right-[max(1.5rem,calc((100vw-1280px)/2))] top-20 hidden w-[440px] flex-col justify-center rounded-[22px] bg-[rgba(255,248,238,0.95)] p-[22px] shadow-[0_30px_60px_-24px_rgba(40,6,10,0.55)] xl:flex"
               >
                 <DistrictMap map={mapData} initialFilters={filters} svgClassName="max-h-[420px]" />
               </aside>
@@ -492,8 +497,16 @@ function SocialPreview({ id, pictured, latest, yt }: { id: string; pictured: New
   return <p className="m-0 rounded-[14px] border border-dashed border-nr-line2 p-4 text-sm text-nr-muted">पूर्वावलोकन लवकरच</p>
 }
 
-/** The hero's yellow chip: the release's topic, else what kind of release. */
+/** The CM or DCM a release names, first in Gazette order. */
+function leaderOf(item: NewsItem) {
+  return LEADERS.find((m) => item.ministers.includes(m.id))
+}
+
+/** The hero's yellow chip: who it is from, else the release's topic, else
+ *  what kind of release. */
 function kickerOf(item: NewsItem): string {
+  const leader = leaderOf(item)
+  if (leader) return `${leader.tier === 'cm' ? 'मुख्यमंत्री' : 'उपमुख्यमंत्री'} ${leader.nameMr}`
   if (item.topic) return topicLabel(item.topic)
   if (item.cm) return 'मुख्यमंत्री व मंत्रिमंडळ'
   return item.dept ?? ''

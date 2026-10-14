@@ -134,6 +134,7 @@ CREATE TABLE IF NOT EXISTS articles (
   approved_at   TEXT,
   fold_date     TEXT NOT NULL,
   poster_url    TEXT,
+  source_categories TEXT NOT NULL DEFAULT '[]',
   source_url    TEXT
 );
 
@@ -178,6 +179,7 @@ ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_credit TEXT;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS poster_url   TEXT;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS source_url   TEXT;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS video_url    TEXT;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS source_categories TEXT NOT NULL DEFAULT '[]';
 `
 
 const INDEXES = `
@@ -251,6 +253,7 @@ function toArticle(r: Row): Article {
     fold_date: r.fold_date as string,
     poster_url: (r.poster_url as string) ?? null,
     source_url: (r.source_url as string) ?? null,
+    source_categories: JSON.parse((r.source_categories as string) || '[]'),
   }
 }
 
@@ -279,6 +282,7 @@ export interface CreateArticleInput {
   fold_date: string
   poster_url?: string | null
   source_url?: string | null
+  source_categories?: string[]
 }
 
 export async function createArticle(input: CreateArticleInput): Promise<Article> {
@@ -286,11 +290,11 @@ export async function createArticle(input: CreateArticleInput): Promise<Article>
     `INSERT INTO articles
       (category, raw_text, title, body, district, language, release_no, office, department,
        attribution, bullets, dateline, byline, image_url, image_credit, status, submitted_by,
-       submitted_at, approved_at, fold_date, poster_url, source_url)
+       submitted_at, approved_at, fold_date, poster_url, source_url, source_categories)
      VALUES
       (@category, @raw_text, @title, @body, @district, @language, @release_no, @office, @department,
        @attribution, @bullets, @dateline, @byline, @image_url, @image_credit, @status, @submitted_by,
-       @submitted_at, @approved_at, @fold_date, @poster_url, @source_url)
+       @submitted_at, @approved_at, @fold_date, @poster_url, @source_url, @source_categories)
      RETURNING *`,
     {
       category: input.category ?? 'general',
@@ -315,6 +319,7 @@ export async function createArticle(input: CreateArticleInput): Promise<Article>
       fold_date: input.fold_date,
       poster_url: input.poster_url ?? null,
       source_url: input.source_url ?? null,
+      source_categories: JSON.stringify(input.source_categories ?? []),
     },
   )
   return toArticle(row!)
@@ -394,6 +399,7 @@ export async function updateArticle(id: number, patch: Partial<Article>): Promis
     if (k in patch) { sets.push(`${k} = @${k}`); params[k] = (patch as Record<string, unknown>)[k] ?? null }
   }
   if ('bullets' in patch) { sets.push('bullets = @bullets'); params.bullets = JSON.stringify(patch.bullets ?? []) }
+  if ('source_categories' in patch) { sets.push('source_categories = @source_categories'); params.source_categories = JSON.stringify(patch.source_categories ?? []) }
   if (patch.status === 'approved') { sets.push('approved_at = @approved_at'); params.approved_at = new Date().toISOString() }
   if (!sets.length) return getArticle(id)
 

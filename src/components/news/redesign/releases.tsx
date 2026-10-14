@@ -287,7 +287,7 @@ export function ReleasesBrowser({
         ))}
       </div>
 
-      <div ref={listRef} className="min-w-0 scroll-mt-[118px] lg:scroll-mt-[124px]">
+      <div ref={listRef} className="min-w-0 scroll-mt-[122px] lg:scroll-mt-[132px]">
         <p role="status" className="m-0 text-[0.8125rem] text-nr-text2 lg:text-sm">
           {feedStatus}
         </p>

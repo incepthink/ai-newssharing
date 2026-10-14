@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AxisDirect — High-Value Customer Identification and Social Influence Mapping</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  @page {
+    size: A4;
+    margin: 14mm 15mm 14mm 15mm;
+    @top-left {
+      content: "AXISDIRECT | High-Value Customer Identification & Influence Mapping";
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 7.5pt;
+      font-weight: 600;
+      color: #64748b;
+      padding-bottom: 3px;
+    }
+    @top-right {
+      content: none;
+    }
+    @bottom-left {
+      content: none;
+    }
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 7.5pt;
+      font-weight: 600;
+      color: #64748b;
+      padding-top: 3px;
+    }
+  }
+
+  @page:first {
+    margin: 0;
+    @top-left { content: none; }
+    @top-right { content: none; }
+    @bottom-left { content: none; }
+    @bottom-right { content: none; }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1e293b;
+    font-size: 8.3pt;
+    line-height: 1.42;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+
+  .page-container {
+    page-break-after: always;
+    position: relative;
+    padding-top: 2px;
+  }
+
+  .page-container:last-of-type {
+    page-break-after: avoid;
+  }
+
+  /* Cover Page */
+  .cover-container {
+    page-break-after: always;
+    height: 100vh;
+    padding: 60px 52px 45px 52px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #ffffff;
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  .cover-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .cover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #97144d;
+    padding-bottom: 16px;
+  }
+
+  .cover-header-brand {
+    font-size: 16pt;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #97144d;
+    text-transform: uppercase;
+  }
+
+  .cover-header-vendor {
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: 0.5px;
+  }
+
+  .cover-body {
+    margin-top: auto;
+    margin-bottom: auto;
+    padding: 20px 0;
+  }
+
+  .cover-title {
+    font-size: 26pt;
+    font-weight: 800;
+    line-height: 1.18;
+    color: #0f172a;
+    letter-spacing: -0.6px;
+    margin: 0 0 16px 0;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+  }
+
+  .cover-title span {
+    color: #97144d;
+  }
+
+  .cover-desc {
+    font-size: 10.5pt;
+    font-weight: 400;
+    color: #475569;
+    line-height: 1.55;
+    margin: 0 0 32px 0;
+    max-width: 95%;
+  }
+
+  .meta-card {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 22px 26px;
+  }
+
+  .meta-col {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .meta-lbl {
+    font-size: 7.2pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #94a3b8;
+    margin-bottom: 3px;
+  }
+
+  .meta-val {
+    font-size: 9.2pt;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .cover-foot {
+    border-top: 1px solid #cbd5e1;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    color: #64748b;
+  }
+
+  /* Typography */
+  h1 {
+    font-size: 12pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+    margin: 0 0 7px 0;
+    padding-bottom: 3px;
+    border-bottom: 1.8px solid #97144d;
+  }
+
+  h1 span.num {
+    color: #97144d;
+    margin-right: 5px;
+  }
+
+  h2 {
+    font-size: 9.8pt;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 10px 0 5px 0;
+    letter-spacing: -0.2px;
+  }
+
+  p {
+    margin: 0 0 6px 0;
+    text-align: justify;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6px 0 10px 0;
+    font-size: 7.6pt;
+  }
+
+  th {
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-weight: 700;
+    text-align: left;
+    padding: 5px 7px;
+    border: 1px solid #cbd5e1;
+    font-size: 7.2pt;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  td {
+    padding: 4.5px 7px;
+    border: 1px solid #e2e8f0;
+    vertical-align: top;
+    color: #334155;
+    line-height: 1.36;
+  }
+
+  tr:nth-child(even) td {
+    background-color: #fafbfd;
+  }
+
+  /* Clean box without colored left border */
+  .clean-box {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 7px 11px;
+    margin: 7px 0 9px 0;
+    font-size: 7.8pt;
+    line-height: 1.4;
+  }
+
+  .clean-box-head {
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 3px;
+    font-size: 8.2pt;
+  }
+
+  /* Funnel Blocks */
+  .funnel-row {
+    display: flex;
+    align-items: stretch;
+    margin-bottom: 4px;
+  }
+
+  .funnel-badge {
+    width: 78px;
+    background: #97144d;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 7.5pt;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px 0 0 4px;
+    padding: 3px 5px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .funnel-desc {
+    flex: 1;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: none;
+    border-radius: 0 4px 4px 0;
+    padding: 4.5px 9px;
+    font-size: 7.5pt;
+    line-height: 1.34;
+  }
+
+  /* Formula block */
+  .formula-box {
+    background-color: #0f172a;
+    color: #f8fafc;
+    border-radius: 6px;
+    padding: 9px 13px;
+    margin: 7px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.5pt;
+    line-height: 1.46;
+  }
+
+  .f-pink { color: #f472b6; font-weight: 600; }
+  .f-blue { color: #38bdf8; }
+  .f-yellow { color: #fbbf24; }
+
+  /* Pill Badges */
+  .pill {
+    display: inline-block;
+    padding: 1px 5px;
+    font-size: 6.5pt;
+    font-weight: 700;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .pill-t1 { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  .pill-t2 { background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .pill-t3 { background-color: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; }
+  .pill-std { background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+
+  ul {
+    margin: 3px 0 5px 0;
+    padding-left: 16px;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: COVER PAGE -->
+<div class="cover-container">
+  <div class="cover-header">
+    <div class="cover-header-brand">AXISDIRECT</div>
+    <div class="cover-header-vendor">HASHCASE (HASHBYTE PVT LTD)</div>
+  </div>
+
+  <div class="cover-body">
+    <h1 class="cover-title">
+      High-Value Customer Identification &<br>
+      <span>Social Influence Mapping</span>
+    </h1>
+    <p class="cover-desc">
+      An automated algorithmic workflow for resolving KYC identities against public social graphs, quantifying asymmetric reputational risk, and orchestrating priority service routing across a 50-lakh customer base.
+    </p>
+
+    <div class="meta-card">
+      <div class="meta-col">
+        <span class="meta-lbl">Client Organization</span>
+        <span class="meta-val">Axis Securities Limited (AxisDirect)</span>
+      </div>
+      <div class="meta-col">
+        <span class="meta-lbl">Delivery Partner</span>
+        <span class="meta-val">HashCase (HashByte Pvt Ltd)</span>
+      </div>
+      <div class="meta-col">
+        <span class="meta-lbl">Document Version & Status</span>
+        <span class="meta-val">Version 2.4 — Production Baseline</span>
+      </div>
+      <div class="meta-col">
+        <span class="meta-lbl">Engagement Period</span>
+        <span class="meta-val">Q3–Q4 2024 (Pilot Run & Production Deployment)</span>
+      </div>
+      <div class="meta-col">
+        <span class="meta-lbl">Target Demographic</span>
+        <span class="meta-val">50,00,000 KYC Records (Retail, HNI, Trading)</span>
+      </div>
+      <div class="meta-col">
+        <span class="meta-lbl">Regulatory & InfoSec Review</span>
+        <span class="meta-val">Compliant with DPDP Act 2023 & SEBI KYC Norms</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cover-foot">
+    <span>© 2024 HashByte Pvt Ltd. All rights reserved.</span>
+    <span>AxisDirect Customer Experience & Operations</span>
+  </div>
+</div>
+
+<!-- PAGE 2: STRATEGIC CONTEXT & SCORING DIMENSIONS -->
+<div class="page-container">
+  <h1><span class="num">1.</span> Executive Summary & Strategic Rationale</h1>
+  
+  <p>
+    AxisDirect maintains Know Your Customer (KYC) records for approximately <strong>50 lakh (5 million) customers</strong> across retail equity, derivatives, currency, and mutual fund advisory accounts. Within this base exists a critical micro-segment whose public reach and social credibility make their individual service experience consequential far beyond the commercial value of their trading book.
+  </p>
+
+  <p>
+    If a venture-backed tech founder with 75,000 LinkedIn followers, a prominent finance creator with 2,50,000 YouTube subscribers, or a financial daily editor experiences a failed order execution, an unresolved margin penalty, or a delayed KYC unlock and subsequently posts a screenshot publicly, the resulting brand exposure is asymmetric, immediate, and nearly impossible to contain once viral momentum takes hold.
+  </p>
+
+  <p>
+    <strong>HashCase (HashByte Pvt Ltd)</strong> was engaged to build and deploy an automated data processing workflow that systematically reconciles AxisDirect's KYC database against public professional and social graphs. The resulting intelligence layer assigns an algorithmic <strong>Composite Influence Score (CIS)</strong> and categorizes high-exposure individuals into distinct operational service tiers.
+  </p>
+
+  <p>
+    The output supports service prioritisation and reputational risk management. It functions as an operational protective guardrail rather than a marketing or sales solicitation tool.
+  </p>
+
+  <h1 style="margin-top: 14px;"><span class="num">2.</span> The Multi-Dimensional Scoring Framework</h1>
+
+  <p>
+    To quantify reputational exposure objectively, each matched profile is evaluated across four core attributes. Rather than treating raw follower counts as an isolated metric, the model contextualizes reach against institutional credibility and topical relevance to capital markets.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 14%;">Attribute</th>
+        <th style="width: 27%;">Definition & Rationale</th>
+        <th style="width: 33%;">Primary Data Signals Extracted</th>
+        <th style="width: 26%;">Mathematical Treatment</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Reach (R)</strong></td>
+        <td>The absolute scale of the addressable audience the customer can broadcast to directly.</td>
+        <td>Followers on LinkedIn, X (Twitter), Instagram; subscribers on YouTube channels.</td>
+        <td>Logarithmically compressed: log<sub>10</sub>(R+1). Prevents extreme outlier distortion.</td>
+      </tr>
+      <tr>
+        <td><strong>Authority (A)</strong></td>
+        <td>The institutional credibility and weight attributed to the individual's public commentary.</td>
+        <td>Platform verification badges, MCA-21 Director filings, C-suite/Partner titles, media citations.</td>
+        <td>Standardized index [0–100] based on credential hierarchy and third-party verification.</td>
+      </tr>
+      <tr>
+        <td><strong>Relevance (M)</strong></td>
+        <td>Topical overlap between the customer's audience and retail broking/wealth markets.</td>
+        <td>Bio keyword analysis, content topic modeling (taxation, trading, equity research, macroeconomics).</td>
+        <td>Multiplicative modifier [0.50x to 1.35x]. Heavily discounts non-business/lifestyle accounts.</td>
+      </tr>
+      <tr>
+        <td><strong>Grievance Vulnerability</strong></td>
+        <td>Real-time responsiveness to service friction and historical propensity for public escalation.</td>
+        <td>Integration with active social listening webhooks (Sprinklr / X Enterprise API) detecting brand mentions.</td>
+        <td>Dynamic event-based CRM queue override rather than a static additive penalty.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- PAGE 3: ARCHETYPES & THE 5-STAGE TECHNICAL FUNNEL -->
+<div class="page-container">
+  <h1><span class="num">3.</span> Key Customer Archetypes in the AxisDirect Base</h1>
+  
+  <p>
+    Analysis of the confirmed high-influence cohort revealed five recurring archetypes within AxisDirect's demographic base. Each archetype presents distinct escalation patterns and demands a calibrated operational response.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 21%;">Customer Archetype</th>
+        <th style="width: 27%;">Demographic & Identity Indicators</th>
+        <th style="width: 25%;">Primary Escalation Channels</th>
+        <th style="width: 27%;">Reputational Risk Vector</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Startup Founders & Tech CXOs</strong></td>
+        <td>Aged 28–48; corporate email domains; Bengaluru, Mumbai, NCR, Pune; LinkedIn network &gt; 15,000; MCA active directorships.</td>
+        <td>LinkedIn posts, X quote-tweets tagging executive leadership.</td>
+        <td>High peer-network resonance. Tech and startup ecosystems quickly mobilize and share grievances.</td>
+      </tr>
+      <tr>
+        <td><strong>2. Finfluencers & Trading Educators</strong></td>
+        <td>Active YouTube/Instagram creators; bio keywords: <em>Option Trader, Nifty Analyst, Wealth Coach</em>; 50k–1M+ followers.</td>
+        <td>Live YouTube streams, Instagram stories, screenshots on X / Telegram channels.</td>
+        <td>Immediate mass-retail audience. Platform downtime or order latency screenshots directly deter prospective accounts.</td>
+      </tr>
+      <tr>
+        <td><strong>3. Financial Journalists & Media Editors</strong></td>
+        <td>Reporters, columnists, and anchor staff at major publications (Mint, ET, Moneycontrol, CNBC-TV18, Bloomberg).</td>
+        <td>X threads, direct editorial mentions, industry WhatsApp/Signal groups.</td>
+        <td>Direct access to mainstream media amplification. A service bug can become an investigative article on broking compliance.</td>
+      </tr>
+      <tr>
+        <td><strong>4. Senior Legal & Regulatory Figures</strong></td>
+        <td>Senior Advocates, NCLT/High Court counsel, retired administrative/regulatory officials, Big-4 Tax Partners.</td>
+        <td>Formal legal notices, direct letters to SEBI / Banking Ombudsman, high-level board escalations.</td>
+        <td>Systemic compliance and regulatory audits rather than viral public social outrage.</td>
+      </tr>
+      <tr>
+        <td><strong>5. Derivatives Community Leaders</strong></td>
+        <td>High-frequency option writers running popular Discord servers or private trading groups (1,000–10,000 active traders).</td>
+        <td>Community broadcasts, collective support ticket spamming, viral X campaigns.</td>
+        <td>Multiplied operational pressure. An outage experienced by one leader triggers simultaneous panic across hundreds of clients.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h1 style="margin-top: 10px;"><span class="num">4.</span> Technical Funnel Architecture & Methodology</h1>
+
+  <p>
+    Querying live public social graphs across a large customer base is cost-prohibitive and introduces massive false positives. The HashCase architecture functions as a precision-engineered funnel designed around two immutable constraints:
+  </p>
+
+  <ul>
+    <li><strong>The Indian Name Collision Paradox:</strong> Common names appear thousands of times within the customer base. Name alone is zero proof of identity; matches require multi-attribute corroboration.</li>
+    <li><strong>Temporal Decay of KYC Declarations:</strong> KYC data captures an individual at onboarding. Historical fields serve as anchor seeds, but current authority is resolved from live public records.</li>
+  </ul>
+
+  <div class="funnel-row">
+    <div class="funnel-badge">STAGE 1</div>
+    <div class="funnel-desc">
+      <strong>Data Ingestion, Transliteration Normalisation & Salted Hashing:</strong>
+      Name standardisation using Indian phonetic models (variants like <em>Rajesh/Rajeshh, Dikshit/Dixit, Banerjee/Bandopadhyay</em>). Parsing addresses into standardized PIN, City, and State. Validating corporate domains against free webmail. Salted SHA-256 pseudonymisation creates a decoupled processing environment.
+    </div>
+  </div>
+
+  <div class="funnel-row">
+    <div class="funnel-badge">STAGE 2</div>
+    <div class="funnel-desc">
+      <strong>High-Recall Candidate Shortlisting:</strong>
+      Low-cost heuristic filtering using native KYC fields: (1) Occupation regex across 250+ senior roles (Director, Founder, Partner, MD, Editor, Advocate); (2) Verified corporate email domains; (3) Declared annual income or Demat account vintage; (4) Tier-1 metropolitan concentration; (5) Existing Burgundy/HNI relationship flags.
+    </div>
+  </div>
+
+  <div class="funnel-row">
+    <div class="funnel-badge">STAGE 3</div>
+    <div class="funnel-desc">
+      <strong>Multi-Attribute Social Graph Discovery:</strong>
+      Automated queries across authorized enterprise endpoints (LinkedIn API, X Enterprise API, Google Knowledge Graph API, MCA-21 Company Registry, Crunchbase). Queries combine strict composite tokens: <code>[Full Name] + [Declared Employer]</code>, <code>[Full Name] + [Corporate Domain]</code>, and <code>[Email Handle] + [Location]</code>.
+    </div>
+  </div>
+
+  <div class="funnel-row">
+    <div class="funnel-badge">STAGE 4</div>
+    <div class="funnel-desc">
+      <strong>Disambiguation & Deterministic Identity Resolution:</strong>
+      Each candidate match is evaluated against a weighted corroboration matrix. Matches are assigned a Confidence Score between 0.00 and 1.00. Ambiguous cases are routed to a Human-in-the-Loop (HITL) audit queue or pruned entirely.
+    </div>
+  </div>
+
+  <div class="funnel-row">
+    <div class="funnel-badge">STAGE 5</div>
+    <div class="funnel-desc">
+      <strong>Influence Enrichment, Algorithmic Scoring & CRM Ingestion:</strong>
+      Enrichment of confirmed profiles with follower counts, median post engagement, verification status, and topical tags. Generation of the final Composite Influence Score (CIS) and assignment into operational service tiers.
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4: DISAMBIGUATION & MATHEMATICAL SCORING -->
+<div class="page-container">
+  <h1><span class="num">4.4</span> The Disambiguation Matrix & Confidence Thresholding</h1>
+
+  <p>
+    The resolution engine calculates match confidence (<i>C<sub>i</sub></i>) as a weighted sum of normalized corroboration vectors:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 25%;">Corroboration Vector</th>
+        <th style="width: 12%;">Weight</th>
+        <th style="width: 63%;">Validation Logic & Disambiguation Rules</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Employer / Org Consistency</strong></td>
+        <td><strong>35%</strong></td>
+        <td>Fuzzy matching (Levenshtein distance &gt; 0.88) between KYC employer field and public LinkedIn experience graph / MCA directorships.</td>
+      </tr>
+      <tr>
+        <td><strong>Username / Email Handle Overlap</strong></td>
+        <td><strong>20%</strong></td>
+        <td>Jaro-Winkler string similarity between the customer's email username (e.g., <em>vikram.mehta</em>) and public social handles (@vikrammehta).</td>
+      </tr>
+      <tr>
+        <td><strong>Geographic / City Alignment</strong></td>
+        <td><strong>20%</strong></td>
+        <td>Exact match of current city or metro cluster between KYC address and public profile location.</td>
+      </tr>
+      <tr>
+        <td><strong>Chronological Consistency</strong></td>
+        <td><strong>15%</strong></td>
+        <td>Validation that declared date of birth aligns plausibly with university graduation years or corporate career milestones.</td>
+      </tr>
+      <tr>
+        <td><strong>Name Rarity Weight (IDF)</strong></td>
+        <td><strong>10%</strong></td>
+        <td>Inverse Document Frequency across the customer base. Unique names require fewer corroborating signals than common names.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="clean-box">
+    <div class="clean-box-head">Confidence Thresholds & Human-in-the-Loop (HITL) Protocol</div>
+    <ul>
+      <li><strong>Automated Acceptance (<i>C<sub>i</sub></i> &ge; 0.85):</strong> High-confidence deterministic matches. Ingested directly into the influence scoring engine without human intervention.</li>
+      <li><strong>Human-in-the-Loop Review Queue (0.70 &le; <i>C<sub>i</sub></i> &lt; 0.85):</strong> Ambiguous profiles where public reach is substantial (&gt;25k followers). Routed to compliance analysts for a brief visual verification; ambiguous remainders purged.</li>
+      <li><strong>Automated Pruning (<i>C<sub>i</sub></i> &lt; 0.70):</strong> Discarded immediately. An erroneous false-positive identification is deemed far more damaging than an omitted match.</li>
+    </ul>
+  </div>
+
+  <h1 style="margin-top: 14px;"><span class="num">4.5</span> Mathematical Formulation of the Composite Influence Score (CIS)</h1>
+
+  <p>
+    The enriched attributes are normalized and synthesized into a single scalar score CIS &isin; [0, 100]:
+  </p>
+
+  <div class="formula-box">
+    <span class="f-pink">CIS</span> = <span class="f-yellow">MIN</span>(100, [ <span class="f-blue">w_reach</span> &middot; <span class="f-pink">S_reach</span> + <span class="f-blue">w_auth</span> &middot; <span class="f-pink">S_auth</span> + <span class="f-blue">w_eng</span> &middot; <span class="f-pink">S_eng</span> ] &times; <span class="f-pink">M_relevance</span>)<br><br>
+    Where:<br>
+    &bull; <span class="f-pink">S_reach</span> &nbsp;&nbsp;&nbsp;&nbsp;= (<span class="f-yellow">log10</span>(<span class="f-blue">Total_Audience</span> + 1) / <span class="f-yellow">log10</span>(1,000,000)) &times; 100 &nbsp;&nbsp;&nbsp;&nbsp;[w_reach = <span class="f-yellow">0.40</span>]<br>
+    &bull; <span class="f-pink">S_auth</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= Normalized credential score (Verification, MCA Directorship, CXO) &nbsp;&nbsp;[w_auth = <span class="f-yellow">0.35</span>]<br>
+    &bull; <span class="f-pink">S_eng</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= Normalized 30-day median interaction rate (replies/shares) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[w_eng = <span class="f-yellow">0.25</span>]<br>
+    &bull; <span class="f-pink">M_relevance</span> = Industry topical multiplier: <span class="f-yellow">1.35x</span> (Finance/Trading), <span class="f-yellow">1.00x</span> (Business/Tech), <span class="f-yellow">0.50x</span> (General/Lifestyle)
+  </div>
+
+  <p>
+    <strong>Key Mathematical Characteristics:</strong> (1) <em>Logarithmic Reach Compression:</em> The marginal difference between 1,000 and 20,000 followers is significant, while the difference between 700,000 and 720,000 is negligible. (2) <em>Authority Weighting:</em> High institutional authority outscores lifestyle accounts with passive followings. (3) <em>Multiplicative Relevance:</em> Irrelevant audiences are discounted by up to 50%, ensuring capital markets exposure remains the primary sorting criteria.
+  </p>
+</div>
+
+<!-- PAGE 5: OPERATIONAL TIERING & SLAS -->
+<div class="page-container">
+  <h1><span class="num">5.</span> Operational Tiering Framework & Service SLAs</h1>
+
+  <p>
+    Continuous decimal scores cannot be directly executed by frontline customer service desks. The pipeline categorizes scored customers into distinct operational tiers embedded directly into AxisDirect's CRM (Salesforce / LeadSquared) and ticketing systems.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 15%;">Tier</th>
+        <th style="width: 25%;">Representative Cohort</th>
+        <th style="width: 32%;">Operational Escalation Path & CRM Protocol</th>
+        <th style="width: 28%;">Resolution SLA Standards</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <span class="pill pill-t1">TIER 1</span><br>
+          <strong>Executive VIP</strong>
+        </td>
+        <td>
+          Listed CXOs, prominent finfluencers (&gt;100k relevant reach), senior national business editors, Unicorn founders.
+        </td>
+        <td>
+          Direct routing to Senior Executive Concierge Desk; dedicated Senior RM; automatic duplicate alert dispatched to Head of Customer Experience (CX); mandatory VP review prior to ticket closure.
+        </td>
+        <td>
+          <strong>First Response:</strong> &lt; 15 mins<br>
+          <strong>Resolution Target:</strong> &lt; 4 hours<br>
+          <strong>Real-Time Monitoring:</strong> 24/7 active social mention alert.
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="pill pill-t2">TIER 2</span><br>
+          <strong>High Priority</strong>
+        </td>
+        <td>
+          Series A/B founders, corporate VPs/Directors, certified research analysts, active trading coaches (15k–100k reach).
+        </td>
+        <td>
+          Prioritized queue routing in ticketing system; auto-assignment to Level-2 Senior Support Engineers; daily supervisor reconciliation of all open tickets.
+        </td>
+        <td>
+          <strong>First Response:</strong> &lt; 1 hour<br>
+          <strong>Resolution Target:</strong> &lt; 12 hours<br>
+          <strong>Escalation Threshold:</strong> Alert at 6h unresolved.
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="pill pill-t3">TIER 3</span><br>
+          <strong>Monitored</strong>
+        </td>
+        <td>
+          Boutique financial advisors, senior chartered accountants, tech leads, mid-tier commentators (3k–15k reach).
+        </td>
+        <td>
+          CRM record tagged with dynamic awareness badge; standard routing queue with auto-elevation to Tier 2 if a ticket is reopened or escalated twice.
+        </td>
+        <td>
+          <strong>First Response:</strong> &lt; 4 hours<br>
+          <strong>Resolution Target:</strong> Standard 24h TAT<br>
+          <strong>Re-open Trigger:</strong> Immediate L2 routing.
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="pill pill-std">STANDARD</span><br>
+          <strong>General Retail</strong>
+        </td>
+        <td>
+          Standard retail investors, passive demat holders, non-public accounts.
+        </td>
+        <td>
+          Standard automated IVR, conversational AI chatbot triage, standard round-robin support queue.
+        </td>
+        <td>
+          Standard institutional SLAs (24–48 hours turnaround time).
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Operational Governance Matrix</h2>
+  <p>
+    To ensure seamless handoffs between automated classification and human execution, the following operational safeguards are enacted:
+  </p>
+  <ul>
+    <li><strong>Supervisor Override:</strong> Relationship managers may manually appeal a customer's tier assignment through a one-click CRM justification form.</li>
+    <li><strong>Silent Incident Management:</strong> If a platform outage occurs during market hours (9:15 AM - 3:30 PM), Tier 1 and Tier 2 customers receive proactive status updates before public inquiries materialize.</li>
+    <li><strong>Closed-Loop Audit:</strong> All escalated interactions undergo weekly sample reviews by the CX quality assurance desk to verify SLA adherence and escalation efficacy.</li>
+  </ul>
+</div>
+
+</body>
+</html>

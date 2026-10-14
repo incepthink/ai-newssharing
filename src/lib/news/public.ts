@@ -43,6 +43,9 @@ export type NewsItem = {
   credit: string | null
   video: string | null
   cm: boolean
+  /** Mahasamvad's own categories for the post (`दुष्काळ २०२६`, …), empty
+   *  for a desk-filed release. What a योजना selects on first. */
+  categories: string[]
   /** Roster ids (`data/ministers.ts`) the attribution or headline names. */
   ministers: string[]
   language: 'mr' | 'hi' | 'en'

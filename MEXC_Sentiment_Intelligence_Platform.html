@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Real-Time Social Media & Campaign Sentiment Intelligence Platform — MEXC</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+  @page {
+    size: A4;
+    margin: 14mm 16mm 14mm 16mm;
+    @top-left { content: none; }
+    @top-right { content: none; }
+    @bottom-left { content: none; }
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 7.2pt;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1e293b;
+    font-size: 8.4pt;
+    line-height: 1.44;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+
+  .page {
+    page-break-after: always;
+    height: 100%;
+    position: relative;
+  }
+
+  .page:last-of-type {
+    page-break-after: avoid;
+  }
+
+  /* Document Titles */
+  .doc-title {
+    font-size: 19pt;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.18;
+    letter-spacing: -0.5px;
+    margin: 0 0 4px 0;
+  }
+
+  .doc-subtitle {
+    font-size: 9.2pt;
+    font-style: italic;
+    color: #64748b;
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  /* Section Headings */
+  .section-tag {
+    font-size: 11pt;
+    font-weight: 800;
+    color: #1d4ed8;
+    letter-spacing: -0.2px;
+    margin: 14px 0 6px 0;
+  }
+
+  .sub-section-title {
+    font-size: 9.4pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 6px 0;
+  }
+
+  p {
+    margin: 0 0 8px 0;
+    color: #334155;
+    text-align: justify;
+  }
+
+  /* Callout Problem Container - NO colored left border */
+  .problem-box {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+  }
+
+  /* Bullet lists */
+  ul.solution-list {
+    margin: 0 0 8px 0;
+    padding-left: 16px;
+    list-style-type: disc;
+  }
+
+  ul.solution-list li {
+    margin-bottom: 8px;
+    color: #334155;
+    line-height: 1.45;
+  }
+
+  ul.solution-list li strong {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  /* Page 2 Workflow Styling */
+  .wf-header-title {
+    font-size: 15pt;
+    font-weight: 800;
+    color: #1d4ed8;
+    letter-spacing: -0.3px;
+    margin: 0 0 4px 0;
+  }
+
+  .wf-header-desc {
+    font-size: 8pt;
+    color: #64748b;
+    line-height: 1.38;
+    margin: 0 0 12px 0;
+  }
+
+  /* Workflow Canvas */
+  .wf-container {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 10px 12px;
+  }
+
+  .wf-bar-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1.5px solid #1e293b;
+    padding-bottom: 4px;
+    margin-bottom: 9px;
+  }
+
+  .wf-bar-top-title {
+    font-size: 7.6pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+
+  .wf-bar-top-tag {
+    font-size: 6.8pt;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  /* Workflow Step Box */
+  .wf-step {
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #ffffff;
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+
+  .wf-step-head {
+    background: #1e3a8a;
+    color: #ffffff;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .wf-step-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 7.2pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .wf-step-num {
+    background: #ffffff;
+    color: #1e3a8a;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 6.5pt;
+    font-weight: 800;
+  }
+
+  .wf-step-meta {
+    font-size: 6.4pt;
+    color: #bfdbfe;
+    font-weight: 500;
+  }
+
+  .wf-step-body {
+    padding: 6px 10px;
+    font-size: 7.6pt;
+    background: #ffffff;
+  }
+
+  .wf-step-main {
+    font-size: 8.2pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+  }
+
+  .wf-step-sub {
+    font-size: 7.2pt;
+    color: #64748b;
+  }
+
+  /* Connector arrows */
+  .wf-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 12px;
+    margin: -2px 0 3px 0;
+    color: #2563eb;
+    font-size: 9pt;
+    line-height: 1;
+  }
+
+  .wf-branch-label {
+    text-align: center;
+    margin: 2px 0 6px 0;
+  }
+
+  .wf-branch-pill {
+    display: inline-block;
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    font-size: 6.8pt;
+    font-weight: 700;
+    padding: 2px 10px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  /* Dual Track Grid */
+  .wf-dual-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .wf-track-box {
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    overflow: hidden;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .wf-track-head {
+    background: #1e3a8a;
+    color: #ffffff;
+    padding: 4px 8px;
+    font-size: 7.2pt;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .wf-track-body {
+    padding: 6px 8px;
+    flex: 1;
+    background: #f8fafc;
+  }
+
+  .wf-track-title {
+    font-size: 8pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+  }
+
+  .wf-track-list {
+    margin: 0;
+    padding-left: 12px;
+    font-size: 7pt;
+    color: #475569;
+    line-height: 1.35;
+  }
+
+  .wf-track-list li {
+    margin-bottom: 3px;
+  }
+
+  /* Page 3 Table & Highlights - NO colored left border */
+  .layer-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 14px 0;
+    font-size: 7.5pt;
+  }
+
+  .layer-table th {
+    background-color: #1e3a8a;
+    color: #ffffff;
+    font-weight: 700;
+    text-align: left;
+    padding: 6px 8px;
+    border: 1px solid #1e3a8a;
+    font-size: 7.2pt;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .layer-table td {
+    padding: 5px 8px;
+    border: 1px solid #e2e8f0;
+    vertical-align: top;
+    color: #334155;
+    line-height: 1.35;
+  }
+
+  .layer-table tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+
+  .edge-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+
+  .edge-list {
+    margin: 0;
+    padding-left: 16px;
+    list-style-type: disc;
+  }
+
+  .edge-list li {
+    margin-bottom: 6px;
+    color: #334155;
+    font-size: 7.8pt;
+    line-height: 1.4;
+  }
+
+  .edge-list li strong {
+    color: #0f172a;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.5pt;
+    background: #f1f5f9;
+    padding: 1px 3px;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: PROBLEM & SOLUTION -->
+<div class="page">
+  <div class="doc-title">Real-Time Social Media & Campaign Sentiment Intelligence Platform</div>
+  <div class="doc-subtitle">Enterprise Architecture & Implementation Blueprint | Client Solution for MEXC</div>
+
+  <div class="section-tag" style="margin-top: 4px;">Problem</div>
+  <div class="sub-section-title">Context & Operational Challenge</div>
+  
+  <div class="problem-box">
+    <p style="margin: 0;">
+      MEXC required continuous 24/7 visibility into brand perception, user sentiment, and marketing campaign performance across hyper-active and fragmented cryptocurrency communities (X/Twitter, Telegram, Discord, and Reddit). The high velocity of crypto chatter—dominated by trader slang, bot-driven spam campaigns, rapid market volatility swings, and coordinated FUD (Fear, Uncertainty, and Doubt: orchestrated panic rumors or smear campaigns)—rendered traditional social listening tools ineffective at distinguishing actionable market signals from noise or measuring true campaign resonance.
+    </p>
+  </div>
+
+  <div class="section-tag">Solution</div>
+  <p style="margin-bottom: 10px;">
+    Architected and deployed an autonomous, end-to-end social intelligence and sentiment analysis platform designed specifically for the dynamics of crypto social ecosystems:
+  </p>
+
+  <ul class="solution-list">
+    <li>
+      <strong>Multi-Channel Streaming Ingestion & Noise Scrubbing:</strong> Built high-throughput streaming pipelines ingesting posts, replies, and channel messages across X, Telegram, Discord, and Reddit. Deployed deterministic filters and fast duplicate-pruning (Redis Bloom filters) to eliminate bot spam, fraudulent airdrop giveaways, and <em>cashtag hijacking</em> (spammers attaching the <code>$MX</code> ticker symbol to unrelated promotional scams or fake giveaways to hijack community search feeds).
+    </li>
+    <li>
+      <strong>Semantic Topic Clustering (Vector Similarity Search):</strong> Applied AI text embeddings (<code>text-embedding-3-large</code> @ 1024-dim) paired with high-speed vector search (<code>pgvector</code>) to automatically group high-volume community chatter into distinct discussion topics in real time (e.g., app performance, withdrawal speeds, listing inquiries), without requiring manually preconfigured keyword lists.
+    </li>
+    <li>
+      <strong>Domain-Specific AI Sentiment & Campaign Engine:</strong> Deployed a self-hosted AI model (Qwen-2.5 on a private cluster) with strict output data validation. The engine decodes crypto-native trader slang (such as <em>"rekt"</em> [steep trading losses], <em>"liquidated"</em> [margin call], <em>"dev rugged"</em> [scam token exit], and <em>"HODL"</em> [holding long-term]) to classify multi-class sentiment (Bullish, Bearish, Neutral, Panic/Crisis). Crucially, it separates individual trader leverage losses from legitimate platform operational issues and attributes conversation spikes to marketing events.
+    </li>
+    <li>
+      <strong>Influencer & KOL (Key Opinion Leader) Attribution:</strong> Computed reach, account authenticity, and engagement ratios to distinguish genuine Key Opinion Leaders (KOLs) from retail noise, triggering automated alerts when sudden negative sentiment anomalies or coordinated smear campaigns emerge.
+    </li>
+    <li>
+      <strong>Executive Command Center Dashboard:</strong> Delivered an interactive Next.js real-time analytics portal displaying live community mood curves, campaign engagement ROI across token launches (such as <code>#Kickstarter</code> and <code>#Launchpad</code>), sentiment share of voice against competitor exchanges, and interactive topic heatmaps.
+    </li>
+  </ul>
+</div>
+
+<!-- PAGE 2: SYSTEM ARCHITECTURE & PROCESSING FLOWCHART -->
+<div class="page">
+  <div class="wf-header-title">System Architecture & Processing Flowchart</div>
+  <div class="wf-header-desc">
+    The following diagram presents the multi-channel streaming topology, split-track analytics workflow (Campaign Tracking vs. Community Sentiment), AI classification core, and real-time operational endpoints:
+  </div>
+
+  <div class="wf-container">
+    <div class="wf-bar-top">
+      <span class="wf-bar-top-title">HOW THE PLATFORM WORKS, END TO END</span>
+      <span class="wf-bar-top-tag">Real-Time Social & Campaign Sentiment Intelligence</span>
+    </div>
+
+    <!-- STAGE 1 -->
+    <div class="wf-step">
+      <div class="wf-step-head">
+        <span class="wf-step-badge"><span class="wf-step-num">1</span> LISTEN</span>
+        <span class="wf-step-meta">Continuous Ingestion</span>
+      </div>
+      <div class="wf-step-body">
+        <div class="wf-step-main">Every public post and community mention about MEXC is captured the second it appears</div>
+        <div class="wf-step-sub">
+          <strong>Active Ingress:</strong> X (Twitter) Filtered Stream &bull; Telegram Streaming (150+ monitored public groups) &bull; Discord Gateway &bull; Reddit Streamer
+          <span style="float: right; color: #1e3a8a; font-weight: 600;">Running 24/7 &bull; Zero Polling Lag</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="wf-arrow">&#9660;</div>
+
+    <!-- STAGE 2 -->
+    <div class="wf-step">
+      <div class="wf-step-head">
+        <span class="wf-step-badge"><span class="wf-step-num">2</span> CLEAN UP</span>
+        <span class="wf-step-meta">Deterministic Pre-Processing & Anti-Spam</span>
+      </div>
+      <div class="wf-step-body">
+        <div class="wf-step-main">Automated bot networks, repetitive promo spam, and cashtag hijacking are scrubbed out</div>
+        <div class="wf-step-sub">
+          &bull; <strong>Cashtag De-Hijacking:</strong> Contextual regex strips spam posts falsely tagging <code>$MX</code> onto unrelated scam tokens.<br>
+          &bull; <strong>Bot Pruning & Deduplication:</strong> Redis Bloom filters eliminate coordinated dummy account rings and repeated airdrop blasts so only genuine organic chatter advances.
+        </div>
+      </div>
+    </div>
+
+    <div class="wf-arrow">&#9660;</div>
+
+    <!-- BRANCH LABEL -->
+    <div class="wf-branch-label">
+      <span class="wf-branch-pill">PARALLEL DUAL-TRACK PROCESSING</span>
+    </div>
+
+    <!-- STAGE 3: DUAL TRACKS -->
+    <div class="wf-dual-grid">
+      <div class="wf-track-box">
+        <div class="wf-track-head">
+          <span class="wf-step-num">3</span> TRACK A &bull; CAMPAIGN ATTRIBUTION
+        </div>
+        <div class="wf-track-body">
+          <div class="wf-track-title">Are our marketing campaigns and token listings working?</div>
+          <ul class="wf-track-list">
+            <li><strong>Attention Velocity:</strong> Tracking volume and reach generated across <code>#Kickstarter</code>, <code>#Launchpad</code>, and listings.</li>
+            <li><strong>KOL Attribution:</strong> Identifying which Key Opinion Leaders (influencers) drive genuine traction vs. paid bot engagement.</li>
+            <li><strong>Viral Resonance:</strong> Quantifying secondary amplification (retweets, quote-tweets, forwards, views).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="wf-track-box">
+        <div class="wf-track-head">
+          <span class="wf-step-num">3</span> TRACK B &bull; COMMUNITY SENTIMENT
+        </div>
+        <div class="wf-track-body">
+          <div class="wf-track-title">How does the global trading community feel about MEXC?</div>
+          <ul class="wf-track-list">
+            <li><strong>Live Mood Index:</strong> Real-time aggregate sentiment scoring (Bullish vs. Bearish vs. Panic/FUD).</li>
+            <li><strong>Early Rumor Alerts:</strong> Immediate anomaly alerts the moment coordinated FUD, withdrawal complaints, or solvency rumors emerge.</li>
+            <li><strong>Topic Clustering:</strong> Vector similarity search (<code>pgvector</code>) grouping thousands of messages into core topic clusters.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="wf-arrow">&#9660;</div>
+
+    <!-- STAGE 4 -->
+    <div class="wf-step">
+      <div class="wf-step-head">
+        <span class="wf-step-badge"><span class="wf-step-num">4</span> UNDERSTAND</span>
+        <span class="wf-step-meta">Sovereign AI Core &bull; Private Self-Hosted Cluster</span>
+      </div>
+      <div class="wf-step-body">
+        <div class="wf-step-main">Domain-specific AI parses every message with the contextual comprehension of an active trader</div>
+        <div class="wf-step-sub" style="margin-top: 3px;">
+          &bull; <strong>Crypto Slang Comprehension:</strong> Translates crypto-native terms (<em>"rekt", "dev rugged", "liquidated", "to the moon", "HODL"</em>) into precise market signals.<br>
+          &bull; <strong>Contextual Disambiguation:</strong> Accurately distinguishes personal trading leverage losses from platform-level service grievances.<br>
+          &bull; <strong>Strict Schema Enforcement:</strong> Transforms unstructured chatter into clean, structured JSON records with zero hallucinations.<br>
+          &bull; <strong>100% Data Sovereignty:</strong> Executes entirely on self-hosted GPU infrastructure. Zero client intelligence or user data leaves the private VPC.
+        </div>
+      </div>
+    </div>
+
+    <div class="wf-arrow">&#9660;</div>
+
+    <!-- STAGE 5: ACT & SEE -->
+    <div class="wf-dual-grid" style="margin-bottom: 0;">
+      <div class="wf-track-box">
+        <div class="wf-track-head" style="background: #b91c1c;">
+          <span class="wf-step-num" style="color: #b91c1c;">5</span> ACT &bull; INSTANT ESCALATION
+        </div>
+        <div class="wf-track-body">
+          <div class="wf-track-title" style="color: #b91c1c;">Sub-Second Anomaly Alerts</div>
+          <p style="font-size: 7.2pt; color: #475569; margin: 0; line-height: 1.35;">
+            PR, Risk, and Executive teams receive immediate Telegram Bot and Slack alerts the moment negative chatter spikes, neutralizing emerging crises before viral momentum takes hold.
+          </p>
+        </div>
+      </div>
+
+      <div class="wf-track-box">
+        <div class="wf-track-head" style="background: #047857;">
+          <span class="wf-step-num" style="color: #047857;">5</span> SEE &bull; REAL-TIME INTELLIGENCE
+        </div>
+        <div class="wf-track-body">
+          <div class="wf-track-title" style="color: #047857;">Executive Command Center</div>
+          <p style="font-size: 7.2pt; color: #047857; margin: 0; line-height: 1.35;">
+            A unified Next.js real-time analytics portal displaying live community mood curves, campaign engagement ROI, topic heatmaps, and sentiment share-of-voice against competitor exchanges.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PAGE 3: ARCHITECTURAL LAYER BREAKDOWN & HIGHLIGHTS -->
+<div class="page">
+  <div class="wf-header-title">Architectural Layer Breakdown & Functional Scope</div>
+
+  <table class="layer-table">
+    <thead>
+      <tr>
+        <th style="width: 11%;">Layer</th>
+        <th style="width: 23%;">Module Name</th>
+        <th style="width: 25%;">Technology / Framework</th>
+        <th style="width: 41%;">Scope & Functional Deliverables</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Layer 1</strong></td>
+        <td><strong>Multi-Channel Ingestion & Filter Router</strong></td>
+        <td>API Streams & Webhooks</td>
+        <td>Continuous ingress from X, Telegram, Discord, and Reddit. Bot spam pruning and ticker ($MX) cashtag de-hijacking.</td>
+      </tr>
+      <tr>
+        <td><strong>Layer 2A</strong></td>
+        <td><strong>Track A: Campaign & Event Attribution</strong></td>
+        <td>Marketing Attribution Pipeline</td>
+        <td>Campaign tracking across #Kickstarter, #Launchpad, and listings; Key Opinion Leader (KOL) amplification & virality metrics.</td>
+      </tr>
+      <tr>
+        <td><strong>Layer 2B</strong></td>
+        <td><strong>Track B: Brand & Community Sentiment</strong></td>
+        <td>Vector Similarity (pgvector) & NLP</td>
+        <td>Mood Index (Bullish/Bearish), early FUD/panic anomaly triggers, and automated semantic topic discovery.</td>
+      </tr>
+      <tr>
+        <td><strong>Layer 3</strong></td>
+        <td><strong>Self-Hosted Sovereign AI Core</strong></td>
+        <td>Private Cluster (Qwen-2.5) + Validation</td>
+        <td>Crypto-slang translation (HODL, rekt, liquidated, rug), leverage loss vs. platform bug disambiguation, structured JSON.</td>
+      </tr>
+      <tr>
+        <td><strong>Layer 4A</strong></td>
+        <td><strong>Real-Time Operational Actions</strong></td>
+        <td>Automated Dispatch System</td>
+        <td>Instant sub-second Telegram & Slack push alerts on sudden FUD spikes or negative sentiment shifts.</td>
+      </tr>
+      <tr>
+        <td><strong>Layer 4B</strong></td>
+        <td><strong>Executive Command Center</strong></td>
+        <td>Next.js Real-Time Analytics</td>
+        <td>Live sentiment gauges, campaign ROI, competitive share-of-voice against competitor exchanges, and topic heatmaps.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="wf-header-title" style="margin-top: 16px;">Crypto-Native Capabilities & Architecture Highlights</div>
+  
+  <div class="sub-section-title" style="margin-bottom: 6px;">Platform Competitive Edge</div>
+
+  <div class="edge-box">
+    <ul class="edge-list">
+      <li>
+        <strong>Context-Aware Slang Comprehension:</strong> Fine-tuned understanding of crypto vernacular like <em>'liquidation cascade'</em>, <em>'dev rugged'</em>, <em>'wagmi'</em>, and <em>'to the moon'</em> ensures the AI accurately distinguishes individual trader leverage losses from actual platform-level service failures.
+      </li>
+      <li>
+        <strong>Real-Time FUD & Crisis Early Warning:</strong> Automated threshold anomaly detection alerts PR, risk, and communications teams within seconds of coordinated smear campaigns, fake regulatory rumors, or withdrawal freeze claims.
+      </li>
+      <li>
+        <strong>High-Dimensional Semantic Topic Mapping:</strong> AI vector indexing (<code>pgvector</code>) automatically clusters emerging conversation threads by underlying meaning without requiring manual keyword configuration.
+      </li>
+      <li>
+        <strong>Zero Third-Party Data Exposure:</strong> Self-hosted LLM on private GPU clusters maintains strict internal control over proprietary trading intelligence and user analytics, ensuring complete data sovereignty.
+      </li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>

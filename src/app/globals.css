@@ -1131,7 +1131,7 @@ a:hover .nr-zoom, .group:hover .nr-zoom { transform: scale(1.04); }
    carousel autoplays for everyone (the pause button stays). */
 .nr-fill {
   transform-origin: left center;
-  animation: nr-fill 4.5s linear forwards;
+  animation: nr-fill 3s linear forwards;
 }
 @keyframes nr-fill {
   from { transform: scaleX(0); }

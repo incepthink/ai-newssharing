@@ -4,7 +4,8 @@ import type { ReactNode } from 'react'
 import { MAIN_NAV, SPECIAL_COVERAGE, VIDEO_PROGRAMMES } from '@/data/news-editorial'
 import { schemeName } from '@/lib/news/hubs'
 import type { Frame } from '@/lib/news/frame'
-import { IconFacebookF, IconInstagram, IconTelegram, IconX, IconYouTube } from '@/components/ui'
+import { foldDateMr, MONTHS_MR, toDevanagariDigits } from '@/lib/marathi'
+import { IconFacebookF, IconInstagram, IconPublic, IconTelegram, IconX, IconYouTube } from '@/components/ui'
 import { IDownload, ISearch } from './icons'
 import { MainNav, type MainNavItem, type MainNavLink } from './main-nav'
 import { ChatButton, FoldButton, ReleaseSearchLink } from './triggers'
@@ -21,7 +22,7 @@ import { NewsUiProvider } from './ui'
  *  edge below that. */
 export const WRAP = 'mx-auto w-full max-w-[1328px] px-4 sm:px-6'
 /** Anchored sections clear the sticky masthead. */
-export const ANCHOR = 'scroll-mt-[118px] lg:scroll-mt-[124px]'
+export const ANCHOR = 'scroll-mt-[122px] lg:scroll-mt-[132px]'
 
 /**
  * DGIPR's social channels — the four official accounts confirmed by DGIPR.
@@ -43,8 +44,8 @@ export const SOCIAL = [
 
 export const YOUTUBE_URL = SOCIAL[3].url
 
-/** The masthead's row of the same accounts, plus the Telegram channel, each
- *  on its platform's own colour. */
+/** The masthead's row of the same accounts, plus the Telegram channel and
+ *  Public's Maharashtra news page, each on its platform's own colour. */
 const NAV_SOCIAL = [
   ...SOCIAL.map((s) => ({
     name: s.name,
@@ -53,6 +54,7 @@ const NAV_SOCIAL = [
     glyph: s.id === 'x' ? <IconX size={13} /> : s.id === 'instagram' ? <IconInstagram size={16} /> : s.id === 'youtube' ? <IconYouTube size={16} /> : <IconFacebookF size={17} />,
   })),
   { name: 'Telegram', url: 'https://t.me/MahaDGIPR', tile: '#229ED9', glyph: <IconTelegram size={16} /> },
+  { name: 'Public', url: 'https://public.app/state/news-in-maharashtra', tile: '#E3242B', glyph: <IconPublic size={16} /> },
 ]
 
 /** Under योजना and व्हिडिओ, the hub page first, then each scheme's or
@@ -98,7 +100,7 @@ export function NewsFrame({
         </a>
 
         <header className="sticky top-0 z-30 border-b border-nr-line bg-[rgba(255,248,238,0.97)]">
-          <div className={`${WRAP} flex h-[56px] items-center justify-between gap-2 lg:h-[64px] lg:gap-6`}>
+          <div className={`${WRAP} flex h-[60px] items-center justify-between gap-2 lg:h-[72px] lg:gap-6`}>
             <a href={current ? '/news' : '#top'} aria-label="महासंवाद — मुखपृष्ठ" className="min-w-0 shrink-0">
               <Image src="/mahasamvad-logo.png" alt="महासंवाद" width={292} height={100} priority className="h-[36px] w-auto lg:h-[46px]" />
             </a>
@@ -119,14 +121,29 @@ export function NewsFrame({
               >
                 <ISearch size={18} strokeWidth={2.2} />
               </ReleaseSearchLink>
-              <FoldButton className="flex h-11 items-center gap-2.5 rounded-full bg-nr-primary pl-[18px] pr-1.5 text-[0.9375rem] font-bold text-white shadow-[0_10px_22px_-12px_var(--nr-primary)] max-lg:hidden">
-                आजचा फोल्ड
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-nr-primary">
-                  <IDownload size={16} strokeWidth={2.4} />
+              <FoldButton
+                label={`आजचा फोल्ड, ${foldDateMr(today)} — डाउनलोड करा`}
+                className="flex h-14 items-center gap-3 rounded-full bg-nr-primary pl-6 pr-2 text-white shadow-[0_12px_26px_-12px_var(--nr-primary)] max-lg:hidden"
+              >
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="text-[1.0625rem] font-extrabold">आजचा फोल्ड</span>
+                  <span className="text-[0.8125rem] font-semibold text-white/90">{foldDateMr(today)}</span>
+                </span>
+                <span className="grid h-10 w-10 place-items-center rounded-full bg-white text-nr-primary">
+                  <IDownload size={20} strokeWidth={2.4} />
                 </span>
               </FoldButton>
-              <FoldButton label="आजचा फोल्ड डाउनलोड करा" className="grid h-11 w-11 place-items-center rounded-full bg-nr-primary text-white lg:hidden">
-                <IDownload size={18} strokeWidth={2.2} />
+              <FoldButton
+                label={`आजचा फोल्ड, ${foldDateMr(today)} — डाउनलोड करा`}
+                className="flex h-12 items-center gap-2 rounded-full bg-nr-primary pl-3.5 pr-1.5 text-white lg:hidden"
+              >
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="text-[0.8125rem] font-extrabold">आजचा फोल्ड</span>
+                  <span className="text-[0.6875rem] font-semibold text-white/90">{shortDateMr(today)}</span>
+                </span>
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-nr-primary">
+                  <IDownload size={17} strokeWidth={2.4} />
+                </span>
               </FoldButton>
             </div>
           </div>
@@ -230,6 +247,13 @@ function FooterList({ title, children }: { title: string; children: ReactNode })
       </ul>
     </div>
   )
+}
+
+/** `१४ ऑक्टोबर` — the fold button's date on a phone, where the year does not
+ *  fit. */
+function shortDateMr(iso: string): string {
+  const [, m, d] = iso.split('-').map(Number)
+  return `${toDevanagariDigits(d)} ${MONTHS_MR[m - 1]}`
 }
 
 /** `२२ सप्टेंबर, २०२६ रोजी १८:३०`, always in India time. */

@@ -20,6 +20,13 @@ export type SpecialCoverage = {
   /** The releases in it: the ones a topic rule picks out, or — for a story
    *  no topic covers — the ones a search of the approved corpus finds. */
   select: { topic: TopicId } | { query: string }
+  /** Mahasamvad's own category for the story, where it files one. Its posts
+   *  are in the scheme whatever their headline says; `select` still adds the
+   *  desk's own releases, which carry no category. */
+  category?: string
+  /** Whether `/news` gives it a band of its own. Every scheme is in the
+   *  masthead's menu and on `/yojana` either way. */
+  onHome?: boolean
   /** Headline figures, each with the वृत्त क्र. it was taken from. Empty
    *  until an approved release states them. */
   figures: Array<{ value: string; label: string; source: string }>
@@ -35,6 +42,8 @@ export const SPECIAL_COVERAGE: SpecialCoverage[] = [
     kicker: 'विशेष वृत्तांकन',
     title: 'दुष्काळ २०२६ : शासन काय करत आहे',
     select: { topic: 'drought' },
+    category: 'दुष्काळ २०२६',
+    onHome: true,
     figures: [
       { value: '२६५', label: 'दुष्काळसदृश तालुके', source: '२१७४९५' },
       { value: '१२', label: 'उपाययोजना सुरू', source: '२१७४९५' },
@@ -54,6 +63,8 @@ export const SPECIAL_COVERAGE: SpecialCoverage[] = [
     kicker: 'विशेष वृत्तांकन',
     title: 'कर्जमुक्ती २०२६ : शेतकऱ्यांसाठी शासन काय करत आहे',
     select: { query: 'कर्जमुक्ती' },
+    category: 'कर्जमुक्ती २०२६',
+    onHome: true,
     figures: [
       { value: '१५.८५ लाख', label: 'शेतकऱ्यांना लाभ (तीन टप्पे)', source: '२१७५५९' },
       { value: '१३,२७५', label: 'कोटी रुपये वितरित', source: '२१७५५९' },
@@ -65,6 +76,57 @@ export const SPECIAL_COVERAGE: SpecialCoverage[] = [
       { label: 'पात्र शेतकऱ्यांसाठी आधार प्रमाणीकरण', query: 'आधार प्रमाणीकरण' },
       { label: 'सावकारीविरोधात जनजागृती — महाराष्ट्र सावकारी (नियमन) अधिनियम, २०१४', query: 'सावकारी' },
     ],
+  },
+  /* The rest follow Mahasamvad's own special-coverage categories. Figures
+     only where a release's headline states one: कुंभमेळा from release
+     210039 (७ ऑगस्ट), दावोस from 188467 (२२ जानेवारी). */
+  {
+    anchor: 'lokasamvad',
+    kicker: 'जनसंपर्क अभियान',
+    title: 'लोकसंवाद २०२६ : शासनाच्या योजना जनतेपर्यंत',
+    select: { query: 'लोकसंवाद' },
+    category: 'लोकसंवाद २०२६',
+    figures: [],
+    decisions: [
+      { label: 'सेवा संकल्प अभियान', query: 'सेवा संकल्प' },
+      { label: 'गणेशोत्सव मंडळांतून योजनांचा जागर', query: 'गणेशोत्सव' },
+      { label: 'रोजगार मेळावे', query: 'रोजगार मेळाव' },
+    ],
+  },
+  {
+    anchor: 'kumbhmela',
+    kicker: 'विशेष वृत्तांकन',
+    title: 'कुंभमेळा २०२७-२८ : नाशिक-त्र्यंबकेश्वर सिंहस्थाची तयारी',
+    select: { query: 'कुंभमेळ' },
+    category: 'कुंभमेळा २०२७-२८',
+    figures: [{ value: '३४,७३२ कोटी', label: 'रुपयांचा विकास आराखडा', source: '२१००३९' }],
+    decisions: [
+      { label: 'सिंहस्थ विकास आराखडा', query: 'आराखड' },
+      { label: 'गर्दी, वाहतूक व स्वच्छतेचे नियोजन', query: 'गर्दी व्यवस्थापन' },
+      { label: 'पर्यावरणपूरक कुंभमेळा — घनकचरा व्यवस्थापन', query: 'घनकचऱ्' },
+    ],
+  },
+  {
+    anchor: 'adhiveshan',
+    kicker: 'विधिमंडळ',
+    title: 'पावसाळी अधिवेशन २०२६ : विधिमंडळाचे कामकाज',
+    select: { query: 'पावसाळी अधिवेशन' },
+    category: 'पावसाळी अधिवेशन २०२६',
+    figures: [],
+    decisions: [
+      { label: 'विधानसभा प्रश्नोत्तरे', query: 'विधानसभा प्रश्नोत्तरे' },
+      { label: 'विधानपरिषद प्रश्नोत्तरे', query: 'विधानपरिषद प्रश्नोत्तरे' },
+      { label: 'लक्षवेधी सूचना', query: 'लक्षवेधी' },
+    ],
+  },
+  {
+    anchor: 'davos',
+    kicker: 'गुंतवणूक',
+    title: 'दावोस परिषद २०२६ : महाराष्ट्रात गुंतवणूक',
+    select: { query: 'दावोस' },
+    category: 'दावोस परिषद २०२६',
+    figures: [{ value: '३० लाख कोटी', label: 'रुपयांचे सामंजस्य करार', source: '१८८४६७' }],
+    decisions: [{ label: 'सामंजस्य करार', query: 'सामंजस्य करार' }],
   },
 ]
 

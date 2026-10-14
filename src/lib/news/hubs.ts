@@ -31,11 +31,13 @@ export function schemeQuery(c: SpecialCoverage): string {
   return 'query' in c.select ? c.select.query : schemeName(c).replace(/\s*[०-९\d]+$/, '')
 }
 
-/** The releases a scheme covers: the ones its topic rule picks out, or the
- *  ones a search of the corpus finds. Newest first. */
+/** The releases a scheme covers: the posts Mahasamvad files under its
+ *  category, with the ones its topic rule picks out or a search of the corpus
+ *  finds. Newest first. */
 export function schemeReleases(items: NewsItem[], c: SpecialCoverage): NewsItem[] {
   const sel = c.select
-  return 'topic' in sel ? items.filter((i) => i.topic === sel.topic) : searchItems(items, sel.query)
+  const picked = new Set('topic' in sel ? items.filter((i) => i.topic === sel.topic) : searchItems(items, sel.query))
+  return items.filter((i) => picked.has(i) || (c.category !== undefined && i.categories.includes(c.category)))
 }
 
 /** A decision is shown only when a search for it finds an approved release. */

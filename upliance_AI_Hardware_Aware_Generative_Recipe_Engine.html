@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Upliance AI: Hardware-Aware Generative Recipe & Personalization Engine</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+  @page {
+    size: A4;
+    margin: 14mm 16mm 14mm 16mm;
+    @top-left { content: none; }
+    @top-right { content: none; }
+    @bottom-left { content: none; }
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 7.2pt;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1e293b;
+    font-size: 8.4pt;
+    line-height: 1.44;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+
+  .page {
+    page-break-after: always;
+    height: 100%;
+    position: relative;
+  }
+
+  .page:last-of-type {
+    page-break-after: avoid;
+  }
+
+  /* Document Titles */
+  .doc-title {
+    font-size: 19pt;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.18;
+    letter-spacing: -0.5px;
+    margin: 0 0 4px 0;
+  }
+
+  .doc-subtitle {
+    font-size: 9.2pt;
+    font-style: italic;
+    color: #64748b;
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  /* Section Headings */
+  .section-tag {
+    font-size: 11pt;
+    font-weight: 800;
+    color: #1d4ed8;
+    letter-spacing: -0.2px;
+    margin: 14px 0 6px 0;
+  }
+
+  .sub-section-title {
+    font-size: 9.4pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 6px 0;
+  }
+
+  p {
+    margin: 0 0 8px 0;
+    color: #334155;
+    text-align: justify;
+  }
+
+  /* Callout Problem Container - Subtle, uniform 1px border, NO colored left border */
+  .problem-box {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+  }
+
+  /* Bullet lists */
+  ul.solution-list {
+    margin: 0 0 8px 0;
+    padding-left: 16px;
+    list-style-type: disc;
+  }
+
+  ul.solution-list li {
+    margin-bottom: 8px;
+    color: #334155;
+    line-height: 1.45;
+  }
+
+  ul.solution-list li strong {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  ul.sub-bullet-list {
+    margin: 4px 0 6px 0;
+    padding-left: 16px;
+    list-style-type: circle;
+  }
+
+  ul.sub-bullet-list li {
+    margin-bottom: 3px;
+    color: #475569;
+    font-size: 8pt;
+    line-height: 1.38;
+  }
+
+  /* Page 2 Workflow Styling */
+  .wf-header-title {
+    font-size: 15pt;
+    font-weight: 800;
+    color: #1d4ed8;
+    letter-spacing: -0.3px;
+    margin: 0 0 4px 0;
+  }
+
+  .wf-header-desc {
+    font-size: 8pt;
+    color: #64748b;
+    line-height: 1.38;
+    margin: 0 0 12px 0;
+  }
+
+  /* Workflow Canvas */
+  .wf-container {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 10px 12px;
+  }
+
+  .wf-bar-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1.5px solid #1e293b;
+    padding-bottom: 4px;
+    margin-bottom: 9px;
+  }
+
+  .wf-bar-top-title {
+    font-size: 7.6pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+
+  .wf-bar-top-tag {
+    font-size: 6.8pt;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  /* Workflow Step Box */
+  .wf-step {
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #ffffff;
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+
+  .wf-step-head {
+    background: #1e3a8a;
+    color: #ffffff;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .wf-step-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 7.2pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .wf-step-num {
+    background: #ffffff;
+    color: #1e3a8a;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 6.5pt;
+    font-weight: 800;
+  }
+
+  .wf-step-meta {
+    font-size: 6.4pt;
+    color: #bfdbfe;
+    font-weight: 500;
+  }
+
+  .wf-step-body {
+    padding: 6px 10px;
+    font-size: 7.6pt;
+    background: #ffffff;
+  }
+
+  .wf-step-main {
+    font-size: 8.2pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+  }
+
+  .wf-step-sub {
+    font-size: 7.2pt;
+    color: #64748b;
+    line-height: 1.35;
+  }
+
+  /* Inner Engine Workflow */
+  .engine-box {
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    overflow: hidden;
+    background: #ffffff;
+    margin-bottom: 6px;
+  }
+
+  .engine-head {
+    background: #1e3a8a;
+    color: #ffffff;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 7.2pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .engine-body {
+    padding: 8px 10px;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sub-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 6px 8px;
+  }
+
+  .sub-card-title {
+    font-size: 7.8pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .sub-card-num {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 6.5pt;
+    font-weight: 800;
+  }
+
+  .sub-card-desc {
+    font-size: 7pt;
+    color: #475569;
+    line-height: 1.32;
+    margin: 0 0 4px 0;
+  }
+
+  .sub-card-meta {
+    font-size: 6.4pt;
+    color: #1e40af;
+    background: #eff6ff;
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+    border: 1px solid #dbeafe;
+  }
+
+  /* Hardware parameter pills */
+  .param-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin: 4px 0;
+  }
+
+  .param-pill {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6.6pt;
+    color: #0f172a;
+  }
+
+  .param-label {
+    font-weight: 700;
+    color: #1e40af;
+    text-transform: uppercase;
+    font-size: 6.2pt;
+    display: block;
+    margin-bottom: 1px;
+  }
+
+  .safety-banner {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 6.6pt;
+    color: #991b1b;
+    line-height: 1.3;
+    margin-top: 4px;
+  }
+
+  /* Connector arrows */
+  .wf-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 12px;
+    margin: -2px 0 3px 0;
+    color: #2563eb;
+    font-size: 9pt;
+    line-height: 1;
+  }
+
+  .wf-branch-label {
+    text-align: center;
+    margin: 2px 0 6px 0;
+  }
+
+  .wf-branch-pill {
+    display: inline-block;
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    font-size: 6.6pt;
+    font-weight: 700;
+    padding: 2px 10px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  /* Output 3-col grid */
+  .wf-tri-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+
+  .wf-output-box {
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #ffffff;
+    padding: 6px 8px;
+  }
+
+  .wf-output-head {
+    font-size: 7.4pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .wf-output-desc {
+    font-size: 6.8pt;
+    color: #475569;
+    line-height: 1.32;
+    margin: 0;
+  }
+
+  /* Page 3 Table & Highlights - Subtle, uniform 1px border, NO colored left border */
+  .layer-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 14px 0;
+    font-size: 7.5pt;
+  }
+
+  .layer-table th {
+    background-color: #1e3a8a;
+    color: #ffffff;
+    font-weight: 700;
+    text-align: left;
+    padding: 6px 8px;
+    border: 1px solid #1e3a8a;
+    font-size: 7.2pt;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .layer-table td {
+    padding: 5.5px 8px;
+    border: 1px solid #e2e8f0;
+    vertical-align: top;
+    color: #334155;
+    line-height: 1.35;
+  }
+
+  .layer-table tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+
+  .edge-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+
+  .edge-list {
+    margin: 0;
+    padding-left: 16px;
+    list-style-type: disc;
+  }
+
+  .edge-list li {
+    margin-bottom: 6px;
+    color: #334155;
+    font-size: 7.8pt;
+    line-height: 1.4;
+  }
+
+  .edge-list li strong {
+    color: #0f172a;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.5pt;
+    background: #f1f5f9;
+    padding: 1px 3px;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: PROBLEM & SOLUTION -->
+<div class="page">
+  <div class="doc-title">Upliance AI: Hardware-Aware Generative Recipe & Personalization Engine</div>
+  <div class="doc-subtitle">System Architecture & Compiler Specifications for the upliance Smart Appliance</div>
+
+  <div class="section-tag" style="margin-top: 4px;">Problem</div>
+  <div class="sub-section-title">Context & Physical Hardware Constraints</div>
+  
+  <div class="problem-box">
+    <p style="margin: 0;">
+      The upliance smart cooking hardware operates via precision physical actuators—motorized stirring blades, induction heating elements, and integrated weighing sensors. However, the appliance initially relied on static, hardcoded recipe programs that could not accommodate real-world kitchen variables: dietary requirements (keto, vegan, Jain), missing pantry items, custom portion sizes, or personal spice tolerances. Generic conversational LLMs (such as standard chatbots) cannot safely solve this, as unconstrained text generation cannot safely translate into the strict thermal limits, blade speeds, and timed physical steps required by physical kitchen hardware.
+    </p>
+  </div>
+
+  <div class="section-tag">Solution</div>
+  <p style="margin-bottom: 10px;">
+    Engineered upliance AI, an intelligent, hardware-constrained recipe personalization and compiler engine that translates natural language culinary requests into safe, machine-executable cooking workflows:
+  </p>
+
+  <ul class="solution-list">
+    <li>
+      <strong>Semantic Recipe Discovery (AI Vector Search & Retrieval):</strong> Powers dynamic recipe discovery across the verified upliance recipe database using semantic vector embeddings (<code>pgvector</code>). Ingests user dietary profiles, available pantry ingredients, and time constraints to match and retrieve optimal kitchen-tested base recipes based on culinary meaning and flavor profiles rather than rigid keywords.
+    </li>
+    <li>
+      <strong>Context-Aware Recipe Adaptation Engine:</strong> Developed an intelligent culinary reasoning pipeline using a self-hosted private AI model (Qwen LLM on private vLLM infrastructure). When a user requests on-the-fly modifications (e.g., <em>"make this low-carb, swap paneer for tofu, and adjust for 4 people"</em>), upliance AI dynamically recalculates ingredient proportions, liquid-to-solid moisture balance, and cooking duration.
+    </li>
+    <li>
+      <strong>Deterministic Machine Instruction Compiler:</strong> Enforces strict data-validation rules (via Zod schemas) to compile natural language cooking steps into exact, deterministic machine controls:
+      <ul class="sub-bullet-list">
+        <li><strong>Motor Speeds:</strong> Stirring RPM, reverse blade mode (stirring with the blunt edge to gently mix without shredding delicate ingredients like paneer or tofu), and pulse chopping cycles.</li>
+        <li><strong>Multi-Stage Induction Heat Curves:</strong> Gradual, controlled temperature ramps and timed hold intervals to prevent burning or scorching.</li>
+        <li><strong>Integrated Scale Calibration:</strong> Step-by-step weight prompts with automated tare calibration (automatically zeroing the scale as ingredients are added).</li>
+        <li><strong>Hardware Safety Envelopes:</strong> Enforced physical guardrails (scorch prevention, dry-run cutoffs, and boil-over mitigation).</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Real-Time Appliance Synchronization:</strong> Connects upliance AI to the appliance's touchscreen operating system via lightweight real-time communication protocols (WebSockets), delivering live interactive cooking guidance, automated appliance actuator control, and responsive feedback to user taste adjustments.
+    </li>
+  </ul>
+</div>
+
+<!-- PAGE 2: SYSTEM ARCHITECTURE & PROCESSING FLOWCHART -->
+<div class="page">
+  <div class="wf-header-title">Architecture & Execution Flowchart</div>
+  <div class="wf-header-desc">
+    The diagram below illustrates the complete execution pipeline—from user natural language requests, through the upliance AI compilation engine, to structured machine-code parameters controlling physical hardware actuators:
+  </div>
+
+  <div class="wf-container">
+    <div class="wf-bar-top">
+      <span class="wf-bar-top-title">HOW THE PLATFORM WORKS, END TO END</span>
+      <span class="wf-bar-top-tag">Hardware-Aware Generative Recipe Compilation</span>
+    </div>
+
+    <!-- STEP 1: INPUT -->
+    <div class="wf-step">
+      <div class="wf-step-head">
+        <span class="wf-step-badge"><span class="wf-step-num">1</span> INPUT &bull; NATURAL LANGUAGE REQUEST</span>
+        <span class="wf-step-meta">Spoken or Touchscreen Ingress</span>
+      </div>
+      <div class="wf-step-body">
+        <div class="wf-step-main">The user asks for something, in plain words</div>
+        <div class="wf-step-sub">
+          <em style="color: #0f172a; font-weight: 600;">"Make this less spicy, swap the paneer for tofu, and cook it for 4 people."</em><br>
+          Typed or spoken directly into the appliance's touchscreen — zero manual menus, zero rigid preset programs.
+        </div>
+      </div>
+    </div>
+
+    <div class="wf-arrow">&#9660;</div>
+
+    <!-- STEP 2: UPLIANCE AI ENGINE -->
+    <div class="engine-box">
+      <div class="engine-head">
+        <span class="wf-step-badge"><span class="wf-step-num">2</span> UPLIANCE AI ENGINE &bull; UNDERSTAND &bull; ADAPT &bull; COMPILE</span>
+        <span class="wf-step-meta">Hardware-Constrained Reasoning</span>
+      </div>
+      <div class="engine-body">
+        <!-- Sub-step 1 -->
+        <div class="sub-card">
+          <div class="sub-card-title">
+            <span class="sub-card-num">1</span> Find the best-matching tested recipe
+          </div>
+          <div class="sub-card-desc">
+            Searches upliance's library of kitchen-tested recipes by culinary meaning rather than rigid keywords, selecting the closest match to the user's diet, pantry inventory, and available cooking time.
+          </div>
+          <span class="sub-card-meta">PostgreSQL + pgvector (HNSW semantic vector search)</span>
+        </div>
+
+        <!-- Sub-step 2 -->
+        <div class="sub-card">
+          <div class="sub-card-title">
+            <span class="sub-card-num">2</span> Rework the recipe around the request
+          </div>
+          <div class="sub-card-desc">
+            Recalculates ingredient quantities, liquid-to-solid moisture balance, cooking times, and heat levels — ensuring tofu for 4 people is cooked properly, not just relabelled.
+          </div>
+          <span class="sub-card-meta">Self-Hosted Private AI (Qwen LLM on vLLM infrastructure)</span>
+        </div>
+
+        <!-- Sub-step 3 -->
+        <div class="sub-card">
+          <div class="sub-card-title">
+            <span class="sub-card-num">3</span> Convert every step into exact machine settings
+          </div>
+          <div class="sub-card-desc">
+            Each cooking step is rewritten as precise numbers the hardware can safely execute. Anything that fails validation or falls outside safe limits is rejected before it reaches the appliance.
+          </div>
+          
+          <div class="param-grid">
+            <div class="param-pill">
+              <span class="param-label">Blade Actuator</span>
+              Speed 2 RPM &bull; Reverse gentle stir
+            </div>
+            <div class="param-pill">
+              <span class="param-label">Induction Heat</span>
+              110 &deg;C &bull; Hold 4 min curve
+            </div>
+            <div class="param-pill">
+              <span class="param-label">Scale Sensor</span>
+              Prompt: Add 200 g diced tofu
+            </div>
+          </div>
+
+          <div class="safety-banner">
+            <strong>HARDWARE SAFETY ENVELOPE:</strong> Scorch prevention, boil-over thermal ceilings, dry-run cut-offs, and lid-lock interlocks are validated on every instruction.
+          </div>
+          
+          <div style="margin-top: 4px;">
+            <span class="sub-card-meta">Strict schema validation &bull; Embedded firmware interlocks</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wf-branch-label">
+      <span class="wf-branch-pill">VALIDATED MACHINE-CODE JSON OVER WEBSOCKET</span>
+    </div>
+
+    <div class="wf-arrow">&#9660;</div>
+
+    <!-- STEP 3: OUTPUT -->
+    <div class="wf-step" style="margin-bottom: 0;">
+      <div class="wf-step-head" style="background: #047857;">
+        <span class="wf-step-badge"><span class="wf-step-num" style="color: #047857;">3</span> OUTPUT &bull; PHYSICAL APPLIANCE EXECUTES STEP BY STEP</span>
+        <span class="wf-step-meta">Synchronized Actuation</span>
+      </div>
+      <div class="wf-step-body" style="padding: 7px 10px;">
+        <div class="wf-tri-grid">
+          <div class="wf-output-box">
+            <div class="wf-output-head">Touchscreen UI</div>
+            <p class="wf-output-desc">
+              Shows the adapted recipe one step at a time, providing live visual guidance, countdowns, and on-the-fly taste adjustments.
+            </p>
+          </div>
+          <div class="wf-output-box">
+            <div class="wf-output-head">Built-In Scale</div>
+            <p class="wf-output-desc">
+              Weighs dynamically as the user pours (e.g., <em>"Added 150 g of 200 g"</em>) with automated tare zeroing until the amount is exact.
+            </p>
+          </div>
+          <div class="wf-output-box">
+            <div class="wf-output-head">Motor & Induction</div>
+            <p class="wf-output-desc">
+              Stirs and heats automatically at the exact compiled RPM, temperature curve, and duration compiled by the AI engine.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PAGE 3: ARCHITECTURAL LAYER BREAKDOWN & HIGHLIGHTS -->
+<div class="page">
+  <div class="wf-header-title">Hardware-Software Compilation & Safety Matrix</div>
+  <div class="wf-header-desc">
+    Architectural layer breakdown, core technologies, and operational responsibilities across the upliance smart cooking platform:
+  </div>
+
+  <table class="layer-table">
+    <thead>
+      <tr>
+        <th style="width: 14%;">System Layer</th>
+        <th style="width: 24%;">Subsystem Name</th>
+        <th style="width: 26%;">Core Technology</th>
+        <th style="width: 36%;">Operational Scope & Responsibilities</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Layer 1</strong></td>
+        <td><strong>User Intent Ingestion</strong></td>
+        <td>Touchscreen / Voice NLP</td>
+        <td>Captures natural culinary substitutions, dietary preferences (keto, vegan, Jain), and portion scaling.</td>
+      </tr>
+      <tr>
+        <td><strong>Layer 2A</strong></td>
+        <td><strong>Semantic Discovery & RAG</strong></td>
+        <td>PostgreSQL + pgvector (HNSW)</td>
+        <td>Matches user taste preferences and pantry ingredients to certified, kitchen-tested base recipes via vector search.</td>
+      </tr>
+      <tr>
+        <td><strong>Layer 2B</strong></td>
+        <td><strong>Culinary Adaptation Engine</strong></td>
+        <td>Self-Hosted Qwen via vLLM</td>
+        <td>Recalibrates ingredient volume, liquid-to-solid moisture balance, cooking durations, and induction heat curves.</td>
+      </tr>
+      <tr>
+        <td><strong>Layer 2C</strong></td>
+        <td><strong>Deterministic Hardware Compiler</strong></td>
+        <td>Strict Schema Validation</td>
+        <td>Outputs validated machine code for blade stirring RPM, reverse blade modes, heat curves, and scale calibration.</td>
+      </tr>
+      <tr>
+        <td><strong>Safety Envelope</strong></td>
+        <td><strong>Hardware Guardrail Engine</strong></td>
+        <td>Embedded Firmware Interlocks</td>
+        <td>Enforces physical safety limits: burn prevention, boil-over thermal ceilings, dry-run heater cutoffs, and lid-lock triggers.</td>
+      </tr>
+      <tr>
+        <td><strong>Hardware Layer</strong></td>
+        <td><strong>upliance Smart Appliance</strong></td>
+        <td>Actuators & Physical Sensors</td>
+        <td>Automated motorized blade stirring, precision induction heating, live scale with tare calibration, and touchscreen UI.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="wf-header-title" style="margin-top: 16px;">Platform Engineering Highlights & Hardware Guardrails</div>
+  
+  <div class="sub-section-title" style="margin-bottom: 6px;">Institutional Safety Standards for Kitchen Automation</div>
+
+  <div class="edge-box">
+    <ul class="edge-list">
+      <li>
+        <strong>Hardware-Aware Culinary Reasoning:</strong> Unlike generic conversational chatbots that generate ungrounded recipes, upliance AI incorporates physical kitchen physics—calculating evaporation rates, induction thermal inertia, and blade shear resistance before generating instructions.
+      </li>
+      <li>
+        <strong>Reverse Blade Texture Preservation:</strong> Automatically deploys reverse blade rotation (stirring with the blunt edge of the blade) during delicate simmering stages, preventing soft proteins like paneer, tofu, or vegetables from being pureed.
+      </li>
+      <li>
+        <strong>Fail-Safe Firmware Interlocks:</strong> All compiled machine parameters pass through local microcontroller firmware checks. If sensors detect insufficient liquid (dry-run risk) or abnormal temperature spikes, the induction heater immediately cuts off independently of cloud software.
+      </li>
+      <li>
+        <strong>Closed-Loop Interactive Weighing:</strong> Synchronizes recipe steps with integrated load-cell scales, pausing execution until the user reaches the exact ingredient weight target and automatically zeroing (tare calibration) for the next step.
+      </li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>
